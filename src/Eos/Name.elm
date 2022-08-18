@@ -21,8 +21,6 @@ accounts, permissions, actions, tables, etc.
 
 -}
 
--- TODO - Include elm-verify-examples (with elm-tooling?)
-
 import Json.Decode
 import Json.Encode
 
@@ -47,6 +45,11 @@ type Name
 
 {-| Convert a [Name](#Name) to a regular `String`. This is useful if you want to
 display names in your application.
+
+    fromString "eosio.token"
+        |> Result.map toString
+        --> Ok "eosio.token"
+
 -}
 toString : Name -> String
 toString (Name name) =
@@ -55,6 +58,14 @@ toString (Name name) =
 
 {-| Convert a regular `String` into a [Name](#Name). Since there are some
 restrictions on the possible names, this function can fail with an [Error](#Error).
+
+    fromString "eosio.token"
+        |> Result.map toString
+    --> Ok "eosio.token"
+
+    fromString "eosio.token9"
+    --> Err (InvalidCharacters ( '9', []) )
+
 -}
 fromString : String -> Result Error Name
 fromString name =
@@ -89,6 +100,19 @@ fromString name =
 
 {-| The `Error` type represents all of the possible errors when converting a [Name](#Name)
 [fromString](#fromString).
+
+    fromString "0123456789"
+    --> Err (InvalidCharacters ( '0', [ '6', '7', '8', '9' ] ))
+
+    fromString "eosio."
+    --> Err DotInLastPlace
+
+    fromString ""
+    --> Err TooShort
+
+    fromString "a.very.long.name"
+    --> Err TooLong
+
 -}
 type Error
     = InvalidCharacters ( Char, List Char )
