@@ -2,12 +2,12 @@ module Generate exposing (main)
 
 {-| -}
 
-import Elm
+import Abi
 import Gen.CodeGen.Generate as Generate
-import Gen.Helper
+import Json.Decode
 
 
-main : Program {} () ()
+main : Program Json.Decode.Value () ()
 main =
-    Generate.run
-        []
+    Generate.fromJson Abi.decoder
+        (\_ -> [])
