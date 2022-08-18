@@ -9,5 +9,8 @@
   ],
   "repository": "https://github.com/NeoVier/elm-eos",
   "author": "Henrique da Cunha Buss",
-  "license": "BSD-3-Clause"
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "elm-review": "^2.7.3"
+  }
 }
