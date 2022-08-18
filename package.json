@@ -2,7 +2,9 @@
   "name": "@neovier/elm-eos",
   "version": "1.0.0",
   "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
-  "scripts": {},
+  "scripts": {
+    "post-install": "elm-tooling install"
+  },
   "keywords": [
     "elm",
     "eos"
@@ -11,6 +13,7 @@
   "author": "Henrique da Cunha Buss",
   "license": "BSD-3-Clause",
   "devDependencies": {
-    "elm-review": "^2.7.3"
+    "elm-review": "^2.7.3",
+    "elm-tooling": "^1.8.0"
   }
 }
