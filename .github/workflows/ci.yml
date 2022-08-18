@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.elm
-          key: elm-${{ hashFiles('elm.json', 'elm-tooling.json', 'review/elm.json') }}
+          key: elm-${{ hashFiles('elm.json', 'elm-tooling.json', 'codegen/elm.json', 'codegen/elm.codegen.json' 'review/elm.json') }}
 
       # Install npm packages, unless we restored them from cache.
       # Since `npm ci` removes the node_modules folder before running it’s
@@ -63,6 +63,18 @@ jobs:
         uses: sparksp/elm-review-action@v1.0.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: codegen elm-format
+        uses: sparksp/elm-format-action@v1
+        with:
+          working-directory: codegen
+
+      - name: codegen elm-review
+        uses: sparksp/elm-review-action@v1.0.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          working-directory: codegen
 
       - name: Build elm docs
         id: docs
