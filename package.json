@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
   "scripts": {
+    "test": "elm-verify-examples && elm-test-rs",
     "post-install": "elm-tooling install"
   },
   "keywords": [
