@@ -1,0 +1,13 @@
+{
+  "name": "@neovier/elm-eos",
+  "version": "1.0.0",
+  "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
+  "scripts": {},
+  "keywords": [
+    "elm",
+    "eos"
+  ],
+  "repository": "https://github.com/NeoVier/elm-eos",
+  "author": "Henrique da Cunha Buss",
+  "license": "BSD-3-Clause"
+}
