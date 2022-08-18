@@ -1,0 +1,167 @@
+module Eos.Name exposing
+    ( Name
+    , toString, fromString, Error(..), errorToString
+    , encode, decoder
+    )
+
+{-| Name is a very fundamental basic type of EOSIO. It is used to identify
+accounts, permissions, actions, tables, etc.
+
+@docs Name
+
+
+## Converting to and from `String`
+
+@docs toString, fromString, Error, errorToString
+
+
+## Dealing with JSON
+
+@docs encode, decoder
+
+-}
+
+-- TODO - Include elm-verify-examples (with elm-tooling?)
+
+import Json.Decode
+import Json.Encode
+
+
+{-| Names are strings of up to 12 characters in length. They can include
+characters a-z, 1-5, and the dot character (except for the last character).
+
+In order to generate a `Name`, you can use [fromString](#fromString) or
+[decoder](#decoder).
+
+To display a `Name`, use the [toString](#toString) function. You can also
+[encode](#encode) a `Name`
+
+-}
+type Name
+    = Name String
+
+
+
+-- CONVERTING TO AND FROM STRING
+
+
+{-| Convert a [Name](#Name) to a regular `String`. This is useful if you want to
+display names in your application.
+-}
+toString : Name -> String
+toString (Name name) =
+    name
+
+
+{-| Convert a regular `String` into a [Name](#Name). Since there are some
+restrictions on the possible names, this function can fail with an [Error](#Error).
+-}
+fromString : String -> Result Error Name
+fromString name =
+    let
+        sanitizedString : String
+        sanitizedString =
+            name
+                |> String.trim
+                |> String.toLower
+
+        isCharacterAllowed : Char -> Bool
+        isCharacterAllowed char =
+            Char.isAlpha char || List.member char [ '1', '2', '3', '4', '5', '.' ]
+    in
+    case String.filter (not << isCharacterAllowed) sanitizedString |> String.toList of
+        firstInvalidCharacter :: otherInvalidCharacters ->
+            Err (InvalidCharacters ( firstInvalidCharacter, otherInvalidCharacters ))
+
+        [] ->
+            if String.length sanitizedString < minLength then
+                Err TooShort
+
+            else if String.length sanitizedString > maxLength then
+                Err TooLong
+
+            else if String.endsWith "." sanitizedString then
+                Err DotInLastPlace
+
+            else
+                Ok (Name sanitizedString)
+
+
+{-| The `Error` type represents all of the possible errors when converting a [Name](#Name)
+[fromString](#fromString).
+-}
+type Error
+    = InvalidCharacters ( Char, List Char )
+    | DotInLastPlace
+    | TooShort
+    | TooLong
+
+
+{-| You can use this function to convert an [Error](#Error) into a human-readable
+`String`.
+-}
+errorToString : Error -> String
+errorToString error =
+    case error of
+        InvalidCharacters ( firstInvalidCharacter, otherInvalidCharacters ) ->
+            let
+                invalidCharactersString : String
+                invalidCharactersString =
+                    (firstInvalidCharacter :: otherInvalidCharacters)
+                        |> List.map String.fromChar
+                        |> String.join ", "
+            in
+            "The given name contains invalid characters. Valid characters range from a-z, 1-5, and the dot character (except for the last character). The following characters are invalid: " ++ invalidCharactersString
+
+        DotInLastPlace ->
+            "The given name contains a dot (`.`) as the last character. Dots are allowed, but not as the last character!"
+
+        TooShort ->
+            "The given name is too short. Names must be at least " ++ String.fromInt minLength ++ " long."
+
+        TooLong ->
+            "The given name is too long. Names must be at most " ++ String.fromInt maxLength ++ " long."
+
+
+
+-- JSON
+
+
+{-| Encode a [Name](#Name) into JSON. You can use this to send a [Name](#Name) to
+the blockchain or some server.
+-}
+encode : Name -> Json.Encode.Value
+encode (Name name) =
+    Json.Encode.string name
+
+
+{-| Decode a [Name](#Name) from JSON. You can use this to receive a [Name](#Name)
+from the blockchain or some server. It already does all of the validation necessary
+to ensure the [Name](#Name) is valid.
+-}
+decoder : Json.Decode.Decoder Name
+decoder =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\name ->
+                case fromString name of
+                    Ok validName ->
+                        Json.Decode.succeed validName
+
+                    Err error ->
+                        Json.Decode.fail (errorToString error)
+            )
+
+
+
+-- UTILS
+
+
+minLength : Int
+minLength =
+    1
+
+
+maxLength : Int
+maxLength =
+    12
