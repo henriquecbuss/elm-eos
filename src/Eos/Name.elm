@@ -48,7 +48,7 @@ display names in your application.
 
     fromString "eosio.token"
         |> Result.map toString
-        --> Ok "eosio.token"
+    --> Ok "eosio.token"
 
 -}
 toString : Name -> String
@@ -63,8 +63,17 @@ restrictions on the possible names, this function can fail with an [Error](#Erro
         |> Result.map toString
     --> Ok "eosio.token"
 
-    fromString "eosio.token9"
-    --> Err (InvalidCharacters ( '9', []) )
+    fromString "0123456789"
+    --> Err (InvalidCharacters ( '0', [ '6', '7', '8', '9' ] ))
+
+    fromString "eosio."
+    --> Err DotInLastPlace
+
+    fromString ""
+    --> Err TooShort
+
+    fromString "a.very.long.name"
+    --> Err TooLong
 
 -}
 fromString : String -> Result Error Name
