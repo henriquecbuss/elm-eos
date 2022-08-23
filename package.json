@@ -4,6 +4,7 @@
   "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
   "scripts": {
     "test": "elm-verify-examples && elm-test-rs && cd codegen && elm-test-rs",
+    "generate-helpers": "elm-codegen install && mv codegen/Gen codegen/src/Gen",
     "post-install": "elm-tooling install"
   },
   "keywords": [
