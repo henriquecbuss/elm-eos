@@ -150,10 +150,10 @@ errorToString error =
             "The given name contains a dot (`.`) as the last character. Dots are allowed, but not as the last character!"
 
         TooShort ->
-            "The given name is too short. Names must be at least " ++ String.fromInt minLength ++ " long."
+            "The given name is too short. Names must be at least " ++ String.fromInt minLength ++ " characters long."
 
         TooLong ->
-            "The given name is too long. Names must be at most " ++ String.fromInt maxLength ++ " long."
+            "The given name is too long. Names must be at most " ++ String.fromInt maxLength ++ " characters long."
 
 
 
