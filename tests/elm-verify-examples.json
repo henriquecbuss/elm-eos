@@ -1,6 +1,7 @@
 {
   "root": "../src",
   "tests": [
-    "Eos.Name"
+    "Eos.Name",
+    "Eos.SymbolCode"
   ]
 }
