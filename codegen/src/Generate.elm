@@ -7,7 +7,10 @@ import Elm
 import Elm.Annotation
 import EosType exposing (EosType)
 import Gen.CodeGen.Generate as Generate
+import Gen.Eos.Checksum
 import Gen.Eos.Name
+import Gen.Eos.PublicKey
+import Gen.Eos.Signature
 import Gen.Eos.TimePoint
 import Gen.Eos.TimePointSec
 import Gen.Time
@@ -73,13 +76,13 @@ eosTypeToAnnotation eosType =
             Elm.Annotation.string
 
         EosType.Checksum ->
-            Debug.todo ""
+            Gen.Eos.Checksum.annotation_.checksum
 
         EosType.PublicKey ->
-            Debug.todo ""
+            Gen.Eos.PublicKey.annotation_.publicKey
 
         EosType.Signature ->
-            Debug.todo ""
+            Gen.Eos.Signature.annotation_.signature
 
         EosType.Symbol ->
             Debug.todo ""
