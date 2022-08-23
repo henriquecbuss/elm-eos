@@ -7,6 +7,10 @@ import Elm
 import Elm.Annotation
 import EosType exposing (EosType)
 import Gen.CodeGen.Generate as Generate
+import Gen.Eos.Name
+import Gen.Eos.TimePoint
+import Gen.Eos.TimePointSec
+import Gen.Time
 import Json.Decode
 
 
@@ -51,16 +55,16 @@ eosTypeToAnnotation eosType =
             Elm.Annotation.float
 
         EosType.TimePoint ->
-            Elm.Annotation.named [ "Eos", "TimePoint" ] "TimePoint"
+            Gen.Eos.TimePoint.annotation_.timePoint
 
         EosType.TimePointSec ->
-            Elm.Annotation.named [ "Eos", "TimePointSec" ] "TimePointSec"
+            Gen.Eos.TimePointSec.annotation_.timePointSec
 
         EosType.BlockTimestampType ->
-            Debug.todo ""
+            Gen.Time.annotation_.posix
 
         EosType.Name ->
-            Elm.Annotation.named [ "Eos", "Name" ] "Name"
+            Gen.Eos.Name.annotation_.name
 
         EosType.Bytes ->
             Debug.todo ""
