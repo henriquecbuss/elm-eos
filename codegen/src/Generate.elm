@@ -9,6 +9,7 @@ import EosType exposing (EosType)
 import Gen.CodeGen.Generate as Generate
 import Gen.Eos.Asset
 import Gen.Eos.Checksum
+import Gen.Eos.ExtendedAsset
 import Gen.Eos.Name
 import Gen.Eos.PublicKey
 import Gen.Eos.Signature
@@ -97,4 +98,4 @@ eosTypeToAnnotation eosType =
             Gen.Eos.Asset.annotation_.asset
 
         EosType.ExtendedAsset ->
-            Debug.todo ""
+            Gen.Eos.ExtendedAsset.annotation_.extendedAsset

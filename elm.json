@@ -7,6 +7,7 @@
     "exposed-modules": [
         "Eos.Asset",
         "Eos.Checksum",
+        "Eos.ExtendedAsset",
         "Eos.Name",
         "Eos.PublicKey",
         "Eos.Signature",
