@@ -9,6 +9,7 @@
         "Eos.Name",
         "Eos.PublicKey",
         "Eos.Signature",
+        "Eos.Symbol",
         "Eos.SymbolCode",
         "Eos.TimePoint",
         "Eos.TimePointSec",

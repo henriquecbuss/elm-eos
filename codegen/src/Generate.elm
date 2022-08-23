@@ -11,6 +11,7 @@ import Gen.Eos.Checksum
 import Gen.Eos.Name
 import Gen.Eos.PublicKey
 import Gen.Eos.Signature
+import Gen.Eos.Symbol
 import Gen.Eos.SymbolCode
 import Gen.Eos.TimePoint
 import Gen.Eos.TimePointSec
@@ -86,7 +87,7 @@ eosTypeToAnnotation eosType =
             Gen.Eos.Signature.annotation_.signature
 
         EosType.Symbol ->
-            Debug.todo ""
+            Gen.Eos.Symbol.annotation_.symbol
 
         EosType.SymbolCode ->
             Gen.Eos.SymbolCode.annotation_.symbolCode
