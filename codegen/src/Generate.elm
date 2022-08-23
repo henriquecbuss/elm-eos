@@ -54,7 +54,7 @@ eosTypeToAnnotation eosType =
             Elm.Annotation.named [ "Eos", "TimePoint" ] "TimePoint"
 
         EosType.TimePointSec ->
-            Debug.todo ""
+            Elm.Annotation.named [ "Eos", "TimePointSec" ] "TimePointSec"
 
         EosType.BlockTimestampType ->
             Debug.todo ""
