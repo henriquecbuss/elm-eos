@@ -5,6 +5,7 @@
     "license": "BSD-3-Clause",
     "version": "1.0.0",
     "exposed-modules": [
+        "Eos.Asset",
         "Eos.Checksum",
         "Eos.Name",
         "Eos.PublicKey",

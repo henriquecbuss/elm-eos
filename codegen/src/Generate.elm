@@ -7,6 +7,7 @@ import Elm
 import Elm.Annotation
 import EosType exposing (EosType)
 import Gen.CodeGen.Generate as Generate
+import Gen.Eos.Asset
 import Gen.Eos.Checksum
 import Gen.Eos.Name
 import Gen.Eos.PublicKey
@@ -93,7 +94,7 @@ eosTypeToAnnotation eosType =
             Gen.Eos.SymbolCode.annotation_.symbolCode
 
         EosType.Asset ->
-            Debug.todo ""
+            Gen.Eos.Asset.annotation_.asset
 
         EosType.ExtendedAsset ->
             Debug.todo ""
