@@ -146,5 +146,5 @@ decoder =
                         Json.Decode.succeed symbolCode
 
                     Err error ->
-                        Json.Decode.fail (errorToString error)
+                        Json.Decode.fail (errorToString error ++ ". Received: " ++ code)
             )
