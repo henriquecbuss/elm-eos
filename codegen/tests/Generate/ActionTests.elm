@@ -78,21 +78,30 @@ type_ =
         , float32 : Float
         , float64 : Float
         , float128 : Float
-        , time_point : Eos.TimePoint.TimePoint
-        , time_point_sec : Eos.TimePointSec.TimePointSec
-        , block_timestamp_type : Time.Posix
+        , timePoint : Eos.TimePoint.TimePoint
+        , timePointSec : Eos.TimePointSec.TimePointSec
+        , blockTimestampType : Time.Posix
         , name : Eos.Name.Name
         , string : String
         , checksum160 : Eos.Checksum.Checksum
         , checksum256 : Eos.Checksum.Checksum
         , checksum512 : Eos.Checksum.Checksum
-        , public_key : Eos.PublicKey.PublicKey
+        , publicKey : Eos.PublicKey.PublicKey
         , signature : Eos.Signature.Signature
         , symbol : Eos.Symbol.Symbol
-        , symbol_code : Eos.SymbolCode.SymbolCode
+        , symbolCode : Eos.SymbolCode.SymbolCode
         , asset : Eos.Asset.Asset
-        , extended_asset : Eos.ExtendedAsset.ExtendedAsset
+        , extendedAsset : Eos.ExtendedAsset.ExtendedAsset
         }"""
+        , test "transforms snake_case into camelCase and PascalCase" <|
+            \_ ->
+                [ snakeCaseAction ]
+                    |> Generate.Action.type_
+                    |> Elm.ToString.declaration
+                    |> .body
+                    |> Expect.equal
+                        """type Action
+    = SnakeCase { snakeCase : String }"""
         ]
 
 
@@ -337,6 +346,17 @@ rewardAction =
           , type_ = EosType.Asset
           }
         , { name = "reason"
+          , type_ = EosType.EosString
+          }
+        ]
+    }
+
+
+snakeCaseAction : Abi.Action
+snakeCaseAction =
+    { name = "snake_case"
+    , arguments =
+        [ { name = "snake_case"
           , type_ = EosType.EosString
           }
         ]

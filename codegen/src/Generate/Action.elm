@@ -6,6 +6,7 @@ import Elm.Annotation
 import Elm.Case
 import EosType
 import Gen.Json.Encode
+import String.Extra
 
 
 type_ : List Abi.Action -> Elm.Declaration
@@ -15,14 +16,14 @@ type_ actions =
 
 actionVariant : Abi.Action -> Elm.Variant
 actionVariant action =
-    Elm.variantWith action.name [ actionParameter action ]
+    Elm.variantWith (String.Extra.camelize action.name) [ actionParameter action ]
 
 
 actionParameter : Abi.Action -> Elm.Annotation.Annotation
 actionParameter action =
     Elm.Annotation.record
         (action.arguments
-            |> List.map (\arg -> ( arg.name, EosType.toAnnotation arg.type_ ))
+            |> List.map (\arg -> ( String.Extra.camelize arg.name, EosType.toAnnotation arg.type_ ))
         )
 
 
