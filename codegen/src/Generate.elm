@@ -9,10 +9,6 @@ import Generate.Action
 import Json.Decode
 
 
-
--- TODO - Convert names to camelCase
-
-
 main : Program Json.Decode.Value () ()
 main =
     Generate.fromJson Abi.decoder

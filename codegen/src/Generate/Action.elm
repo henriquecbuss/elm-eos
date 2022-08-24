@@ -55,14 +55,19 @@ encode actions =
 
 encodeActionBranch : Abi.Action -> Elm.Case.Branch
 encodeActionBranch action =
-    Elm.Case.branch1 action.name
+    Elm.Case.branch1 (String.Extra.camelize action.name)
         ( "args", actionParameter action )
         (\argsRecord ->
             Gen.Json.Encode.object
                 (List.map
                     (\argument ->
                         Elm.tuple (Elm.string argument.name)
-                            (EosType.generateEncoder argument.type_ (Elm.get argument.name argsRecord))
+                            (EosType.generateEncoder argument.type_
+                                (Elm.get
+                                    (String.Extra.camelize argument.name)
+                                    argsRecord
+                                )
+                            )
                     )
                     action.arguments
                 )

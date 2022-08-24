@@ -188,28 +188,43 @@ encode action =
                 , ( "float32", Json.Encode.float args.float32 )
                 , ( "float64", Json.Encode.float args.float64 )
                 , ( "float128", Json.Encode.float args.float128 )
-                , ( "time_point", Eos.TimePoint.encode args.time_point )
+                , ( "time_point", Eos.TimePoint.encode args.timePoint )
                 , ( "time_point_sec"
-                  , Eos.TimePointSec.encode args.time_point_sec
+                  , Eos.TimePointSec.encode args.timePointSec
                   )
                 , ( "block_timestamp_type"
-                  , Json.Encode.int
-                        (Time.posixToMillis args.block_timestamp_type)
+                  , Json.Encode.int (Time.posixToMillis args.blockTimestampType)
                   )
                 , ( "name", Eos.Name.encode args.name )
                 , ( "string", Json.Encode.string args.string )
                 , ( "checksum160", Eos.Checksum.encode args.checksum160 )
                 , ( "checksum256", Eos.Checksum.encode args.checksum256 )
                 , ( "checksum512", Eos.Checksum.encode args.checksum512 )
-                , ( "public_key", Eos.PublicKey.encode args.public_key )
+                , ( "public_key", Eos.PublicKey.encode args.publicKey )
                 , ( "signature", Eos.Signature.encode args.signature )
                 , ( "symbol", Eos.Symbol.encode args.symbol )
-                , ( "symbol_code", Eos.SymbolCode.encode args.symbol_code )
+                , ( "symbol_code", Eos.SymbolCode.encode args.symbolCode )
                 , ( "asset", Eos.Asset.encode args.asset )
                 , ( "extended_asset"
-                  , Eos.ExtendedAsset.encode args.extended_asset
+                  , Eos.ExtendedAsset.encode args.extendedAsset
                   )
                 ]"""
+                        ]
+        , test "works correctly for snake_cased actions" <|
+            \_ ->
+                [ snakeCaseAction ]
+                    |> Generate.Action.encode
+                    |> Elm.ToString.declaration
+                    |> Expect.all
+                        [ .signature
+                            >> Expect.equal "encode : Action -> Json.Encode.Value"
+                        , .body
+                            >> Expect.equal """encode : Action -> Json.Encode.Value
+encode action =
+    case action of
+        SnakeCase args ->
+            Json.Encode.object
+                [ ( "snake_case", Json.Encode.string args.snakeCase ) ]"""
                         ]
         ]
 
