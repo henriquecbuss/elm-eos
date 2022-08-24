@@ -1,5 +1,19 @@
-module EosType exposing (EosType(..), decoder)
+module EosType exposing (EosType(..), decoder, generateEncoder, toAnnotation)
 
+import Elm
+import Elm.Annotation
+import Gen.Eos.Asset
+import Gen.Eos.Checksum
+import Gen.Eos.ExtendedAsset
+import Gen.Eos.Name
+import Gen.Eos.PublicKey
+import Gen.Eos.Signature
+import Gen.Eos.Symbol
+import Gen.Eos.SymbolCode
+import Gen.Eos.TimePoint
+import Gen.Eos.TimePointSec
+import Gen.Json.Encode
+import Gen.Time
 import Json.Decode
 
 
@@ -126,3 +140,102 @@ decoder =
                     _ ->
                         Json.Decode.fail "Invalid eos type"
             )
+
+
+generateEncoder : EosType -> Elm.Expression -> Elm.Expression
+generateEncoder eosType =
+    case eosType of
+        EosBool ->
+            Gen.Json.Encode.call_.bool
+
+        EosInt ->
+            Gen.Json.Encode.call_.int
+
+        EosFloat ->
+            Gen.Json.Encode.call_.float
+
+        TimePoint ->
+            Gen.Eos.TimePoint.call_.encode
+
+        TimePointSec ->
+            Gen.Eos.TimePointSec.call_.encode
+
+        BlockTimestampType ->
+            Gen.Time.posixToMillis
+                >> Gen.Json.Encode.call_.int
+
+        Name ->
+            Gen.Eos.Name.call_.encode
+
+        EosString ->
+            Gen.Json.Encode.call_.string
+
+        Checksum ->
+            Gen.Eos.Checksum.call_.encode
+
+        PublicKey ->
+            Gen.Eos.PublicKey.call_.encode
+
+        Signature ->
+            Gen.Eos.Signature.call_.encode
+
+        Symbol ->
+            Gen.Eos.Symbol.call_.encode
+
+        SymbolCode ->
+            Gen.Eos.SymbolCode.call_.encode
+
+        Asset ->
+            Gen.Eos.Asset.call_.encode
+
+        ExtendedAsset ->
+            Gen.Eos.ExtendedAsset.call_.encode
+
+
+toAnnotation : EosType -> Elm.Annotation.Annotation
+toAnnotation eosType =
+    case eosType of
+        EosBool ->
+            Elm.Annotation.bool
+
+        EosInt ->
+            Elm.Annotation.int
+
+        EosFloat ->
+            Elm.Annotation.float
+
+        TimePoint ->
+            Gen.Eos.TimePoint.annotation_.timePoint
+
+        TimePointSec ->
+            Gen.Eos.TimePointSec.annotation_.timePointSec
+
+        BlockTimestampType ->
+            Gen.Time.annotation_.posix
+
+        Name ->
+            Gen.Eos.Name.annotation_.name
+
+        EosString ->
+            Elm.Annotation.string
+
+        Checksum ->
+            Gen.Eos.Checksum.annotation_.checksum
+
+        PublicKey ->
+            Gen.Eos.PublicKey.annotation_.publicKey
+
+        Signature ->
+            Gen.Eos.Signature.annotation_.signature
+
+        Symbol ->
+            Gen.Eos.Symbol.annotation_.symbol
+
+        SymbolCode ->
+            Gen.Eos.SymbolCode.annotation_.symbolCode
+
+        Asset ->
+            Gen.Eos.Asset.annotation_.asset
+
+        ExtendedAsset ->
+            Gen.Eos.ExtendedAsset.annotation_.extendedAsset
