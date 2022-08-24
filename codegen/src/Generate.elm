@@ -6,6 +6,7 @@ import Abi
 import Elm
 import Gen.CodeGen.Generate as Generate
 import Generate.Action
+import Generate.Table.Query
 import Json.Decode
 
 
@@ -17,6 +18,10 @@ main =
                 [ Generate.Action.type_ abi.actions
                     |> Elm.expose
                 , Generate.Action.encode abi.actions
+                    |> Elm.expose
+                ]
+            , Elm.file [ "Table", "Query" ]
+                [ Generate.Table.Query.type_ abi.tables
                     |> Elm.expose
                 ]
             ]
