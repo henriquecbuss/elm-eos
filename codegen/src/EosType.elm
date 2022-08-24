@@ -40,6 +40,7 @@ type EosType
     | SymbolCode
     | Asset
     | ExtendedAsset
+    | EosList EosType
 
 
 decoder : Json.Decode.Decoder EosType
@@ -47,100 +48,116 @@ decoder =
     Json.Decode.string
         |> Json.Decode.andThen
             (\decodedString ->
-                case decodedString of
-                    "bool" ->
-                        Json.Decode.succeed EosBool
+                case fromString decodedString of
+                    Nothing ->
+                        Json.Decode.fail "Invalid eos type."
 
-                    "int8" ->
-                        Json.Decode.succeed EosInt
-
-                    "uint8" ->
-                        Json.Decode.succeed EosInt
-
-                    "int16" ->
-                        Json.Decode.succeed EosInt
-
-                    "uint16" ->
-                        Json.Decode.succeed EosInt
-
-                    "int32" ->
-                        Json.Decode.succeed EosInt
-
-                    "uint32" ->
-                        Json.Decode.succeed EosInt
-
-                    "int64" ->
-                        Json.Decode.succeed EosInt
-
-                    "uint64" ->
-                        Json.Decode.succeed EosInt
-
-                    "int128" ->
-                        Json.Decode.succeed EosInt
-
-                    "uint128" ->
-                        Json.Decode.succeed EosInt
-
-                    "varint32" ->
-                        Json.Decode.succeed EosInt
-
-                    "varuint32" ->
-                        Json.Decode.succeed EosInt
-
-                    "float32" ->
-                        Json.Decode.succeed EosFloat
-
-                    "float64" ->
-                        Json.Decode.succeed EosFloat
-
-                    "float128" ->
-                        Json.Decode.succeed EosFloat
-
-                    "time_point" ->
-                        Json.Decode.succeed TimePoint
-
-                    "time_point_sec" ->
-                        Json.Decode.succeed TimePointSec
-
-                    "block_timestamp_type" ->
-                        Json.Decode.succeed BlockTimestampType
-
-                    "name" ->
-                        Json.Decode.succeed Name
-
-                    "string" ->
-                        Json.Decode.succeed EosString
-
-                    "checksum160" ->
-                        Json.Decode.succeed Checksum
-
-                    "checksum256" ->
-                        Json.Decode.succeed Checksum
-
-                    "checksum512" ->
-                        Json.Decode.succeed Checksum
-
-                    "public_key" ->
-                        Json.Decode.succeed PublicKey
-
-                    "signature" ->
-                        Json.Decode.succeed Signature
-
-                    "symbol" ->
-                        Json.Decode.succeed Symbol
-
-                    "symbol_code" ->
-                        Json.Decode.succeed SymbolCode
-
-                    "asset" ->
-                        Json.Decode.succeed Asset
-
-                    "extended_asset" ->
-                        Json.Decode.succeed ExtendedAsset
-
-                    _ ->
-                        Json.Decode.fail "Invalid eos type"
+                    Just validType ->
+                        Json.Decode.succeed validType
             )
+
+
+fromString : String -> Maybe EosType
+fromString stringType =
+    if String.endsWith "[]" stringType then
+        String.dropRight 2 stringType
+            |> fromString
+            |> Maybe.map EosList
+
+    else
+        case stringType of
+            "bool" ->
+                Just EosBool
+
+            "int8" ->
+                Just EosInt
+
+            "uint8" ->
+                Just EosInt
+
+            "int16" ->
+                Just EosInt
+
+            "uint16" ->
+                Just EosInt
+
+            "int32" ->
+                Just EosInt
+
+            "uint32" ->
+                Just EosInt
+
+            "int64" ->
+                Just EosInt
+
+            "uint64" ->
+                Just EosInt
+
+            "int128" ->
+                Just EosInt
+
+            "uint128" ->
+                Just EosInt
+
+            "varint32" ->
+                Just EosInt
+
+            "varuint32" ->
+                Just EosInt
+
+            "float32" ->
+                Just EosFloat
+
+            "float64" ->
+                Just EosFloat
+
+            "float128" ->
+                Just EosFloat
+
+            "time_point" ->
+                Just TimePoint
+
+            "time_point_sec" ->
+                Just TimePointSec
+
+            "block_timestamp_type" ->
+                Just BlockTimestampType
+
+            "name" ->
+                Just Name
+
+            "string" ->
+                Just EosString
+
+            "checksum160" ->
+                Just Checksum
+
+            "checksum256" ->
+                Just Checksum
+
+            "checksum512" ->
+                Just Checksum
+
+            "public_key" ->
+                Just PublicKey
+
+            "signature" ->
+                Just Signature
+
+            "symbol" ->
+                Just Symbol
+
+            "symbol_code" ->
+                Just SymbolCode
+
+            "asset" ->
+                Just Asset
+
+            "extended_asset" ->
+                Just ExtendedAsset
+
+            _ ->
+                Nothing
 
 
 generateEncoder : EosType -> Elm.Expression
@@ -192,6 +209,9 @@ generateEncoder eosType =
         ExtendedAsset ->
             Gen.Eos.ExtendedAsset.values_.encode
 
+        EosList innerType ->
+            Elm.apply Gen.Json.Encode.values_.list [ generateEncoder innerType ]
+
 
 toAnnotation : EosType -> Elm.Annotation.Annotation
 toAnnotation eosType =
@@ -240,3 +260,6 @@ toAnnotation eosType =
 
         ExtendedAsset ->
             Gen.Eos.ExtendedAsset.annotation_.extendedAsset
+
+        EosList innerType ->
+            Elm.Annotation.list (toAnnotation innerType)

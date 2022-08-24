@@ -33,6 +33,10 @@
                     "type": "bool"
                 },
                 {
+                    "name": "bool_list",
+                    "type": "bool[]"
+                },
+                {
                     "name": "int8",
                     "type": "int8"
                 },

@@ -48,7 +48,7 @@ type_ =
         , memo : String
         }
     | Reward
-        { receiver : Eos.Name.Name
+        { receivers : List Eos.Name.Name
         , awarder : Eos.Name.Name
         , quantity : Eos.Asset.Asset
         , reason : String
@@ -122,10 +122,10 @@ encode action =
     case action of
         Transfer args ->
             Json.Encode.object
-                [ ( "from", Eos.Name.encode args.from )
-                , ( "to", Eos.Name.encode args.to )
-                , ( "quantity", Eos.Asset.encode args.quantity )
-                , ( "memo", Json.Encode.string args.memo )
+                [ ( "from", args.from |> Eos.Name.encode )
+                , ( "to", args.to |> Eos.Name.encode )
+                , ( "quantity", args.quantity |> Eos.Asset.encode )
+                , ( "memo", args.memo |> Json.Encode.string )
                 ]"""
                         ]
         , test "works correctly for multiple actions" <|
@@ -144,18 +144,20 @@ encode action =
     case action of
         Transfer args ->
             Json.Encode.object
-                [ ( "from", Eos.Name.encode args.from )
-                , ( "to", Eos.Name.encode args.to )
-                , ( "quantity", Eos.Asset.encode args.quantity )
-                , ( "memo", Json.Encode.string args.memo )
+                [ ( "from", args.from |> Eos.Name.encode )
+                , ( "to", args.to |> Eos.Name.encode )
+                , ( "quantity", args.quantity |> Eos.Asset.encode )
+                , ( "memo", args.memo |> Json.Encode.string )
                 ]
 
         Reward args ->
             Json.Encode.object
-                [ ( "receiver", Eos.Name.encode args.receiver )
-                , ( "awarder", Eos.Name.encode args.awarder )
-                , ( "quantity", Eos.Asset.encode args.quantity )
-                , ( "reason", Json.Encode.string args.reason )
+                [ ( "receivers"
+                  , args.receivers |> Json.Encode.list Eos.Name.encode
+                  )
+                , ( "awarder", args.awarder |> Eos.Name.encode )
+                , ( "quantity", args.quantity |> Eos.Asset.encode )
+                , ( "reason", args.reason |> Json.Encode.string )
                 ]"""
                         ]
         , test "works correctly for all types" <|
@@ -172,41 +174,42 @@ encode action =
     case action of
         Test args ->
             Json.Encode.object
-                [ ( "bool", Json.Encode.bool args.bool )
-                , ( "int8", Json.Encode.int args.int8 )
-                , ( "uint8", Json.Encode.int args.uint8 )
-                , ( "int16", Json.Encode.int args.int16 )
-                , ( "uint16", Json.Encode.int args.uint16 )
-                , ( "int32", Json.Encode.int args.int32 )
-                , ( "uint32", Json.Encode.int args.uint32 )
-                , ( "int64", Json.Encode.int args.int64 )
-                , ( "uint64", Json.Encode.int args.uint64 )
-                , ( "int128", Json.Encode.int args.int128 )
-                , ( "uint128", Json.Encode.int args.uint128 )
-                , ( "varint32", Json.Encode.int args.varint32 )
-                , ( "varuint32", Json.Encode.int args.varuint32 )
-                , ( "float32", Json.Encode.float args.float32 )
-                , ( "float64", Json.Encode.float args.float64 )
-                , ( "float128", Json.Encode.float args.float128 )
-                , ( "time_point", Eos.TimePoint.encode args.timePoint )
+                [ ( "bool", args.bool |> Json.Encode.bool )
+                , ( "int8", args.int8 |> Json.Encode.int )
+                , ( "uint8", args.uint8 |> Json.Encode.int )
+                , ( "int16", args.int16 |> Json.Encode.int )
+                , ( "uint16", args.uint16 |> Json.Encode.int )
+                , ( "int32", args.int32 |> Json.Encode.int )
+                , ( "uint32", args.uint32 |> Json.Encode.int )
+                , ( "int64", args.int64 |> Json.Encode.int )
+                , ( "uint64", args.uint64 |> Json.Encode.int )
+                , ( "int128", args.int128 |> Json.Encode.int )
+                , ( "uint128", args.uint128 |> Json.Encode.int )
+                , ( "varint32", args.varint32 |> Json.Encode.int )
+                , ( "varuint32", args.varuint32 |> Json.Encode.int )
+                , ( "float32", args.float32 |> Json.Encode.float )
+                , ( "float64", args.float64 |> Json.Encode.float )
+                , ( "float128", args.float128 |> Json.Encode.float )
+                , ( "time_point", args.timePoint |> Eos.TimePoint.encode )
                 , ( "time_point_sec"
-                  , Eos.TimePointSec.encode args.timePointSec
+                  , args.timePointSec |> Eos.TimePointSec.encode
                   )
                 , ( "block_timestamp_type"
-                  , Json.Encode.int (Time.posixToMillis args.blockTimestampType)
+                  , args.blockTimestampType
+                        |> (Time.posixToMillis |> Json.Encode.int)
                   )
-                , ( "name", Eos.Name.encode args.name )
-                , ( "string", Json.Encode.string args.string )
-                , ( "checksum160", Eos.Checksum.encode args.checksum160 )
-                , ( "checksum256", Eos.Checksum.encode args.checksum256 )
-                , ( "checksum512", Eos.Checksum.encode args.checksum512 )
-                , ( "public_key", Eos.PublicKey.encode args.publicKey )
-                , ( "signature", Eos.Signature.encode args.signature )
-                , ( "symbol", Eos.Symbol.encode args.symbol )
-                , ( "symbol_code", Eos.SymbolCode.encode args.symbolCode )
-                , ( "asset", Eos.Asset.encode args.asset )
+                , ( "name", args.name |> Eos.Name.encode )
+                , ( "string", args.string |> Json.Encode.string )
+                , ( "checksum160", args.checksum160 |> Eos.Checksum.encode )
+                , ( "checksum256", args.checksum256 |> Eos.Checksum.encode )
+                , ( "checksum512", args.checksum512 |> Eos.Checksum.encode )
+                , ( "public_key", args.publicKey |> Eos.PublicKey.encode )
+                , ( "signature", args.signature |> Eos.Signature.encode )
+                , ( "symbol", args.symbol |> Eos.Symbol.encode )
+                , ( "symbol_code", args.symbolCode |> Eos.SymbolCode.encode )
+                , ( "asset", args.asset |> Eos.Asset.encode )
                 , ( "extended_asset"
-                  , Eos.ExtendedAsset.encode args.extendedAsset
+                  , args.extendedAsset |> Eos.ExtendedAsset.encode
                   )
                 ]"""
                         ]
@@ -224,7 +227,7 @@ encode action =
     case action of
         SnakeCase args ->
             Json.Encode.object
-                [ ( "snake_case", Json.Encode.string args.snakeCase ) ]"""
+                [ ( "snake_case", args.snakeCase |> Json.Encode.string ) ]"""
                         ]
         ]
 
@@ -351,8 +354,8 @@ rewardAction : Abi.Action
 rewardAction =
     { name = "reward"
     , arguments =
-        [ { name = "receiver"
-          , type_ = EosType.Name
+        [ { name = "receivers"
+          , type_ = EosType.EosList EosType.Name
           }
         , { name = "awarder"
           , type_ = EosType.Name
