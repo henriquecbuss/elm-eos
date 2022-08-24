@@ -73,9 +73,6 @@ eosTypeToAnnotation eosType =
         EosType.Name ->
             Gen.Eos.Name.annotation_.name
 
-        EosType.Bytes ->
-            Debug.todo ""
-
         EosType.EosString ->
             Elm.Annotation.string
 

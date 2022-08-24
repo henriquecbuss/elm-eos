@@ -3,7 +3,11 @@ module EosType exposing (EosType(..), decoder)
 import Json.Decode
 
 
-{-| This includes all of the native types, declared in [abi\_serializer::configure\_built\_in\_types()](https://github.com/EOSIO/eos/blob/de78b49b5765c88f4e005046d1489c3905985b94/libraries/chain/abi_serializer.cpp#L89-L127)
+{-| This includes all of the native types, declared in [abi\_serializer::configure\_built\_in\_types()](https://github.com/EOSIO/eos/blob/de78b49b5765c88f4e005046d1489c3905985b94/libraries/chain/abi_serializer.cpp#L89-L127).
+
+It only doesn't support `bytes`. If you need support for `bytes`, please open an
+issue on GitHub
+
 -}
 type EosType
     = EosBool
@@ -13,7 +17,6 @@ type EosType
     | TimePointSec
     | BlockTimestampType
     | Name
-    | Bytes
     | EosString
     | Checksum
     | PublicKey
@@ -89,9 +92,6 @@ decoder =
 
                     "name" ->
                         Json.Decode.succeed Name
-
-                    "bytes" ->
-                        Json.Decode.succeed Bytes
 
                     "string" ->
                         Json.Decode.succeed EosString
