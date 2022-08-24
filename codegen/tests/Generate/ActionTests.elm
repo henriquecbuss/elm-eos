@@ -12,6 +12,7 @@ suite : Test
 suite =
     describe "Generate.Action"
         [ type_
+        , encode
         ]
 
 
@@ -92,6 +93,115 @@ type_ =
         , asset : Eos.Asset.Asset
         , extended_asset : Eos.ExtendedAsset.ExtendedAsset
         }"""
+        ]
+
+
+encode : Test
+encode =
+    describe "encode"
+        [ test "works correctly for transfer action" <|
+            \_ ->
+                [ transferAction ]
+                    |> Generate.Action.encode
+                    |> Elm.ToString.declaration
+                    |> Expect.all
+                        [ .signature
+                            >> Expect.equal "encode : Action -> Json.Encode.Value"
+                        , .body
+                            >> Expect.equal """encode : Action -> Json.Encode.Value
+encode action =
+    case action of
+        Transfer args ->
+            Json.Encode.object
+                [ ( "from", Eos.Name.encode args.from )
+                , ( "to", Eos.Name.encode args.to )
+                , ( "quantity", Eos.Asset.encode args.quantity )
+                , ( "memo", Json.Encode.string args.memo )
+                ]"""
+                        ]
+        , test "works correctly for multiple actions" <|
+            \_ ->
+                [ transferAction
+                , rewardAction
+                ]
+                    |> Generate.Action.encode
+                    |> Elm.ToString.declaration
+                    |> Expect.all
+                        [ .signature
+                            >> Expect.equal "encode : Action -> Json.Encode.Value"
+                        , .body
+                            >> Expect.equal """encode : Action -> Json.Encode.Value
+encode action =
+    case action of
+        Transfer args ->
+            Json.Encode.object
+                [ ( "from", Eos.Name.encode args.from )
+                , ( "to", Eos.Name.encode args.to )
+                , ( "quantity", Eos.Asset.encode args.quantity )
+                , ( "memo", Json.Encode.string args.memo )
+                ]
+
+        Reward args ->
+            Json.Encode.object
+                [ ( "receiver", Eos.Name.encode args.receiver )
+                , ( "awarder", Eos.Name.encode args.awarder )
+                , ( "quantity", Eos.Asset.encode args.quantity )
+                , ( "reason", Json.Encode.string args.reason )
+                ]"""
+                        ]
+        , test "works correctly for all types" <|
+            \_ ->
+                [ allTypesAction ]
+                    |> Generate.Action.encode
+                    |> Elm.ToString.declaration
+                    |> Expect.all
+                        [ .signature
+                            >> Expect.equal "encode : Action -> Json.Encode.Value"
+                        , .body
+                            >> Expect.equal """encode : Action -> Json.Encode.Value
+encode action =
+    case action of
+        Test args ->
+            Json.Encode.object
+                [ ( "bool", Json.Encode.bool args.bool )
+                , ( "int8", Json.Encode.int args.int8 )
+                , ( "uint8", Json.Encode.int args.uint8 )
+                , ( "int16", Json.Encode.int args.int16 )
+                , ( "uint16", Json.Encode.int args.uint16 )
+                , ( "int32", Json.Encode.int args.int32 )
+                , ( "uint32", Json.Encode.int args.uint32 )
+                , ( "int64", Json.Encode.int args.int64 )
+                , ( "uint64", Json.Encode.int args.uint64 )
+                , ( "int128", Json.Encode.int args.int128 )
+                , ( "uint128", Json.Encode.int args.uint128 )
+                , ( "varint32", Json.Encode.int args.varint32 )
+                , ( "varuint32", Json.Encode.int args.varuint32 )
+                , ( "float32", Json.Encode.float args.float32 )
+                , ( "float64", Json.Encode.float args.float64 )
+                , ( "float128", Json.Encode.float args.float128 )
+                , ( "time_point", Eos.TimePoint.encode args.time_point )
+                , ( "time_point_sec"
+                  , Eos.TimePointSec.encode args.time_point_sec
+                  )
+                , ( "block_timestamp_type"
+                  , Json.Encode.int
+                        (Time.posixToMillis args.block_timestamp_type)
+                  )
+                , ( "name", Eos.Name.encode args.name )
+                , ( "string", Json.Encode.string args.string )
+                , ( "checksum160", Eos.Checksum.encode args.checksum160 )
+                , ( "checksum256", Eos.Checksum.encode args.checksum256 )
+                , ( "checksum512", Eos.Checksum.encode args.checksum512 )
+                , ( "public_key", Eos.PublicKey.encode args.public_key )
+                , ( "signature", Eos.Signature.encode args.signature )
+                , ( "symbol", Eos.Symbol.encode args.symbol )
+                , ( "symbol_code", Eos.SymbolCode.encode args.symbol_code )
+                , ( "asset", Eos.Asset.encode args.asset )
+                , ( "extended_asset"
+                  , Eos.ExtendedAsset.encode args.extended_asset
+                  )
+                ]"""
+                        ]
         ]
 
 
