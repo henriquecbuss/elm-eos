@@ -33,10 +33,6 @@
                     "type": "bool"
                 },
                 {
-                    "name": "bool",
-                    "type": "bool"
-                },
-                {
                     "name": "int8",
                     "type": "int8"
                 },
