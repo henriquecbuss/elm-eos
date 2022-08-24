@@ -4,6 +4,7 @@ import Abi
 import Elm
 import Elm.Annotation
 import Elm.Case
+import Elm.Op
 import EosType
 import Gen.Json.Encode
 import String.Extra
@@ -62,11 +63,8 @@ encodeActionBranch action =
                 (List.map
                     (\argument ->
                         Elm.tuple (Elm.string argument.name)
-                            (EosType.generateEncoder argument.type_
-                                (Elm.get
-                                    (String.Extra.camelize argument.name)
-                                    argsRecord
-                                )
+                            (Elm.get (String.Extra.camelize argument.name) argsRecord
+                                |> Elm.Op.pipe (EosType.generateEncoder argument.type_)
                             )
                     )
                     action.arguments

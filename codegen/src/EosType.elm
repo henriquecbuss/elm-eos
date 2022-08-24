@@ -2,6 +2,7 @@ module EosType exposing (EosType(..), decoder, generateEncoder, toAnnotation)
 
 import Elm
 import Elm.Annotation
+import Elm.Op
 import Gen.Eos.Asset
 import Gen.Eos.Checksum
 import Gen.Eos.ExtendedAsset
@@ -142,54 +143,54 @@ decoder =
             )
 
 
-generateEncoder : EosType -> Elm.Expression -> Elm.Expression
+generateEncoder : EosType -> Elm.Expression
 generateEncoder eosType =
     case eosType of
         EosBool ->
-            Gen.Json.Encode.call_.bool
+            Gen.Json.Encode.values_.bool
 
         EosInt ->
-            Gen.Json.Encode.call_.int
+            Gen.Json.Encode.values_.int
 
         EosFloat ->
-            Gen.Json.Encode.call_.float
+            Gen.Json.Encode.values_.float
 
         TimePoint ->
-            Gen.Eos.TimePoint.call_.encode
+            Gen.Eos.TimePoint.values_.encode
 
         TimePointSec ->
-            Gen.Eos.TimePointSec.call_.encode
+            Gen.Eos.TimePointSec.values_.encode
 
         BlockTimestampType ->
-            Gen.Time.posixToMillis
-                >> Gen.Json.Encode.call_.int
+            Gen.Time.values_.posixToMillis
+                |> Elm.Op.pipe Gen.Json.Encode.values_.int
 
         Name ->
-            Gen.Eos.Name.call_.encode
+            Gen.Eos.Name.values_.encode
 
         EosString ->
-            Gen.Json.Encode.call_.string
+            Gen.Json.Encode.values_.string
 
         Checksum ->
-            Gen.Eos.Checksum.call_.encode
+            Gen.Eos.Checksum.values_.encode
 
         PublicKey ->
-            Gen.Eos.PublicKey.call_.encode
+            Gen.Eos.PublicKey.values_.encode
 
         Signature ->
-            Gen.Eos.Signature.call_.encode
+            Gen.Eos.Signature.values_.encode
 
         Symbol ->
-            Gen.Eos.Symbol.call_.encode
+            Gen.Eos.Symbol.values_.encode
 
         SymbolCode ->
-            Gen.Eos.SymbolCode.call_.encode
+            Gen.Eos.SymbolCode.values_.encode
 
         Asset ->
-            Gen.Eos.Asset.call_.encode
+            Gen.Eos.Asset.values_.encode
 
         ExtendedAsset ->
-            Gen.Eos.ExtendedAsset.call_.encode
+            Gen.Eos.ExtendedAsset.values_.encode
 
 
 toAnnotation : EosType -> Elm.Annotation.Annotation
