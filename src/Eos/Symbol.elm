@@ -32,7 +32,7 @@ import Json.Encode
 
 
 {-| A Symbol is what identifies a currency, and is made of a `precision` and a
-[SymbolCode](Eos.SymbolCode). For example, the symbol `1,EOS` is a symbol with
+[SymbolCode](Eos-SymbolCode). For example, the symbol `1,EOS` is a symbol with
 precision 1, and a symbol code of `EOS`.
 
 The precision number determines how many decimal digits can be used. In the
@@ -62,7 +62,7 @@ precision (Symbol symbol) =
     symbol.precision
 
 
-{-| Get the [SymbolCode](Eos.SymbolCode) of a [Symbol](#Symbol)
+{-| Get the [SymbolCode](Eos-SymbolCode) of a [Symbol](#Symbol)
 
     import Eos.SymbolCode
 
@@ -80,7 +80,7 @@ code (Symbol symbol) =
 -- CONVERTING FROM STRINGS AND INTS
 
 
-{-| Create a [Symbol](#Symbol) from a precision and a [SymbolCode](Eos.SymbolCode).
+{-| Create a [Symbol](#Symbol) from a precision and a [SymbolCode](Eos-SymbolCode).
 -}
 fromPrecisionAndCode : Int -> Eos.SymbolCode.SymbolCode -> Result PrecisionError Symbol
 fromPrecisionAndCode precision_ code_ =
@@ -92,7 +92,7 @@ fromPrecisionAndCode precision_ code_ =
 
 
 {-| Create a [Symbol](#Symbol) from a precision and a `String` that represents a
-[SymbolCode](Eos.SymbolCode). If you already have a [SymbolCode](Eos.SymbolCode),
+[SymbolCode](Eos-SymbolCode). If you already have a [SymbolCode](Eos-SymbolCode),
 use [fromPrecisionAndCode](#fromPrecisionAndCode) instead.
 
     import Eos.SymbolCode

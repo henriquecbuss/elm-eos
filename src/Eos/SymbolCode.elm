@@ -4,7 +4,7 @@ module Eos.SymbolCode exposing
     , encode, decoder
     )
 
-{-| A symbol code is usually used in a [Symbol](Eos.Symbol#Symbol), along with a precision.
+{-| A symbol code is usually used in a [Symbol](Eos-Symbol#Symbol), along with a precision.
 
 @docs SymbolCode
 

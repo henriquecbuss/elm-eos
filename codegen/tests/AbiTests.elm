@@ -6,6 +6,7 @@ import Expect
 import Json.Decode
 import Test exposing (Test, describe, test)
 
+
 suite : Test
 suite =
     describe "Abi"
