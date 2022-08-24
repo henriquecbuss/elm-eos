@@ -68,3 +68,4 @@ config =
     , NoRecordAliasConstructor.rule
     , Simplify.rule Simplify.defaults
     ]
+        |> List.map (Review.Rule.ignoreErrorsForDirectories [ "tests/VerifyExamples" ])

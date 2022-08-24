@@ -68,4 +68,4 @@ config =
     , NoRecordAliasConstructor.rule
     , Simplify.rule Simplify.defaults
     ]
-        |> List.map (Review.Rule.ignoreErrorsForDirectories [ "Gen" ])
+        |> List.map (Review.Rule.ignoreErrorsForDirectories [ "src/Gen" ])
