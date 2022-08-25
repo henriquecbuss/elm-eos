@@ -1,4 +1,4 @@
-module EosType exposing (EosType(..), decoder, generateEncoder, toAnnotation)
+module EosType exposing (EosType(..), decoder, generateDecoder, generateEncoder, toAnnotation)
 
 import Elm
 import Elm.Annotation
@@ -13,6 +13,7 @@ import Gen.Eos.Symbol
 import Gen.Eos.SymbolCode
 import Gen.Eos.TimePoint
 import Gen.Eos.TimePointSec
+import Gen.Json.Decode
 import Gen.Json.Encode
 import Gen.Time
 import Json.Decode
@@ -211,6 +212,58 @@ generateEncoder eosType =
 
         EosList innerType ->
             Elm.apply Gen.Json.Encode.values_.list [ generateEncoder innerType ]
+
+
+generateDecoder : EosType -> Elm.Expression
+generateDecoder eosType =
+    case eosType of
+        EosBool ->
+            Gen.Json.Decode.values_.bool
+
+        EosInt ->
+            Gen.Json.Decode.values_.int
+
+        EosFloat ->
+            Gen.Json.Decode.values_.float
+
+        TimePoint ->
+            Gen.Eos.TimePoint.values_.decoder
+
+        TimePointSec ->
+            Gen.Eos.TimePointSec.values_.decoder
+
+        BlockTimestampType ->
+            Gen.Json.Decode.map Gen.Time.call_.millisToPosix Gen.Json.Decode.int
+
+        Name ->
+            Gen.Eos.Name.values_.decoder
+
+        EosString ->
+            Gen.Json.Decode.values_.string
+
+        Checksum ->
+            Gen.Eos.Checksum.values_.decoder
+
+        PublicKey ->
+            Gen.Eos.PublicKey.values_.decoder
+
+        Signature ->
+            Gen.Eos.Signature.values_.decoder
+
+        Symbol ->
+            Gen.Eos.Symbol.values_.decoder
+
+        SymbolCode ->
+            Gen.Eos.SymbolCode.values_.decoder
+
+        Asset ->
+            Gen.Eos.Asset.values_.decoder
+
+        ExtendedAsset ->
+            Gen.Eos.ExtendedAsset.values_.decoder
+
+        EosList innerType ->
+            Elm.apply Gen.Json.Decode.values_.list [ generateDecoder innerType ]
 
 
 toAnnotation : EosType -> Elm.Annotation.Annotation

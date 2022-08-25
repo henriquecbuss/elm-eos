@@ -13,6 +13,7 @@ suite =
     describe "EosType"
         [ decoder
         , generateEncoder
+        , generateDecoder
         , toAnnotation
         ]
 
@@ -96,6 +97,40 @@ generateEncoder =
         , generateEncoderTest EosType.ExtendedAsset "Eos.ExtendedAsset.encode"
         , generateEncoderTest (EosType.EosList EosType.EosBool) "Json.Encode.list Json.Encode.bool"
         , generateEncoderTest (EosType.EosList (EosType.EosList EosType.EosBool)) "Json.Encode.list (Json.Encode.list Json.Encode.bool)"
+        ]
+
+
+generateDecoder : Test
+generateDecoder =
+    let
+        generateDecoderTest : EosType.EosType -> String -> Test
+        generateDecoderTest eosType expectedBody =
+            test expectedBody <|
+                \_ ->
+                    eosType
+                        |> EosType.generateDecoder
+                        |> Elm.ToString.expression
+                        |> .body
+                        |> Expect.equal expectedBody
+    in
+    describe "generateDecoder"
+        [ generateDecoderTest EosType.EosBool "Json.Decode.bool"
+        , generateDecoderTest EosType.EosInt "Json.Decode.int"
+        , generateDecoderTest EosType.EosFloat "Json.Decode.float"
+        , generateDecoderTest EosType.TimePoint "Eos.TimePoint.decoder"
+        , generateDecoderTest EosType.TimePointSec "Eos.TimePointSec.decoder"
+        , generateDecoderTest EosType.BlockTimestampType "Json.Decode.map Time.millisToPosix Json.Decode.int"
+        , generateDecoderTest EosType.Name "Eos.Name.decoder"
+        , generateDecoderTest EosType.EosString "Json.Decode.string"
+        , generateDecoderTest EosType.Checksum "Eos.Checksum.decoder"
+        , generateDecoderTest EosType.PublicKey "Eos.PublicKey.decoder"
+        , generateDecoderTest EosType.Signature "Eos.Signature.decoder"
+        , generateDecoderTest EosType.Symbol "Eos.Symbol.decoder"
+        , generateDecoderTest EosType.SymbolCode "Eos.SymbolCode.decoder"
+        , generateDecoderTest EosType.Asset "Eos.Asset.decoder"
+        , generateDecoderTest EosType.ExtendedAsset "Eos.ExtendedAsset.decoder"
+        , generateDecoderTest (EosType.EosList EosType.EosBool) "Json.Decode.list Json.Decode.bool"
+        , generateDecoderTest (EosType.EosList (EosType.EosList EosType.EosBool)) "Json.Decode.list (Json.Decode.list Json.Decode.bool)"
         ]
 
 
