@@ -11,6 +11,7 @@ import Generate.Table
 import Generate.Table.Decoder
 import Generate.Table.Query
 import Json.Decode
+import String.Extra
 
 
 main : Program Json.Decode.Value () ()
@@ -21,17 +22,22 @@ main =
             (Json.Decode.field "abi" Abi.decoder)
         )
         (\{ context, abi } ->
-            [ Elm.file [ "Action" ]
+            let
+                prefixedFile : List String -> List Elm.Declaration -> Elm.File
+                prefixedFile suffix =
+                    Elm.file (Context.prefixed context suffix)
+            in
+            [ prefixedFile [ "Action" ]
                 [ Generate.Action.type_ abi.actions
                     |> Elm.expose
                 , Generate.Action.encode abi.actions
                     |> Elm.expose
                 ]
-            , Elm.file [ "Table" ]
+            , prefixedFile [ "Table" ]
                 (List.map Generate.Table.type_ abi.tables)
-            , Elm.file [ "Table", "Decoder" ]
-                (List.map Generate.Table.Decoder.generate abi.tables)
-            , Elm.file [ "Table", "Query" ]
+            , prefixedFile [ "Table", "Decoder" ]
+                (List.map (Generate.Table.Decoder.generate context) abi.tables)
+            , prefixedFile [ "Table", "Query" ]
                 (List.map (Generate.Table.Query.generateQuery context) abi.tables)
             ]
         )

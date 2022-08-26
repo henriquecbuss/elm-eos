@@ -29,7 +29,7 @@ generateQuery context table =
                         , ( "table", Elm.string table.name )
                         , ( "decoder"
                           , Elm.value
-                                { importFrom = [ "Table", "Decoder" ]
+                                { importFrom = Context.prefixed context [ "Table", "Decoder" ]
                                 , name = String.Extra.camelize table.name
                                 , annotation = Nothing
                                 }
@@ -41,9 +41,13 @@ generateQuery context table =
                 (Elm.Annotation.function
                     [ Elm.Annotation.record [ ( "scope", Elm.Annotation.string ) ]
                     ]
-                    (Elm.Annotation.namedWith [ "Eos", "Query" ]
+                    (Elm.Annotation.namedWith
+                        [ "Eos", "Query" ]
                         "Query"
-                        [ Elm.Annotation.named [ "Table" ] (String.Extra.camelize table.name) ]
+                        [ Elm.Annotation.named
+                            (Context.prefixed context [ "Table" ])
+                            (String.Extra.camelize table.name)
+                        ]
                     )
                 )
         )

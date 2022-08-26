@@ -1,6 +1,7 @@
 module Generate.Table.Decoder exposing (generate)
 
 import Abi
+import Context exposing (Context)
 import Elm
 import Elm.Annotation
 import EosType
@@ -9,8 +10,8 @@ import Gen.Json.Decode.Pipeline
 import String.Extra
 
 
-generate : Abi.Table -> Elm.Declaration
-generate table =
+generate : Context -> Abi.Table -> Elm.Declaration
+generate context table =
     Elm.declaration (String.Extra.camelize table.name)
         (List.foldl
             (\column expression ->
@@ -20,7 +21,7 @@ generate table =
             )
             (Gen.Json.Decode.succeed
                 (Elm.value
-                    { importFrom = [ "Table" ]
+                    { importFrom = Context.prefixed context [ "Table" ]
                     , name = String.Extra.classify table.name
                     , annotation = Nothing
                     }
@@ -29,6 +30,9 @@ generate table =
             table.columns
             |> Elm.withType
                 (Gen.Json.Decode.annotation_.decoder
-                    (Elm.Annotation.named [ "Table" ] (String.Extra.classify table.name))
+                    (Elm.Annotation.named
+                        (Context.prefixed context [ "Table" ])
+                        (String.Extra.classify table.name)
+                    )
                 )
         )
