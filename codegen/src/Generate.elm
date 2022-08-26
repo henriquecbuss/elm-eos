@@ -11,7 +11,6 @@ import Generate.Table
 import Generate.Table.Decoder
 import Generate.Table.Query
 import Json.Decode
-import String.Extra
 
 
 main : Program Json.Decode.Value () ()
