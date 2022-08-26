@@ -36,10 +36,7 @@ encode : ExtendedAsset -> Json.Encode.Value
 encode asset =
     Json.Encode.object
         [ ( "asset"
-          , Json.Encode.object
-                [ ( "amount", Json.Encode.float asset.amount )
-                , ( "symbol", Eos.Symbol.encode asset.symbol )
-                ]
+          , Eos.Asset.encode { amount = asset.amount, symbol = asset.symbol }
           )
         , ( "contract", Eos.Name.encode asset.contract )
         ]
