@@ -1,6 +1,7 @@
 module Generate.Table.DecoderTests exposing (suite)
 
 import Abi
+import Context exposing (Context)
 import Elm.ToString
 import EosType
 import Expect
@@ -20,14 +21,14 @@ decoder =
         [ test "peopleTable" <|
             \_ ->
                 peopleTable
-                    |> Generate.Table.Decoder.generate
+                    |> Generate.Table.Decoder.generate context
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
                             >> Expect.equal
-                                "people : Json.Decode.Decoder Table.People"
+                                "people : Json.Decode.Decoder Eos.Io.Table.People"
                         , .body
-                            >> Expect.equal """people : Json.Decode.Decoder Table.People
+                            >> Expect.equal """people : Json.Decode.Decoder Eos.Io.Table.People
 people =
     Json.Decode.Pipeline.required
         "assets"
@@ -35,27 +36,34 @@ people =
         (Json.Decode.Pipeline.required
             "name"
             Eos.Name.decoder
-            (Json.Decode.succeed Table.People)
+            (Json.Decode.succeed Eos.Io.Table.People)
         )"""
                         ]
         , test "snakeCaseTable" <|
             \_ ->
                 snakeCaseTable
-                    |> Generate.Table.Decoder.generate
+                    |> Generate.Table.Decoder.generate context
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
                             >> Expect.equal
-                                "snakeCase : Json.Decode.Decoder Table.SnakeCase"
+                                "snakeCase : Json.Decode.Decoder Eos.Io.Table.SnakeCase"
                         , .body
-                            >> Expect.equal """snakeCase : Json.Decode.Decoder Table.SnakeCase
+                            >> Expect.equal """snakeCase : Json.Decode.Decoder Eos.Io.Table.SnakeCase
 snakeCase =
     Json.Decode.Pipeline.required
         "snake_case"
         Json.Decode.bool
-        (Json.Decode.succeed Table.SnakeCase)"""
+        (Json.Decode.succeed Eos.Io.Table.SnakeCase)"""
                         ]
         ]
+
+
+context : Context
+context =
+    { baseUrl = "https://eos.io"
+    , contract = "eos.io"
+    }
 
 
 peopleTable : Abi.Table

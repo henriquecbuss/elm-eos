@@ -26,9 +26,9 @@ generateQuery =
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
-                            >> Expect.equal "people : { scope : String } -> Eos.Query.Query Table.People"
+                            >> Expect.equal "people : { scope : String } -> Eos.Query.Query Eos.Io.Table.People"
                         , .body
-                            >> Expect.equal """people : { scope : String } -> Eos.Query.Query Table.People
+                            >> Expect.equal """people : { scope : String } -> Eos.Query.Query Eos.Io.Table.People
 people arg =
     Eos.Query.Query
         { scope = arg.scope
@@ -37,10 +37,10 @@ people arg =
         , upperBound = Nothing
         , limit = Nothing
         , reverse = False
-        , baseUrl = "testurl"
-        , contract = "test.contract"
+        , baseUrl = "https://eos.io"
+        , contract = "eos.io"
         , table = "people"
-        , decoder = Table.Decoder.people
+        , decoder = Eos.Io.Table.Decoder.people
         }"""
                         ]
         , test "snakeCaseTable" <|
@@ -50,9 +50,9 @@ people arg =
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
-                            >> Expect.equal "snakeCase : { scope : String } -> Eos.Query.Query Table.SnakeCase"
+                            >> Expect.equal "snakeCase : { scope : String } -> Eos.Query.Query Eos.Io.Table.SnakeCase"
                         , .body
-                            >> Expect.equal """snakeCase : { scope : String } -> Eos.Query.Query Table.SnakeCase
+                            >> Expect.equal """snakeCase : { scope : String } -> Eos.Query.Query Eos.Io.Table.SnakeCase
 snakeCase arg =
     Eos.Query.Query
         { scope = arg.scope
@@ -61,10 +61,10 @@ snakeCase arg =
         , upperBound = Nothing
         , limit = Nothing
         , reverse = False
-        , baseUrl = "testurl"
-        , contract = "test.contract"
+        , baseUrl = "https://eos.io"
+        , contract = "eos.io"
         , table = "snake_case"
-        , decoder = Table.Decoder.snakeCase
+        , decoder = Eos.Io.Table.Decoder.snakeCase
         }"""
                         ]
         ]
@@ -72,8 +72,8 @@ snakeCase arg =
 
 context : Context
 context =
-    { baseUrl = "testurl"
-    , contract = "test.contract"
+    { baseUrl = "https://eos.io"
+    , contract = "eos.io"
     }
 
 
