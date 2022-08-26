@@ -1,7 +1,7 @@
 module Eos.Symbol exposing
     ( Symbol
     , precision, code
-    , fromPrecisionAndCodeString, fromPrecisionAndCode, Error(..), PrecisionError(..)
+    , fromPrecisionAndCodeString, fromPrecisionAndCode, Error(..), PrecisionError(..), errorToString
     , encode, decoder
     )
 
@@ -17,7 +17,7 @@ module Eos.Symbol exposing
 
 ## Converting from `String`s and `Int`s
 
-@docs fromPrecisionAndCodeString, fromPrecisionAndCode, Error, PrecisionError
+@docs fromPrecisionAndCodeString, fromPrecisionAndCode, Error, PrecisionError, errorToString
 
 
 ## Dealing with JSON
@@ -168,11 +168,8 @@ decoder =
                                     Ok symbol ->
                                         Json.Decode.succeed symbol
 
-                                    Err (PrecisionError NegativePrecision) ->
-                                        Json.Decode.fail ("Invalid precision. I was expecting something in the format 0,EOS, with a positive numver before the comma. Received: " ++ symbolString)
-
-                                    Err (SymbolCodeError err) ->
-                                        Json.Decode.fail (Eos.SymbolCode.errorToString err ++ ". Received: " ++ symbolString)
+                                    Err err ->
+                                        Json.Decode.fail (errorToString err ++ ". Received: " ++ symbolString)
 
                             Nothing ->
                                 Json.Decode.fail ("Invalid precision. I was expecting something in the format 0,EOS, with a number before the comma. Received: " ++ symbolString)
@@ -180,3 +177,16 @@ decoder =
                     _ ->
                         Json.Decode.fail ("Invalid symbol. I was expecting something in the format 0,EOS. Received: " ++ symbolString)
             )
+
+
+{-| You can use this function to convert an [Error](#Error) to a human-readable
+`String`.
+-}
+errorToString : Error -> String
+errorToString error =
+    case error of
+        PrecisionError NegativePrecision ->
+            "Invalid precision. I was expecting something in the format 0,EOS, with a positive numver before the comma."
+
+        SymbolCodeError err ->
+            Eos.SymbolCode.errorToString err
