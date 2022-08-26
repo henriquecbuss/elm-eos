@@ -108,6 +108,7 @@ send toMsg (Query query) =
                 , ( "upper_bound", encodeOptional encodeCursor query.upperBound )
                 , ( "limit", encodeOptional Json.Encode.int query.limit )
                 , ( "reverse", Json.Encode.bool query.reverse )
+                , ( "json", Json.Encode.bool True )
                 ]
                 |> Http.jsonBody
         , expect =
