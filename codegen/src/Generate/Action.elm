@@ -1,11 +1,13 @@
-module Generate.Action exposing (encode, type_)
+module Generate.Action exposing (encode, encodeSingleAction, getName, type_)
 
 import Abi
+import Context
 import Elm
 import Elm.Annotation
 import Elm.Case
 import Elm.Op
 import EosType
+import Gen.Eos.Authorization
 import Gen.Json.Encode
 import String.Extra
 
@@ -28,9 +30,65 @@ actionParameter action =
         )
 
 
-encode : List Abi.Action -> Elm.Declaration
-encode actions =
+encode : Context.Context -> Elm.Declaration
+encode context =
     Elm.declaration "encode"
+        (Elm.fn2
+            ( "authorization", Just Gen.Eos.Authorization.annotation_.authorization )
+            ( "action", Just (Elm.Annotation.named [] "Action") )
+            (\authorizationArg actionArg ->
+                Gen.Json.Encode.object
+                    [ Elm.tuple (Elm.string "account") (Gen.Json.Encode.string context.contract)
+                    , Elm.tuple (Elm.string "name")
+                        (Gen.Json.Encode.call_.string
+                            (Elm.apply
+                                (Elm.value
+                                    { importFrom = []
+                                    , name = "getName"
+                                    , annotation =
+                                        Just
+                                            (Elm.Annotation.function
+                                                [ Elm.Annotation.named [] "Action" ]
+                                                Elm.Annotation.string
+                                            )
+                                    }
+                                )
+                                [ actionArg ]
+                            )
+                        )
+                    , Elm.tuple (Elm.string "authorization") (Gen.Eos.Authorization.encode authorizationArg)
+                    , Elm.tuple (Elm.string "data")
+                        (Elm.apply
+                            (Elm.value
+                                { importFrom = []
+                                , name = "encodeSingleAction"
+                                , annotation =
+                                    Just
+                                        (Elm.Annotation.function
+                                            [ Elm.Annotation.named [] "Action" ]
+                                            Gen.Json.Encode.annotation_.value
+                                        )
+                                }
+                            )
+                            [ actionArg ]
+                        )
+                    ]
+            )
+            -- For some reason, if we don't use `withType` here, elm-codegen
+            -- struggles to infer the type of the function and generates an error.
+            |> Elm.withType
+                (Elm.Annotation.function
+                    [ Gen.Eos.Authorization.annotation_.authorization
+                    , Elm.Annotation.named [] "Action"
+                    ]
+                    Gen.Json.Encode.annotation_.value
+                )
+        )
+
+
+encodeSingleAction : List Abi.Action -> Elm.Declaration
+encodeSingleAction actions =
+    Elm.declaration "encodeSingleAction"
         (Elm.fn
             ( "action"
             , Just
@@ -70,3 +128,22 @@ encodeActionBranch action =
                     action.arguments
                 )
         )
+
+
+getName : List Abi.Action -> Elm.Declaration
+getName actions =
+    Elm.declaration "getName"
+        (Elm.fn ( "action", Just (Elm.Annotation.named [] "Action") )
+            (\actionArg ->
+                Elm.Case.custom actionArg
+                    (Elm.Annotation.named [] "Action")
+                    (List.map getNameBranch actions)
+            )
+        )
+
+
+getNameBranch : Abi.Action -> Elm.Case.Branch
+getNameBranch action =
+    Elm.Case.branch1 (String.Extra.classify action.name)
+        ( "_", actionParameter action )
+        (\_ -> Elm.string action.name)

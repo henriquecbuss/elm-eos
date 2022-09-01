@@ -1,6 +1,7 @@
 module Generate.ActionTests exposing (suite)
 
 import Abi
+import Context
 import Elm.ToString
 import EosType
 import Expect
@@ -13,6 +14,7 @@ suite =
     describe "Generate.Action"
         [ type_
         , encode
+        , encodeSingleAction
         ]
 
 
@@ -107,18 +109,48 @@ type_ =
 
 encode : Test
 encode =
+    let
+        context : Context.Context
+        context =
+            { baseUrl = "https://fruits.com"
+            , contract = "fruits"
+            }
+    in
     describe "encode"
-        [ test "works correctly for transfer action" <|
+        [ test "works correctly for fruits contract" <|
             \_ ->
-                [ transferAction ]
-                    |> Generate.Action.encode
+                Generate.Action.encode context
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
-                            >> Expect.equal "encode : Action -> Json.Encode.Value"
+                            >> Expect.equal "encode : Eos.Authorization.Authorization -> Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """encode : Action -> Json.Encode.Value
-encode action =
+                            >> Expect.equal """encode : Eos.Authorization.Authorization -> Action -> Json.Encode.Value
+encode authorization action =
+    Json.Encode.object
+        [ ( "account", Json.Encode.string "fruits" )
+        , ( "name", Json.Encode.string (getName action) )
+        , ( "authorization", Eos.Authorization.encode authorization )
+        , ( "data", encodeSingleAction action )
+        ]"""
+                        ]
+        ]
+
+
+encodeSingleAction : Test
+encodeSingleAction =
+    describe "encodeSingleAction"
+        [ test "works correctly for transfer action" <|
+            \_ ->
+                [ transferAction ]
+                    |> Generate.Action.encodeSingleAction
+                    |> Elm.ToString.declaration
+                    |> Expect.all
+                        [ .signature
+                            >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
+                        , .body
+                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
+encodeSingleAction action =
     case action of
         Transfer args ->
             Json.Encode.object
@@ -133,14 +165,14 @@ encode action =
                 [ transferAction
                 , rewardAction
                 ]
-                    |> Generate.Action.encode
+                    |> Generate.Action.encodeSingleAction
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
-                            >> Expect.equal "encode : Action -> Json.Encode.Value"
+                            >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """encode : Action -> Json.Encode.Value
-encode action =
+                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
+encodeSingleAction action =
     case action of
         Transfer args ->
             Json.Encode.object
@@ -163,14 +195,14 @@ encode action =
         , test "works correctly for all types" <|
             \_ ->
                 [ allTypesAction ]
-                    |> Generate.Action.encode
+                    |> Generate.Action.encodeSingleAction
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
-                            >> Expect.equal "encode : Action -> Json.Encode.Value"
+                            >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """encode : Action -> Json.Encode.Value
-encode action =
+                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
+encodeSingleAction action =
     case action of
         Test args ->
             Json.Encode.object
@@ -216,14 +248,14 @@ encode action =
         , test "works correctly for snake_cased actions" <|
             \_ ->
                 [ snakeCaseAction ]
-                    |> Generate.Action.encode
+                    |> Generate.Action.encodeSingleAction
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
-                            >> Expect.equal "encode : Action -> Json.Encode.Value"
+                            >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """encode : Action -> Json.Encode.Value
-encode action =
+                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
+encodeSingleAction action =
     case action of
         SnakeCase args ->
             Json.Encode.object

@@ -32,8 +32,11 @@ filesFromAbi base context abi =
     [ prefixedFile [ "Action" ]
         [ Generate.Action.type_ abi.actions
             |> Elm.expose
-        , Generate.Action.encode abi.actions
+        , Generate.Action.encode context
             |> Elm.expose
+        , Generate.Action.encodeSingleAction abi.actions
+            |> Elm.expose
+        , Generate.Action.getName abi.actions
         ]
     , prefixedFile [ "Table" ]
         (List.map Generate.Table.type_ abi.tables)
