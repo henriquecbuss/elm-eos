@@ -8,6 +8,11 @@ them.
 
 ## Overview
 
+This package mainly servers to translate EOSIO types to Elm types. There is a
+[CLI app](#cli) that is responsible for generating code specific to the contracts
+you need. The expection to that is the [Eos.Query](Eos-Query) module, which is
+used to send queries to the blockchain.
+
 For example, let's say you have a contract named `company.acc`, with an `accounts`
 table, described by this struct:
 
@@ -37,7 +42,7 @@ import Company.Acc.Table
 import Eos.Query
 import Http
 
-fetchAccounts : (Result Http.Error (Eos.Query.Response Company.Acc.Table.Account)) -> Cmd msg
+fetchAccounts : (Result Http.Error (Eos.Query.Response Company.Acc.Table.Account) -> msg) -> Cmd msg
 fetchAccounts toMsg =
     Company.Acc.Table.Query.account { scope = "company.acc" }
         |> Eos.Query.withLimit 100
@@ -59,11 +64,12 @@ account : { scope : String } -> Eos.Query.Query Company.Acc.Table.Account
 
 -- In file Company/Acc/Table.elm
 
-import Eos
+import Eos.Name
+import Eos.Asset
 
 type alias Account =
-    { accountName : Eos.Name
-    , balance : Eos.Asset
+    { accountName : Eos.Name.Name
+    , balance : Eos.Asset.Asset
     }
 ```
 
@@ -97,7 +103,10 @@ this:
 
 ```elm
 import Json.Encode
-import Eos
+import Eos.Name
+import Eos.Permission
+import Eos.Asset
+import Company.Acc.Action
 
 sendMoney : { currentUser : Eos.Name.Name, currentPermission : Eos.Permission.Permission to : Eos.Name.Name, amount : Eos.Asset.Asset } -> Json.Encode.Value
 sendMoney { currentUser, currentPermission, to, amount } =
@@ -118,34 +127,31 @@ There are a few moving pieces that need to work together in order to use
 `NeoVier/elm-eos`. Here's how to set them up:
 
 1. Add the elm package as a dependency in your `elm.json`, along with `elm/json`:
-
-```bash
-elm install NeoVier/elm-eos
-elm install elm/json
-```
+   ```bash
+   elm install NeoVier/elm-eos
+   elm install elm/json
+   ```
 
 2. Install the `@neovier/elm-eos` command line through npm. This is what you will
-use to generate Elm code for the EOSIO API. You can save it as a dev dependency
-to ensure everyone on your team has access to the same version:
+   use to generate Elm code for the EOSIO API. You can save it as a dev dependency
+   to ensure everyone on your team has access to the same version:
+   ```bash
+   # With npm
+   npm install --save-dev @neovier/elm-eos
 
-```bash
-# With npm
-npm install --save-dev @neovier/elm-eos
-
-# With yarn
-yarn add --dev @neovier/elm-eos
-```
+   # With yarn
+   yarn add --dev @neovier/elm-eos
+   ```
 
 3. Run the CLI tool to generate the Elm code for your contracts. If you installed
-like shown above, you can run with `npx elm-eos`, or create a script in your `package.json` like this:
-
-```json
-{
-    "scripts": {
-        "generate-eos": "elm-eos https://mydomain.com/v1/chain --contract first --contract second --output generated --base My.Contract"
-    }
-}
-```
+   like shown above, you can run with `npx elm-eos`, or create a script in your `package.json` like this:
+   ```json
+   {
+       "scripts": {
+           "generate-eos": "elm-eos https://mydomain.com/v1/chain --contract first --contract second --output generated --base My.Contract"
+       }
+   }
+   ```
 
 4. Now whenever you need to refresh the generated code, you can run `npm run generate-eos`.
 
@@ -154,13 +160,10 @@ like shown above, you can run with `npx elm-eos`, or create a script in your `pa
 The CLI tool is used to generate the Elm code for your contracts. It takes some
 arguments:
 
-| Name      | Description                                        | Example                            |
-|-----------|----------------------------------------------------|------------------------------------|
-| URL       | The base url of the contracts                      | https://mydomain.com/v1/chain      |
-| Output    | The directory to write the generated code to       | generated                          |
-| Base      | The base module name to use for the generated code | My.Contract                        |
-| Contracts | The names of the contracts to generate code for    | --contract first --contract second |
-
+- URL: the base url of the contracts. For example: `https://mydomain.com/v1/chain`
+- Output: the directory to write the generated code to. For example: `generated`
+- Base: the base module name to use for the generated code. For example: `My.Contract`
+- Contracts: the names of the contracts to generate code for. For example: `--contract first --contract second`
 
 Joining all of that together, you can run the CLI like this:
 
