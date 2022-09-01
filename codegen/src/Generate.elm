@@ -11,23 +11,23 @@ import Generate.Table.Decoder
 import Generate.Table.Query
 
 
-files : List { contract : String, baseUrl : String, abi : Abi.Abi } -> List Elm.File
-files abis =
+files : List String -> List { contract : String, baseUrl : String, abi : Abi.Abi } -> List Elm.File
+files base abis =
     List.concatMap
         (\{ contract, baseUrl, abi } ->
-            filesFromAbi
+            filesFromAbi base
                 { contract = contract, baseUrl = baseUrl }
                 abi
         )
         abis
 
 
-filesFromAbi : Context.Context -> Abi.Abi -> List Elm.File
-filesFromAbi context abi =
+filesFromAbi : List String -> Context.Context -> Abi.Abi -> List Elm.File
+filesFromAbi base context abi =
     let
         prefixedFile : List String -> List Elm.Declaration -> Elm.File
         prefixedFile suffix =
-            Elm.file (Context.prefixed context suffix)
+            Elm.file (base ++ Context.prefixed context suffix)
     in
     [ prefixedFile [ "Action" ]
         [ Generate.Action.type_ abi.actions

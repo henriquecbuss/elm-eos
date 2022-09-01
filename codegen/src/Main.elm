@@ -51,16 +51,18 @@ config =
 baseUrlOptionsParser : Cli.OptionsParser.OptionsParser CliOptions Cli.OptionsParser.BuilderState.AnyOptions
 baseUrlOptionsParser =
     Cli.OptionsParser.build
-        (\url output contracts ->
+        (\url output base contracts ->
             { url = url
             , output = output
+            , base = base
             , contracts = contracts
             }
         )
         |> Cli.OptionsParser.with urlArg
         |> Cli.OptionsParser.with outputArg
+        |> Cli.OptionsParser.with baseArg
         |> Cli.OptionsParser.with contractsArg
-        |> Cli.OptionsParser.withDoc "Get specified contracts from url. For example:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --output generated\n"
+        |> Cli.OptionsParser.withDoc "Get specified contracts from url. For example:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --output generated --base My.Contract\n"
 
 
 urlArg : Cli.Option.Option String String Cli.Option.BeginningOption
@@ -80,6 +82,15 @@ outputArg : Cli.Option.Option (Maybe String) String Cli.Option.BeginningOption
 outputArg =
     Cli.Option.optionalKeywordArg "output"
         |> Cli.Option.map (Maybe.withDefault "generated")
+
+
+baseArg : Cli.Option.Option (Maybe String) (List String) Cli.Option.BeginningOption
+baseArg =
+    Cli.Option.optionalKeywordArg "base"
+        |> Cli.Option.map
+            (Maybe.map (String.split ".")
+                >> Maybe.withDefault []
+            )
 
 
 contractsArg : Cli.Option.Option (List String) (List String) Cli.Option.BeginningOption
@@ -162,6 +173,7 @@ validateContractName contract =
 type alias CliOptions =
     { url : String
     , output : String
+    , base : List String
     , contracts : List String
     }
 
@@ -202,7 +214,10 @@ update cliOptions msg model =
 
         GotAbis (Ok abis) ->
             ( model
-            , WriteToFiles { output = cliOptions.output, files = Generate.files abis }
+            , WriteToFiles
+                { output = cliOptions.output
+                , files = Generate.files cliOptions.base abis
+                }
             )
 
         FinishedWritingToFiles ->
