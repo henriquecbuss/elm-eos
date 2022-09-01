@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Main exposing (CliOptions, Model, Msg, main)
 
 import Cli.Option
 import Cli.OptionsParser
@@ -7,7 +7,6 @@ import Cli.Validate
 import Http
 import InteropDefinitions
 import InteropPorts
-import Json.Decode
 import Json.Encode
 import Task
 
@@ -32,7 +31,12 @@ config : Cli.Program.Config CliOptions
 config =
     Cli.Program.config
         |> Cli.Program.add
-            (Cli.OptionsParser.build CliOptions
+            (Cli.OptionsParser.build
+                (\url contracts ->
+                    { url = url
+                    , contracts = contracts
+                    }
+                )
                 |> Cli.OptionsParser.with
                     (Cli.Option.requiredPositionalArg "url"
                         |> Cli.Option.map
@@ -101,7 +105,7 @@ validateContractName contract =
         firstInvalidCharacter :: [] ->
             Err (contract ++ ": Invalid character: " ++ String.fromChar firstInvalidCharacter ++ ".")
 
-        (firstInvalidCharacter :: otherInvalidCharacters) as invalidCharacters ->
+        (_ :: _) as invalidCharacters ->
             Err
                 (contract
                     ++ ": Invalid characters: "
@@ -130,11 +134,11 @@ type alias CliOptions =
 
 
 type alias Model =
-    ()
+    {}
 
 
 init : InteropDefinitions.Flags -> CliOptions -> ( Model, Cmd Msg )
-init flags cliOptions =
+init _ cliOptions =
     let
         fetchContract : String -> Task.Task String String
         fetchContract contract =
@@ -150,7 +154,7 @@ init flags cliOptions =
                                 Http.GoodStatus_ _ body ->
                                     Ok body
 
-                                Http.BadStatus_ metadata body ->
+                                Http.BadStatus_ metadata _ ->
                                     Err
                                         ("The server returned a bad status:\n\n\t"
                                             ++ String.fromInt metadata.statusCode
@@ -171,7 +175,7 @@ init flags cliOptions =
                 , timeout = Nothing
                 }
     in
-    ( ()
+    ( {}
     , List.foldr
         (\contract currentTask ->
             fetchContract contract
@@ -189,16 +193,16 @@ type Msg
 
 
 update : CliOptions -> Msg -> Model -> ( Model, Cmd Msg )
-update cliOptions msg model =
+update _ msg model =
     case msg of
         GotAbis (Err error) ->
-            ( ()
+            ( model
             , InteropDefinitions.PrintAndExitFailure error
                 |> InteropPorts.fromElm
             )
 
         GotAbis (Ok abis) ->
-            ( ()
+            ( model
             , InteropDefinitions.WriteAbisToFile { fileName = "abis.json", abis = abis }
                 |> InteropPorts.fromElm
             )
