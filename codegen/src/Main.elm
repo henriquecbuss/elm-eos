@@ -1,10 +1,12 @@
-module Main exposing (CliOptions, Model, Msg, main)
+module Main exposing (CliOptions, Model, Msg, main, validateContractName)
 
 import Abi
 import Cli.Option
 import Cli.OptionsParser
+import Cli.OptionsParser.BuilderState
 import Cli.Program
 import Cli.Validate
+import Elm
 import Generate
 import Http
 import InteropDefinitions
@@ -23,72 +25,85 @@ main =
         , printAndExitSuccess =
             InteropDefinitions.PrintAndExitSuccess
                 >> InteropPorts.fromElm
-        , init = init
-        , update = update
+        , init =
+            \flags cliOptions ->
+                init flags cliOptions
+                    |> Tuple.mapSecond effectToCmd
+        , update =
+            \cliOptions msg model ->
+                update cliOptions msg model
+                    |> Tuple.mapSecond effectToCmd
         , subscriptions = subscriptions
         , config = config
         }
 
 
+
+-- PARSING CLI ARGUMENTS
+
+
 config : Cli.Program.Config CliOptions
 config =
     Cli.Program.config
-        |> Cli.Program.add
-            (Cli.OptionsParser.build
-                (\url contracts ->
-                    { url = url
-                    , contracts = contracts
-                    }
-                )
-                |> Cli.OptionsParser.with
-                    (Cli.Option.requiredPositionalArg "url"
-                        |> Cli.Option.map
-                            (\url ->
-                                if String.endsWith "/" url then
-                                    String.dropRight 1 url
+        |> Cli.Program.add baseUrlOptionsParser
+
+
+baseUrlOptionsParser : Cli.OptionsParser.OptionsParser CliOptions Cli.OptionsParser.BuilderState.AnyOptions
+baseUrlOptionsParser =
+    Cli.OptionsParser.build
+        (\url contracts ->
+            { url = url
+            , contracts = contracts
+            }
+        )
+        |> Cli.OptionsParser.with
+            (Cli.Option.requiredPositionalArg "url"
+                |> Cli.Option.map
+                    (\url ->
+                        if String.endsWith "/" url then
+                            String.dropRight 1 url
+
+                        else
+                            url
+                    )
+            )
+        |> Cli.OptionsParser.with
+            (Cli.Option.keywordArgList "contract"
+                |> Cli.Option.validate
+                    (Cli.Validate.predicate
+                        "I need at least one contract. You can give me a list like this:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
+                        (List.isEmpty >> not)
+                    )
+                |> Cli.Option.validateMap
+                    (List.foldr
+                        (\contract context ->
+                            case validateContractName contract of
+                                Ok validContract ->
+                                    { context | oks = validContract :: context.oks }
+
+                                Err errorMessage ->
+                                    { context | errs = errorMessage :: context.errs }
+                        )
+                        { errs = []
+                        , oks = []
+                        }
+                        >> (\{ errs, oks } ->
+                                if List.isEmpty errs then
+                                    Ok oks
 
                                 else
-                                    url
-                            )
+                                    Err
+                                        ("All contract names must be up to 12 characters long, with characters from a-Z, 1-5 and . (except for the last character, which can't be a .). Here are all the errors I found:\n\n"
+                                            ++ (errs
+                                                    |> List.map (\err -> "\t- " ++ err)
+                                                    |> String.join "\n"
+                                               )
+                                            ++ "\n"
+                                        )
+                           )
                     )
-                |> Cli.OptionsParser.with
-                    (Cli.Option.keywordArgList "contract"
-                        |> Cli.Option.validate
-                            (Cli.Validate.predicate
-                                "I need at least one contract. You can give me a list like this:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
-                                (List.isEmpty >> not)
-                            )
-                        |> Cli.Option.validateMap
-                            (List.foldr
-                                (\contract context ->
-                                    case validateContractName contract of
-                                        Ok validContract ->
-                                            { context | oks = validContract :: context.oks }
-
-                                        Err errorMessage ->
-                                            { context | errs = errorMessage :: context.errs }
-                                )
-                                { errs = []
-                                , oks = []
-                                }
-                                >> (\{ errs, oks } ->
-                                        if List.isEmpty errs then
-                                            Ok oks
-
-                                        else
-                                            Err
-                                                ("All contract names must be up to 12 characters long, with characters from a-Z, 1-5 and . (except for the last character, which can't be a .). Here are all the errors I found:\n\n"
-                                                    ++ (errs
-                                                            |> List.map (\err -> "\t- " ++ err)
-                                                            |> String.join "\n"
-                                                       )
-                                                    ++ "\n"
-                                                )
-                                   )
-                            )
-                    )
-                |> Cli.OptionsParser.withDoc "Get specified contracts from url. For example:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
             )
+        |> Cli.OptionsParser.withDoc "Get specified contracts from url. For example:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
 
 
 validateContractName : String -> Result String String
@@ -136,89 +151,23 @@ type alias CliOptions =
     }
 
 
+
+-- INITIALIZING
+
+
 type alias Model =
     {}
 
 
-init : InteropDefinitions.Flags -> CliOptions -> ( Model, Cmd Msg )
+init : InteropDefinitions.Flags -> CliOptions -> ( Model, Effect )
 init _ cliOptions =
-    let
-        contractDecoder :
-            Json.Decode.Decoder
-                { contract : String
-                , abi : Abi.Abi
-                , baseUrl : String
-                }
-        contractDecoder =
-            Json.Decode.map2
-                (\contract abi ->
-                    { contract = contract
-                    , abi = abi
-                    , baseUrl = cliOptions.url
-                    }
-                )
-                (Json.Decode.field "account_name" Json.Decode.string)
-                (Json.Decode.field "abi" Abi.decoder)
-
-        fetchContract :
-            String
-            ->
-                Task.Task
-                    String
-                    { contract : String
-                    , abi : Abi.Abi
-                    , baseUrl : String
-                    }
-        fetchContract contract =
-            Http.task
-                { method = "POST"
-                , headers = []
-                , url = cliOptions.url ++ "/get_abi"
-                , body = Http.jsonBody (Json.Encode.object [ ( "account_name", Json.Encode.string contract ) ])
-                , resolver =
-                    Http.stringResolver
-                        (\response ->
-                            case response of
-                                Http.GoodStatus_ _ body ->
-                                    case Json.Decode.decodeString contractDecoder body of
-                                        Ok valid ->
-                                            Ok valid
-
-                                        Err error ->
-                                            Err ("Failed to decode response from " ++ cliOptions.url ++ "/get_abi:\n\n\t " ++ Json.Decode.errorToString error ++ "\n")
-
-                                Http.BadStatus_ metadata _ ->
-                                    Err
-                                        ("The server returned a bad status:\n\n\t"
-                                            ++ String.fromInt metadata.statusCode
-                                            ++ " "
-                                            ++ metadata.statusText
-                                            ++ "\n"
-                                        )
-
-                                Http.NetworkError_ ->
-                                    Err "I got a network error when I tried to reach the servers. Check your internet connection and try again. If that doesn't work, maybe the server is down.\n"
-
-                                Http.Timeout_ ->
-                                    Err "The request to the server timed out! Try again later.\n"
-
-                                Http.BadUrl_ badUrl ->
-                                    Err ("It seems like you gave me a bad url. This is what you gave me:\n\n\t" ++ badUrl ++ "\n")
-                        )
-                , timeout = Nothing
-                }
-    in
     ( {}
-    , List.foldr
-        (\contract currentTask ->
-            fetchContract contract
-                |> Task.andThen
-                    (\result -> Task.map (\abis -> result :: abis) currentTask)
-        )
-        (Task.succeed [])
-        cliOptions.contracts
-        |> Task.attempt GotAbis
+    , FetchContracts { baseUrl = cliOptions.url, contracts = cliOptions.contracts }
     )
+
+
+
+-- UPDATING
 
 
 type Msg
@@ -228,34 +177,29 @@ type Msg
     | GotInteropPortsToElmDecodingError Json.Decode.Error
 
 
-update : CliOptions -> Msg -> Model -> ( Model, Cmd Msg )
+update : CliOptions -> Msg -> Model -> ( Model, Effect )
 update _ msg model =
     case msg of
         GotAbis (Err error) ->
             ( model
-            , InteropDefinitions.PrintAndExitFailure error
-                |> InteropPorts.fromElm
+            , PrintAndExitFailure error
             )
 
         GotAbis (Ok abis) ->
             ( model
             , Generate.files abis
-                |> InteropDefinitions.WriteToFiles
-                |> InteropPorts.fromElm
+                |> WriteToFiles
             )
 
         FinishedWritingToFiles ->
             ( model
-            , "✅ Generated files"
-                |> InteropDefinitions.PrintAndExitSuccess
-                |> InteropPorts.fromElm
+            , PrintAndExitSuccess "✅ Generated files"
             )
 
         FinishedWritingToFilesWithError ->
             ( model
             , "Something went wrong when I tried to write the files. Check the error above.\n"
-                |> InteropDefinitions.PrintAndExitFailure
-                |> InteropPorts.fromElm
+                |> PrintAndExitFailure
             )
 
         GotInteropPortsToElmDecodingError error ->
@@ -264,9 +208,12 @@ update _ msg model =
                 ++ Json.Decode.errorToString error
                 ++ "\n\n"
                 ++ "If you're up for it, please open an issue with the error message above, on this URL: https://github.com/NeoVier/elm-eos/issues.\n"
-                |> InteropDefinitions.PrintAndExitFailure
-                |> InteropPorts.fromElm
+                |> PrintAndExitFailure
             )
+
+
+
+-- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
@@ -284,3 +231,110 @@ subscriptions _ =
                     Err error ->
                         GotInteropPortsToElmDecodingError error
             )
+
+
+
+-- EFFECTS
+
+
+type Effect
+    = PrintAndExitFailure String
+    | PrintAndExitSuccess String
+    | FetchContracts { baseUrl : String, contracts : List String }
+    | WriteToFiles (List Elm.File)
+
+
+effectToCmd : Effect -> Cmd Msg
+effectToCmd effect =
+    case effect of
+        PrintAndExitFailure message ->
+            message
+                |> InteropDefinitions.PrintAndExitFailure
+                |> InteropPorts.fromElm
+
+        PrintAndExitSuccess message ->
+            message
+                |> InteropDefinitions.PrintAndExitSuccess
+                |> InteropPorts.fromElm
+
+        FetchContracts { baseUrl, contracts } ->
+            let
+                contractDecoder :
+                    Json.Decode.Decoder
+                        { contract : String
+                        , abi : Abi.Abi
+                        , baseUrl : String
+                        }
+                contractDecoder =
+                    Json.Decode.map2
+                        (\contract abi ->
+                            { contract = contract
+                            , abi = abi
+                            , baseUrl = baseUrl
+                            }
+                        )
+                        (Json.Decode.field "account_name" Json.Decode.string)
+                        (Json.Decode.field "abi" Abi.decoder)
+
+                fetchContract :
+                    String
+                    ->
+                        Task.Task
+                            String
+                            { contract : String
+                            , abi : Abi.Abi
+                            , baseUrl : String
+                            }
+                fetchContract contract =
+                    Http.task
+                        { method = "POST"
+                        , headers = []
+                        , url = baseUrl ++ "/get_abi"
+                        , body = Http.jsonBody (Json.Encode.object [ ( "account_name", Json.Encode.string contract ) ])
+                        , resolver =
+                            Http.stringResolver
+                                (\response ->
+                                    case response of
+                                        Http.GoodStatus_ _ body ->
+                                            case Json.Decode.decodeString contractDecoder body of
+                                                Ok valid ->
+                                                    Ok valid
+
+                                                Err error ->
+                                                    Err ("Failed to decode response from " ++ baseUrl ++ "/get_abi:\n\n\t " ++ Json.Decode.errorToString error ++ "\n")
+
+                                        Http.BadStatus_ metadata _ ->
+                                            Err
+                                                ("The server returned a bad status:\n\n\t"
+                                                    ++ String.fromInt metadata.statusCode
+                                                    ++ " "
+                                                    ++ metadata.statusText
+                                                    ++ "\n"
+                                                )
+
+                                        Http.NetworkError_ ->
+                                            Err "I got a network error when I tried to reach the servers. Check your internet connection and try again. If that doesn't work, maybe the server is down.\n"
+
+                                        Http.Timeout_ ->
+                                            Err "The request to the server timed out! Try again later.\n"
+
+                                        Http.BadUrl_ badUrl ->
+                                            Err ("It seems like you gave me a bad url. This is what you gave me:\n\n\t" ++ badUrl ++ "\n")
+                                )
+                        , timeout = Nothing
+                        }
+            in
+            List.foldr
+                (\contract currentTask ->
+                    fetchContract contract
+                        |> Task.andThen
+                            (\result -> Task.map (\abis -> result :: abis) currentTask)
+                )
+                (Task.succeed [])
+                contracts
+                |> Task.attempt GotAbis
+
+        WriteToFiles files ->
+            files
+                |> InteropDefinitions.WriteToFiles
+                |> InteropPorts.fromElm
