@@ -1,9 +1,9 @@
 module InteropDefinitions exposing (Flags, FlagsWithoutArgv, FromElm(..), ToElm(..), interop)
 
 import Cli.Program
-import Json.Encode
+import Elm
 import TsJson.Decode as TsDecode exposing (Decoder)
-import TsJson.Encode as TsEncode exposing (Encoder, optional, required)
+import TsJson.Encode as TsEncode exposing (Encoder, required)
 
 
 interop :
@@ -21,15 +21,12 @@ interop =
 type FromElm
     = PrintAndExitFailure String
     | PrintAndExitSuccess String
-    | WriteAbisToFile { fileName : String, abis : List String }
+    | WriteToFiles (List Elm.File)
 
 
 type ToElm
-    = AuthenticatedUser User
-
-
-type alias User =
-    { username : String }
+    = FinishedWritingToFiles
+    | FinishedWritingToFilesWithError
 
 
 type alias Flags =
@@ -51,18 +48,20 @@ fromElm =
                 PrintAndExitSuccess message ->
                     vPrintAndExitSuccess message
 
-                WriteAbisToFile info ->
-                    vWriteAbisToFile info
+                WriteToFiles files ->
+                    vWriteAbisToFile files
         )
         |> TsEncode.variantTagged "printAndExitFailure"
             (TsEncode.object [ required "message" identity TsEncode.string ])
         |> TsEncode.variantTagged "printAndExitSuccess"
             (TsEncode.object [ required "message" identity TsEncode.string ])
-        |> TsEncode.variantTagged "writeAbisToFile"
-            (TsEncode.object
-                [ required "fileName" .fileName TsEncode.string
-                , required "abis" .abis (TsEncode.list TsEncode.string)
-                ]
+        |> TsEncode.variantTagged "writeToFiles"
+            (TsEncode.list
+                (TsEncode.object
+                    [ required "path" .path TsEncode.string
+                    , required "contents" .contents TsEncode.string
+                    ]
+                )
             )
         |> TsEncode.buildUnion
 
@@ -70,11 +69,11 @@ fromElm =
 toElm : Decoder ToElm
 toElm =
     TsDecode.discriminatedUnion "tag"
-        [ ( "authenticatedUser"
-          , TsDecode.map AuthenticatedUser
-                (TsDecode.map User
-                    (TsDecode.field "username" TsDecode.string)
-                )
+        [ ( "finishedWritingToFiles"
+          , TsDecode.succeed FinishedWritingToFiles
+          )
+        , ( "finishedWritingToFilesWithError"
+          , TsDecode.succeed FinishedWritingToFilesWithError
           )
         ]
 

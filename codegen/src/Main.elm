@@ -25,7 +25,7 @@ main =
                 >> InteropPorts.fromElm
         , init = init
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         , config = config
         }
 
@@ -222,16 +222,10 @@ init _ cliOptions =
 
 
 type Msg
-    = GotAbis
-        (Result
-            String
-            (List
-                { baseUrl : String
-                , contract : String
-                , abi : Abi.Abi
-                }
-            )
-        )
+    = GotAbis (Result String (List { baseUrl : String, contract : String, abi : Abi.Abi }))
+    | FinishedWritingToFiles
+    | FinishedWritingToFilesWithError
+    | GotInteropPortsToElmDecodingError Json.Decode.Error
 
 
 update : CliOptions -> Msg -> Model -> ( Model, Cmd Msg )
@@ -244,14 +238,49 @@ update _ msg model =
             )
 
         GotAbis (Ok abis) ->
-            let
-                files =
-                    Generate.files abis
-                        |> List.map .path
-                        |> Debug.log "FILES"
-            in
             ( model
-              -- , InteropDefinitions.WriteAbisToFile { fileName = "abis.json", abis = abis }
-              --     |> InteropPorts.fromElm
-            , Cmd.none
+            , Generate.files abis
+                |> InteropDefinitions.WriteToFiles
+                |> InteropPorts.fromElm
+            )
+
+        FinishedWritingToFiles ->
+            ( model
+            , "✅ Generated files"
+                |> InteropDefinitions.PrintAndExitSuccess
+                |> InteropPorts.fromElm
+            )
+
+        FinishedWritingToFilesWithError ->
+            ( model
+            , "Something went wrong when I tried to write the files. Check the error above.\n"
+                |> InteropDefinitions.PrintAndExitFailure
+                |> InteropPorts.fromElm
+            )
+
+        GotInteropPortsToElmDecodingError error ->
+            ( model
+            , "I got a weird internal error, when trying to decode something from a port:\n\n\t"
+                ++ Json.Decode.errorToString error
+                ++ "\n\n"
+                ++ "If you're up for it, please open an issue with the error message above, on this URL: https://github.com/NeoVier/elm-eos/issues.\n"
+                |> InteropDefinitions.PrintAndExitFailure
+                |> InteropPorts.fromElm
+            )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    InteropPorts.toElm
+        |> Sub.map
+            (\toElm ->
+                case toElm of
+                    Ok InteropDefinitions.FinishedWritingToFiles ->
+                        FinishedWritingToFiles
+
+                    Ok InteropDefinitions.FinishedWritingToFilesWithError ->
+                        FinishedWritingToFilesWithError
+
+                    Err error ->
+                        GotInteropPortsToElmDecodingError error
             )

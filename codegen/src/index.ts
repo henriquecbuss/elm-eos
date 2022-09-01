@@ -1,6 +1,7 @@
 import { Elm } from "./Main.elm";
 import { version } from "../package.json";
-import fs from "fs";
+import fs from "fs/promises";
+import path from "path";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 global.XMLHttpRequest = require("xhr2");
@@ -23,11 +24,25 @@ app.ports.interopFromElm.subscribe((fromElm) => {
       console.log(fromElm.data.message);
       break;
     }
-    case "writeAbisToFile": {
-      fs.writeFileSync(
-        fromElm.data.fileName,
-        `[${fromElm.data.abis.join(",\n")}]`
-      );
+    case "writeToFiles": {
+      Promise.all(
+        fromElm.data.map(async (file) => {
+          const dirname = path.dirname(file.path);
+
+          await fs.mkdir(dirname, { recursive: true });
+
+          return fs.writeFile(file.path, file.contents, { flag: "w+" });
+        })
+      )
+        .then(() => {
+          app.ports.interopToElm.send({ tag: "finishedWritingToFiles" });
+        })
+        .catch((err) => {
+          console.log(err);
+          app.ports.interopToElm.send({
+            tag: "finishedWritingToFilesWithError",
+          });
+        });
     }
   }
 });
