@@ -1,6 +1,5 @@
-module Context exposing (Context, decoder, prefixed)
+module Context exposing (Context, prefixed)
 
-import Json.Decode
 import String.Extra
 
 
@@ -8,14 +7,6 @@ type alias Context =
     { baseUrl : String
     , contract : String
     }
-
-
-decoder : Json.Decode.Decoder Context
-decoder =
-    Json.Decode.map2
-        (\baseUrl contract -> { baseUrl = baseUrl, contract = contract })
-        (Json.Decode.field "baseUrl" Json.Decode.string)
-        (Json.Decode.field "contract" Json.Decode.string)
 
 
 prefixed : Context -> List String -> List String

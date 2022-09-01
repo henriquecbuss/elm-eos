@@ -5,7 +5,6 @@ module Generate exposing (files)
 import Abi
 import Context
 import Elm
-import Gen.CodeGen.Generate as Generate
 import Generate.Action
 import Generate.Table
 import Generate.Table.Decoder
