@@ -28,7 +28,8 @@ decoder =
                             >> Expect.equal
                                 "people : Json.Decode.Decoder Eos.Io.Table.People"
                         , .body
-                            >> Expect.equal """people : Json.Decode.Decoder Eos.Io.Table.People
+                            >> Expect.equal """{-| Decoder for the people table. -}
+people : Json.Decode.Decoder Eos.Io.Table.People
 people =
     Json.Decode.Pipeline.required
         "assets"
@@ -49,7 +50,8 @@ people =
                             >> Expect.equal
                                 "snakeCase : Json.Decode.Decoder Eos.Io.Table.SnakeCase"
                         , .body
-                            >> Expect.equal """snakeCase : Json.Decode.Decoder Eos.Io.Table.SnakeCase
+                            >> Expect.equal """{-| Decoder for the snake_case table. -}
+snakeCase : Json.Decode.Decoder Eos.Io.Table.SnakeCase
 snakeCase =
     Json.Decode.Pipeline.required
         "snake_case"

@@ -9,14 +9,14 @@ import String.Extra
 
 type_ : Abi.Table -> Elm.Declaration
 type_ table =
-    Elm.alias (String.Extra.camelize table.name)
-        (Elm.Annotation.record
-            (table.columns
-                |> List.map
-                    (\column ->
-                        ( String.Extra.camelize column.name
-                        , EosType.toAnnotation column.type_
-                        )
+    Elm.Annotation.record
+        (table.columns
+            |> List.map
+                (\column ->
+                    ( String.Extra.camelize column.name
+                    , EosType.toAnnotation column.type_
                     )
-            )
+                )
         )
+        |> Elm.alias (String.Extra.camelize table.name)
+        |> Elm.withDocumentation ("Type representing the " ++ table.name ++ " table.")

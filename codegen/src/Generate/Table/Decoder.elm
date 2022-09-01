@@ -36,3 +36,4 @@ generate context table =
                     )
                 )
         )
+        |> Elm.withDocumentation ("Decoder for the " ++ table.name ++ " table.")

@@ -27,7 +27,11 @@ type_ =
                     |> Generate.Action.type_
                     |> Elm.ToString.declaration
                     |> .body
-                    |> Expect.equal """type Action
+                    |> Expect.equal """{-| Represents an action that can be sent to the blockchain.
+
+You can [encode](#encode) it and send it through a port to eosjs or similar.
+-}
+type Action
     = Transfer
         { from : Eos.Name.Name
         , to : Eos.Name.Name
@@ -42,7 +46,11 @@ type_ =
                     |> Generate.Action.type_
                     |> Elm.ToString.declaration
                     |> .body
-                    |> Expect.equal """type Action
+                    |> Expect.equal """{-| Represents an action that can be sent to the blockchain.
+
+You can [encode](#encode) it and send it through a port to eosjs or similar.
+-}
+type Action
     = Transfer
         { from : Eos.Name.Name
         , to : Eos.Name.Name
@@ -62,7 +70,11 @@ type_ =
                     |> Elm.ToString.declaration
                     |> .body
                     |> Expect.equal
-                        """type Action
+                        """{-| Represents an action that can be sent to the blockchain.
+
+You can [encode](#encode) it and send it through a port to eosjs or similar.
+-}
+type Action
     = Test
         { bool : Bool
         , int8 : Int
@@ -102,7 +114,11 @@ type_ =
                     |> Elm.ToString.declaration
                     |> .body
                     |> Expect.equal
-                        """type Action
+                        """{-| Represents an action that can be sent to the blockchain.
+
+You can [encode](#encode) it and send it through a port to eosjs or similar.
+-}
+type Action
     = SnakeCase { snakeCase : String }"""
         ]
 
@@ -125,7 +141,8 @@ encode =
                         [ .signature
                             >> Expect.equal "encode : Eos.Authorization.Authorization -> Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """encode : Eos.Authorization.Authorization -> Action -> Json.Encode.Value
+                            >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value to perform a transaction. You can then send it through a port to eosjs, or similar. -}
+encode : Eos.Authorization.Authorization -> Action -> Json.Encode.Value
 encode authorization action =
     Json.Encode.object
         [ ( "account", Json.Encode.string "fruits" )
@@ -149,7 +166,8 @@ encodeSingleAction =
                         [ .signature
                             >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
+                            >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead. -}
+encodeSingleAction : Action -> Json.Encode.Value
 encodeSingleAction action =
     case action of
         Transfer args ->
@@ -171,7 +189,8 @@ encodeSingleAction action =
                         [ .signature
                             >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
+                            >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead. -}
+encodeSingleAction : Action -> Json.Encode.Value
 encodeSingleAction action =
     case action of
         Transfer args ->
@@ -201,7 +220,8 @@ encodeSingleAction action =
                         [ .signature
                             >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
+                            >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead. -}
+encodeSingleAction : Action -> Json.Encode.Value
 encodeSingleAction action =
     case action of
         Test args ->
@@ -254,7 +274,8 @@ encodeSingleAction action =
                         [ .signature
                             >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
+                            >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead. -}
+encodeSingleAction : Action -> Json.Encode.Value
 encodeSingleAction action =
     case action of
         SnakeCase args ->

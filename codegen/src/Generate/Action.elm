@@ -15,6 +15,7 @@ import String.Extra
 type_ : List Abi.Action -> Elm.Declaration
 type_ actions =
     Elm.customType "Action" (List.map actionVariant actions)
+        |> Elm.withDocumentation "Represents an action that can be sent to the blockchain.\n\nYou can [encode](#encode) it and send it through a port to eosjs or similar."
 
 
 actionVariant : Abi.Action -> Elm.Variant
@@ -32,84 +33,84 @@ actionParameter action =
 
 encode : Context.Context -> Elm.Declaration
 encode context =
-    Elm.declaration "encode"
-        (Elm.fn2
-            ( "authorization", Just Gen.Eos.Authorization.annotation_.authorization )
-            ( "action", Just (Elm.Annotation.named [] "Action") )
-            (\authorizationArg actionArg ->
-                Gen.Json.Encode.object
-                    [ Elm.tuple (Elm.string "account") (Gen.Json.Encode.string context.contract)
-                    , Elm.tuple (Elm.string "name")
-                        (Gen.Json.Encode.call_.string
-                            (Elm.apply
-                                (Elm.value
-                                    { importFrom = []
-                                    , name = "getName"
-                                    , annotation =
-                                        Just
-                                            (Elm.Annotation.function
-                                                [ Elm.Annotation.named [] "Action" ]
-                                                Elm.Annotation.string
-                                            )
-                                    }
-                                )
-                                [ actionArg ]
-                            )
-                        )
-                    , Elm.tuple (Elm.string "authorization") (Gen.Eos.Authorization.encode authorizationArg)
-                    , Elm.tuple (Elm.string "data")
+    Elm.fn2
+        ( "authorization", Just Gen.Eos.Authorization.annotation_.authorization )
+        ( "action", Just (Elm.Annotation.named [] "Action") )
+        (\authorizationArg actionArg ->
+            Gen.Json.Encode.object
+                [ Elm.tuple (Elm.string "account") (Gen.Json.Encode.string context.contract)
+                , Elm.tuple (Elm.string "name")
+                    (Gen.Json.Encode.call_.string
                         (Elm.apply
                             (Elm.value
                                 { importFrom = []
-                                , name = "encodeSingleAction"
+                                , name = "getName"
                                 , annotation =
                                     Just
                                         (Elm.Annotation.function
                                             [ Elm.Annotation.named [] "Action" ]
-                                            Gen.Json.Encode.annotation_.value
+                                            Elm.Annotation.string
                                         )
                                 }
                             )
                             [ actionArg ]
                         )
-                    ]
-            )
-            -- For some reason, if we don't use `withType` here, elm-codegen
-            -- struggles to infer the type of the function and generates an error.
-            |> Elm.withType
-                (Elm.Annotation.function
-                    [ Gen.Eos.Authorization.annotation_.authorization
-                    , Elm.Annotation.named [] "Action"
-                    ]
-                    Gen.Json.Encode.annotation_.value
-                )
+                    )
+                , Elm.tuple (Elm.string "authorization") (Gen.Eos.Authorization.encode authorizationArg)
+                , Elm.tuple (Elm.string "data")
+                    (Elm.apply
+                        (Elm.value
+                            { importFrom = []
+                            , name = "encodeSingleAction"
+                            , annotation =
+                                Just
+                                    (Elm.Annotation.function
+                                        [ Elm.Annotation.named [] "Action" ]
+                                        Gen.Json.Encode.annotation_.value
+                                    )
+                            }
+                        )
+                        [ actionArg ]
+                    )
+                ]
         )
+        -- For some reason, if we don't use `withType` here, elm-codegen
+        -- struggles to infer the type of the function and generates an error.
+        |> Elm.withType
+            (Elm.Annotation.function
+                [ Gen.Eos.Authorization.annotation_.authorization
+                , Elm.Annotation.named [] "Action"
+                ]
+                Gen.Json.Encode.annotation_.value
+            )
+        |> Elm.declaration "encode"
+        |> Elm.withDocumentation "Turn an [Action](#Action) into a JSON value to perform a transaction. You can then send it through a port to eosjs, or similar."
 
 
 encodeSingleAction : List Abi.Action -> Elm.Declaration
 encodeSingleAction actions =
-    Elm.declaration "encodeSingleAction"
-        (Elm.fn
-            ( "action"
-            , Just
-                (Elm.Annotation.function
-                    [ Elm.Annotation.named [] "Action" ]
-                    Gen.Json.Encode.annotation_.value
-                )
+    Elm.fn
+        ( "action"
+        , Just
+            (Elm.Annotation.function
+                [ Elm.Annotation.named [] "Action" ]
+                Gen.Json.Encode.annotation_.value
             )
-            (\actionToEncode ->
-                Elm.Case.custom actionToEncode
-                    (Elm.Annotation.named [] "Action")
-                    (List.map encodeActionBranch actions)
-            )
-            -- For some reason, if we don't use `withType` here, elm-codegen
-            -- struggles to infer the type of the function and generates an error.
-            |> Elm.withType
-                (Elm.Annotation.function
-                    [ Elm.Annotation.named [] "Action" ]
-                    Gen.Json.Encode.annotation_.value
-                )
         )
+        (\actionToEncode ->
+            Elm.Case.custom actionToEncode
+                (Elm.Annotation.named [] "Action")
+                (List.map encodeActionBranch actions)
+        )
+        -- For some reason, if we don't use `withType` here, elm-codegen
+        -- struggles to infer the type of the function and generates an error.
+        |> Elm.withType
+            (Elm.Annotation.function
+                [ Elm.Annotation.named [] "Action" ]
+                Gen.Json.Encode.annotation_.value
+            )
+        |> Elm.declaration "encodeSingleAction"
+        |> Elm.withDocumentation "Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead."
 
 
 encodeActionBranch : Abi.Action -> Elm.Case.Branch
