@@ -21,7 +21,7 @@ interop =
 type FromElm
     = PrintAndExitFailure String
     | PrintAndExitSuccess String
-    | WriteToFiles (List Elm.File)
+    | WriteToFiles { output : String, files : List Elm.File }
 
 
 type ToElm
@@ -48,20 +48,26 @@ fromElm =
                 PrintAndExitSuccess message ->
                     vPrintAndExitSuccess message
 
-                WriteToFiles files ->
-                    vWriteAbisToFile files
+                WriteToFiles info ->
+                    vWriteAbisToFile info
         )
         |> TsEncode.variantTagged "printAndExitFailure"
             (TsEncode.object [ required "message" identity TsEncode.string ])
         |> TsEncode.variantTagged "printAndExitSuccess"
             (TsEncode.object [ required "message" identity TsEncode.string ])
         |> TsEncode.variantTagged "writeToFiles"
-            (TsEncode.list
-                (TsEncode.object
-                    [ required "path" .path TsEncode.string
-                    , required "contents" .contents TsEncode.string
-                    ]
-                )
+            (TsEncode.object
+                [ required "output" .output TsEncode.string
+                , required "files"
+                    .files
+                    (TsEncode.list
+                        (TsEncode.object
+                            [ required "path" .path TsEncode.string
+                            , required "contents" .contents TsEncode.string
+                            ]
+                        )
+                    )
+                ]
             )
         |> TsEncode.buildUnion
 

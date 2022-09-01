@@ -51,59 +51,73 @@ config =
 baseUrlOptionsParser : Cli.OptionsParser.OptionsParser CliOptions Cli.OptionsParser.BuilderState.AnyOptions
 baseUrlOptionsParser =
     Cli.OptionsParser.build
-        (\url contracts ->
+        (\url output contracts ->
             { url = url
+            , output = output
             , contracts = contracts
             }
         )
-        |> Cli.OptionsParser.with
-            (Cli.Option.requiredPositionalArg "url"
-                |> Cli.Option.map
-                    (\url ->
-                        if String.endsWith "/" url then
-                            String.dropRight 1 url
+        |> Cli.OptionsParser.with urlArg
+        |> Cli.OptionsParser.with outputArg
+        |> Cli.OptionsParser.with contractsArg
+        |> Cli.OptionsParser.withDoc "Get specified contracts from url. For example:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --output generated\n"
+
+
+urlArg : Cli.Option.Option String String Cli.Option.BeginningOption
+urlArg =
+    Cli.Option.requiredPositionalArg "url"
+        |> Cli.Option.map
+            (\url ->
+                if String.endsWith "/" url then
+                    String.dropRight 1 url
+
+                else
+                    url
+            )
+
+
+outputArg : Cli.Option.Option (Maybe String) String Cli.Option.BeginningOption
+outputArg =
+    Cli.Option.optionalKeywordArg "output"
+        |> Cli.Option.map (Maybe.withDefault "generated")
+
+
+contractsArg : Cli.Option.Option (List String) (List String) Cli.Option.BeginningOption
+contractsArg =
+    Cli.Option.keywordArgList "contract"
+        |> Cli.Option.validate
+            (Cli.Validate.predicate
+                "I need at least one contract. You can give me a list like this:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
+                (List.isEmpty >> not)
+            )
+        |> Cli.Option.validateMap
+            (List.foldr
+                (\contract context ->
+                    case validateContractName contract of
+                        Ok validContract ->
+                            { context | oks = validContract :: context.oks }
+
+                        Err errorMessage ->
+                            { context | errs = errorMessage :: context.errs }
+                )
+                { errs = []
+                , oks = []
+                }
+                >> (\{ errs, oks } ->
+                        if List.isEmpty errs then
+                            Ok oks
 
                         else
-                            url
-                    )
+                            Err
+                                ("All contract names must be up to 12 characters long, with characters from a-Z, 1-5 and . (except for the last character, which can't be a .). Here are all the errors I found:\n\n"
+                                    ++ (errs
+                                            |> List.map (\err -> "\t- " ++ err)
+                                            |> String.join "\n"
+                                       )
+                                    ++ "\n"
+                                )
+                   )
             )
-        |> Cli.OptionsParser.with
-            (Cli.Option.keywordArgList "contract"
-                |> Cli.Option.validate
-                    (Cli.Validate.predicate
-                        "I need at least one contract. You can give me a list like this:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
-                        (List.isEmpty >> not)
-                    )
-                |> Cli.Option.validateMap
-                    (List.foldr
-                        (\contract context ->
-                            case validateContractName contract of
-                                Ok validContract ->
-                                    { context | oks = validContract :: context.oks }
-
-                                Err errorMessage ->
-                                    { context | errs = errorMessage :: context.errs }
-                        )
-                        { errs = []
-                        , oks = []
-                        }
-                        >> (\{ errs, oks } ->
-                                if List.isEmpty errs then
-                                    Ok oks
-
-                                else
-                                    Err
-                                        ("All contract names must be up to 12 characters long, with characters from a-Z, 1-5 and . (except for the last character, which can't be a .). Here are all the errors I found:\n\n"
-                                            ++ (errs
-                                                    |> List.map (\err -> "\t- " ++ err)
-                                                    |> String.join "\n"
-                                               )
-                                            ++ "\n"
-                                        )
-                           )
-                    )
-            )
-        |> Cli.OptionsParser.withDoc "Get specified contracts from url. For example:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
 
 
 validateContractName : String -> Result String String
@@ -147,6 +161,7 @@ validateContractName contract =
 
 type alias CliOptions =
     { url : String
+    , output : String
     , contracts : List String
     }
 
@@ -178,7 +193,7 @@ type Msg
 
 
 update : CliOptions -> Msg -> Model -> ( Model, Effect )
-update _ msg model =
+update cliOptions msg model =
     case msg of
         GotAbis (Err error) ->
             ( model
@@ -187,8 +202,7 @@ update _ msg model =
 
         GotAbis (Ok abis) ->
             ( model
-            , Generate.files abis
-                |> WriteToFiles
+            , WriteToFiles { output = cliOptions.output, files = Generate.files abis }
             )
 
         FinishedWritingToFiles ->
@@ -241,7 +255,7 @@ type Effect
     = PrintAndExitFailure String
     | PrintAndExitSuccess String
     | FetchContracts { baseUrl : String, contracts : List String }
-    | WriteToFiles (List Elm.File)
+    | WriteToFiles { output : String, files : List Elm.File }
 
 
 effectToCmd : Effect -> Cmd Msg

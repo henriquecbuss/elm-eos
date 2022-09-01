@@ -26,12 +26,13 @@ app.ports.interopFromElm.subscribe((fromElm) => {
     }
     case "writeToFiles": {
       Promise.all(
-        fromElm.data.map(async (file) => {
-          const dirname = path.dirname(file.path);
+        fromElm.data.files.map(async (file) => {
+          const actualPath = path.join(fromElm.data.output, file.path);
+          const dirname = path.dirname(actualPath);
 
           await fs.mkdir(dirname, { recursive: true });
 
-          return fs.writeFile(file.path, file.contents, { flag: "w+" });
+          return fs.writeFile(actualPath, file.contents, { flag: "w+" });
         })
       )
         .then(() => {
