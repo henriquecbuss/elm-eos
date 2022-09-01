@@ -5,3 +5,4 @@ codegen/src/Gen/
 codegen/Gen/
 generated/
 codegen/src/Main.elm.d.ts
+codegen/dist/

@@ -1,12 +1,15 @@
 module Main exposing (CliOptions, Model, Msg, main)
 
+import Abi
 import Cli.Option
 import Cli.OptionsParser
 import Cli.Program
 import Cli.Validate
+import Generate
 import Http
 import InteropDefinitions
 import InteropPorts
+import Json.Decode
 import Json.Encode
 import Task
 
@@ -140,7 +143,32 @@ type alias Model =
 init : InteropDefinitions.Flags -> CliOptions -> ( Model, Cmd Msg )
 init _ cliOptions =
     let
-        fetchContract : String -> Task.Task String String
+        contractDecoder :
+            Json.Decode.Decoder
+                { contract : String
+                , abi : Abi.Abi
+                , baseUrl : String
+                }
+        contractDecoder =
+            Json.Decode.map2
+                (\contract abi ->
+                    { contract = contract
+                    , abi = abi
+                    , baseUrl = cliOptions.url
+                    }
+                )
+                (Json.Decode.field "account_name" Json.Decode.string)
+                (Json.Decode.field "abi" Abi.decoder)
+
+        fetchContract :
+            String
+            ->
+                Task.Task
+                    String
+                    { contract : String
+                    , abi : Abi.Abi
+                    , baseUrl : String
+                    }
         fetchContract contract =
             Http.task
                 { method = "POST"
@@ -152,7 +180,12 @@ init _ cliOptions =
                         (\response ->
                             case response of
                                 Http.GoodStatus_ _ body ->
-                                    Ok body
+                                    case Json.Decode.decodeString contractDecoder body of
+                                        Ok valid ->
+                                            Ok valid
+
+                                        Err error ->
+                                            Err ("Failed to decode response from " ++ cliOptions.url ++ "/get_abi:\n\n\t " ++ Json.Decode.errorToString error ++ "\n")
 
                                 Http.BadStatus_ metadata _ ->
                                     Err
@@ -189,7 +222,16 @@ init _ cliOptions =
 
 
 type Msg
-    = GotAbis (Result String (List String))
+    = GotAbis
+        (Result
+            String
+            (List
+                { baseUrl : String
+                , contract : String
+                , abi : Abi.Abi
+                }
+            )
+        )
 
 
 update : CliOptions -> Msg -> Model -> ( Model, Cmd Msg )
@@ -202,7 +244,14 @@ update _ msg model =
             )
 
         GotAbis (Ok abis) ->
+            let
+                files =
+                    Generate.files abis
+                        |> List.map .path
+                        |> Debug.log "FILES"
+            in
             ( model
-            , InteropDefinitions.WriteAbisToFile { fileName = "abis.json", abis = abis }
-                |> InteropPorts.fromElm
+              -- , InteropDefinitions.WriteAbisToFile { fileName = "abis.json", abis = abis }
+              --     |> InteropPorts.fromElm
+            , Cmd.none
             )
