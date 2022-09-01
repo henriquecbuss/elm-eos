@@ -6,9 +6,11 @@
     "version": "1.0.0",
     "exposed-modules": [
         "Eos.Asset",
+        "Eos.Authorization",
         "Eos.Checksum",
         "Eos.ExtendedAsset",
         "Eos.Name",
+        "Eos.Permission",
         "Eos.PublicKey",
         "Eos.Query",
         "Eos.Signature",
