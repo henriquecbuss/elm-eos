@@ -62,7 +62,7 @@ jobs:
       - name: elm-format
         uses: sparksp/elm-format-action@v1
         with:
-          elm-format: npx elm-format
+          elm_format: npx elm-format
 
       - name: elm-review
         uses: sparksp/elm-review-action@v1.0.4
@@ -73,7 +73,7 @@ jobs:
         uses: sparksp/elm-format-action@v1
         with:
           working-directory: codegen
-          elm-format: npx elm-format
+          elm_format: npx elm-format
 
       - name: codegen elm-review
         uses: sparksp/elm-review-action@v1.0.4
