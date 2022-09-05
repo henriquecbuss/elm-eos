@@ -54,9 +54,7 @@ jobs:
         run: npx --no-install elm-tooling install
 
       - name: elm-tooling install on codegen
-        run: npx --no-install elm-tooling install
-        with:
-          working-directory: codegen
+        run: cd codegen && npx --no-install elm-tooling install
       
       - name: elm-codegen install
         run: npm run generate-helpers
