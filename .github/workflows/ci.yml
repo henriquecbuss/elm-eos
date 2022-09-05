@@ -32,7 +32,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: codegen/node_modules
-          key: node_modules-${{ hashFiles('package-lock.json') }}
+          key: node_modules-${{ hashFiles('codegen/package-lock.json') }}
 
       # Re-use ~/.elm between runs until elm.json, elm-tooling.json or
       # review/elm.json changes. The Elm compiler saves downloaded Elm packages
