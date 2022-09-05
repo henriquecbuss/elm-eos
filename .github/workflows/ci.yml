@@ -60,7 +60,8 @@ jobs:
         run: npm test
 
       - name: elm-format
-        uses: sparksp/elm-format-action@v1
+        # uses: sparksp/elm-format-action@v1
+        run: elm-format
 
       - name: elm-review
         uses: sparksp/elm-review-action@v1.0.4
