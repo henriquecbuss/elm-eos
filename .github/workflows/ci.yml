@@ -76,6 +76,9 @@ jobs:
         with:
           working-directory: codegen
           elm_format: npx elm-format
+          elm_files: |
+            src/**/*.elm
+            !Gen/**/*.elm
 
       - name: codegen elm-review
         uses: sparksp/elm-review-action@v1.0.4
