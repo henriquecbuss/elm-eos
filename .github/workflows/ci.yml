@@ -54,7 +54,7 @@ jobs:
         run: npx --no-install elm-tooling install
       
       - name: elm-codegen install
-        run: npx --no-install elm-codgen install
+        run: npx --no-install elm-codegen install
 
       - name: Tests
         run: npm test
