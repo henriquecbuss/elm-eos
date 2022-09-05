@@ -68,6 +68,7 @@ jobs:
         uses: sparksp/elm-review-action@v1.0.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
           elm_review: npx --no-install elm-review
 
       - name: codegen elm-format
