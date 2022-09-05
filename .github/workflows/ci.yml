@@ -75,7 +75,7 @@ jobs:
         uses: sparksp/elm-format-action@v1
         with:
           working-directory: codegen
-          elm_format: npx elm-format
+          elm_format: npx --no-install elm-format
 
       - name: codegen elm-review
         uses: sparksp/elm-review-action@v1.0.4
