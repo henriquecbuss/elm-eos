@@ -26,6 +26,13 @@ jobs:
         with:
           path: node_modules
           key: node_modules-${{ hashFiles('package-lock.json') }}
+      
+      - name: Cache codegen node_modules
+        id: cache-codegen-node_modules
+        uses: actions/cache@v2
+        with:
+          path: codegen/node_modules
+          key: node_modules-${{ hashFiles('package-lock.json') }}
 
       # Re-use ~/.elm between runs until elm.json, elm-tooling.json or
       # review/elm.json changes. The Elm compiler saves downloaded Elm packages
@@ -40,7 +47,7 @@ jobs:
       # Since `npm ci` removes the node_modules folder before running it’s
       # important to skip this step if cache was restored.
       - name: npm ci
-        # if: steps.cache-node_modules.outputs.cache-hit != 'true'
+        if: steps.cache-node_modules.outputs.cache-hit != 'true' && steps.cache-codegen-node_modules.outputs.cache-hit != 'true'
         env:
           # If you have a `"postinstall": "elm-tooling install"` script in your
           # package.json, this turns it into a no-op. We’ll run it in the next
