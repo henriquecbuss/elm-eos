@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.elm
-          key: elm-${{ hashFiles('elm.json', 'elm-tooling.json', 'codegen/elm.json', 'codegen/elm.codegen.json', 'review/elm.json') }}
+          key: elm-${{ hashFiles('elm.json', 'elm-tooling.json', 'codegen/elm.json', 'codgen/elm-tooling.json', 'codegen/elm.codegen.json', 'review/elm.json') }}
 
       # Install npm packages, unless we restored them from cache.
       # Since `npm ci` removes the node_modules folder before running it’s
@@ -52,6 +52,11 @@ jobs:
 
       - name: elm-tooling install
         run: npx --no-install elm-tooling install
+
+      - name: elm-tooling install on codegen
+        run: npx --no-install elm-tooling install
+        with:
+          working-directory: codegen
       
       - name: elm-codegen install
         run: npm run generate-helpers
@@ -75,7 +80,7 @@ jobs:
         uses: sparksp/elm-format-action@v1
         with:
           working-directory: codegen
-          elm_format: npx --no-install elm-format
+          elm_format: npx elm-format
 
       - name: codegen elm-review
         uses: sparksp/elm-review-action@v1.0.4
