@@ -79,6 +79,7 @@ jobs:
           elm_files: |
             src/**/*.elm
             !Gen/**/*.elm
+          elm_glob: true
 
       - name: codegen elm-review
         uses: sparksp/elm-review-action@v1.0.4
