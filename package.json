@@ -1,6 +1,6 @@
 {
   "name": "@neovier/elm-eos",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
   "main": "codegen/bin/index.js",
   "bin": {
