@@ -48,14 +48,11 @@ jobs:
           # package-lock.json does not, the postinstall script needs running
           # but this step won’t.
           NO_ELM_TOOLING_INSTALL: 1
-        run: npm ci
+        run: npm ci && cd codegen && npm ci
 
       - name: elm-tooling install
-        run: npx --no-install elm-tooling install
+        run: npx --no-install elm-tooling install && cd codegen && npx --no-install elm-tooling install
 
-      - name: elm-tooling install on codegen
-        run: cd codegen && npx --no-install elm-tooling install
-      
       - name: elm-codegen install
         run: npm run generate-helpers
 
