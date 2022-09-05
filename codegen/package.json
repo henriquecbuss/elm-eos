@@ -2,7 +2,7 @@
     "name": "@neovier/elm-eos",
     "version": "1.0.0",
     "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
-    "main": "dist/index.js",
+    "main": "bin/index.js",
     "scripts": {
         "build": "eslint . && NODE_ENV=production tsc --noEmit && NODE_ENV=production ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts",
         "execute": "eslint . && tsc --noEmit && ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts && node dist/index.js",
