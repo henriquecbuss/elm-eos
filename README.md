@@ -176,4 +176,4 @@ Only URL and Contracts are required.
 
 ## Support
 
-If you need any kind of support, feel free to open an issue on GitHub, or ping me @HenriqueBuss on the [Elm Slack](https://elmlang.herokuapp.com/).
+If you need any kind of support, feel free to open an issue on GitHub, or ping me @HenriqueBuss on the [Elm Slack](https://elm-lang.org/community/slack).
