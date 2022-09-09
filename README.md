@@ -126,21 +126,22 @@ a port), or using your preferred method.
 There are a few moving pieces that need to work together in order to use
 `NeoVier/elm-eos`. Here's how to set them up:
 
-1. Add the elm package as a dependency in your `elm.json`, along with `elm/json`:
+1. Add the elm package as a dependency in your `elm.json`, along with `elm/json` and `elm/http`:
    ```bash
    elm install NeoVier/elm-eos
    elm install elm/json
+   elm install elm/http
    ```
 
-2. Install the `@neovier/elm-eos` command line through npm. This is what you will
+2. Install the `elm-eos` command line through npm. This is what you will
    use to generate Elm code for the EOSIO API. You can save it as a dev dependency
    to ensure everyone on your team has access to the same version:
    ```bash
    # With npm
-   npm install --save-dev @neovier/elm-eos
+   npm install --save-dev elm-eos
 
    # With yarn
-   yarn add --dev @neovier/elm-eos
+   yarn add --dev elm-eos
    ```
 
 3. Run the CLI tool to generate the Elm code for your contracts. If you installed
