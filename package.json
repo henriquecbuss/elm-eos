@@ -9,7 +9,7 @@
   "scripts": {
     "test": "elm-verify-examples && elm-test-rs && cd codegen && elm-test-rs",
     "generate-helpers": "rm -rf codegen/src/Gen && elm-codegen install && mv codegen/Gen codegen/src/Gen",
-    "post-install": "elm-tooling install"
+    "postinstall": "elm-tooling install"
   },
   "keywords": [
     "elm",

@@ -10,7 +10,7 @@ them.
 
 This package mainly servers to translate EOSIO types to Elm types. There is a
 [CLI app](#cli) that is responsible for generating code specific to the contracts
-you need. The expection to that is the [Eos.Query](Eos-Query) module, which is
+you need. The expection to that is the [Eos.Query](https://package.elm-lang.org/packages/NeoVier/elm-eos/1.0.0/Eos-Query) module, which is
 used to send queries to the blockchain.
 
 For example, let's say you have a contract named `company.acc`, with an `accounts`

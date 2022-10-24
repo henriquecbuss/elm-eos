@@ -13,11 +13,12 @@ jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js 15
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 16
+        uses: actions/setup-node@v3
         with:
-          node-version: 15
+          node-version: 16
 
       # Re-use node_modules between runs until package-lock.json changes.
       - name: Cache node_modules
@@ -26,6 +27,13 @@ jobs:
         with:
           path: node_modules
           key: node_modules-${{ hashFiles('package-lock.json') }}
+      
+      - name: Cache codegen node_modules
+        id: cache-codegen-node_modules
+        uses: actions/cache@v2
+        with:
+          path: codegen/node_modules
+          key: node_modules-${{ hashFiles('codegen/package-lock.json') }}
 
       # Re-use ~/.elm between runs until elm.json, elm-tooling.json or
       # review/elm.json changes. The Elm compiler saves downloaded Elm packages
@@ -34,13 +42,13 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.elm
-          key: elm-${{ hashFiles('elm.json', 'elm-tooling.json', 'codegen/elm.json', 'codegen/elm.codegen.json', 'review/elm.json') }}
+          key: elm-${{ hashFiles('elm.json', 'elm-tooling.json', 'codegen/elm.json', 'codegen/elm-tooling.json', 'codegen/elm.codegen.json', 'review/elm.json') }}
 
       # Install npm packages, unless we restored them from cache.
       # Since `npm ci` removes the node_modules folder before running it’s
       # important to skip this step if cache was restored.
       - name: npm ci
-        if: steps.cache-node_modules.outputs.cache-hit != 'true'
+        if: steps.cache-node_modules.outputs.cache-hit != 'true' && steps.cache-codegen-node_modules.outputs.cache-hit != 'true'
         env:
           # If you have a `"postinstall": "elm-tooling install"` script in your
           # package.json, this turns it into a no-op. We’ll run it in the next
@@ -48,29 +56,38 @@ jobs:
           # package-lock.json does not, the postinstall script needs running
           # but this step won’t.
           NO_ELM_TOOLING_INSTALL: 1
-        run: npm ci
+        run: npm ci && cd codegen && npm ci
 
       - name: elm-tooling install
-        run: npx --no-install elm-tooling install
-      
+        run: npx --no-install elm-tooling install && cd codegen && npx --no-install elm-tooling install
+
       - name: elm-codegen install
-        run: npx --no-install elm-codgen install
+        run: npm run generate-helpers
 
       - name: Tests
         run: npm test
 
       - name: elm-format
         uses: sparksp/elm-format-action@v1
+        with:
+          elm_format: npx elm-format
 
       - name: elm-review
         uses: sparksp/elm-review-action@v1.0.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          elm_review: npx --no-install elm-review
 
       - name: codegen elm-format
         uses: sparksp/elm-format-action@v1
         with:
           working-directory: codegen
+          elm_format: npx elm-format
+          elm_files: |
+            src/**/*.elm
+            !Gen/**/*.elm
+          elm_glob: true
 
       - name: codegen elm-review
         uses: sparksp/elm-review-action@v1.0.4
@@ -78,6 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           working-directory: codegen
+          elm_review: npx --no-install elm-review
 
       - name: Build elm docs
         id: docs
