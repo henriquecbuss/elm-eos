@@ -17,14 +17,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NeoVier/elm-eos.git"
+    "url": "git+https://github.com/henriquecbuss/elm-eos.git"
   },
   "author": "Henrique da Cunha Buss",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/NeoVier/elm-eos/issues"
+    "url": "https://github.com/henriquecbuss/elm-eos/issues"
   },
-  "homepage": "https://github.com/NeoVier/elm-eos#readme",
+  "homepage": "https://github.com/henriquecbuss/elm-eos#readme",
   "devDependencies": {
     "elm-codegen": "^0.1.3",
     "elm-review": "^2.7.3",

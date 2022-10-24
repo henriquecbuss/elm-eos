@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Elm } from "./Main.elm";
 import { version } from "../package.json";
 import fs from "fs/promises";
