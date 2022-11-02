@@ -1,0 +1,6 @@
+{
+  "name": "member-fetching",
+  "scripts": {
+    "generate": "../../codegen/bin/elm-eos https://staging.cambiatus.io/v1/chain --contract cambiatus.cm --contract cambiatus.tk --output generated"
+  }
+}

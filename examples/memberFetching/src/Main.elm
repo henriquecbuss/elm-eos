@@ -2,7 +2,8 @@ module Main exposing (main)
 
 {-| We depend on a `generated` folder, which is gitignored. In order to generate
 it, use the CLI to generate the Elm code from the `cambiatus.cm` and
-`cambiatus.tk` contracts, from `https://staging.cambiatus.io/v1/chain`
+`cambiatus.tk` contracts, from `https://staging.cambiatus.io/v1/chain`. You can
+use `npm run generate` to do that.
 -}
 
 import AssocList as Dict exposing (Dict)
