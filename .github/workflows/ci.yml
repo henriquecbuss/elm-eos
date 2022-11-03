@@ -102,13 +102,19 @@ jobs:
         continue-on-error: true
         run: npx --no-install elm make --docs docs.json
 
+      - name: Generate TS Interop bindings in codegen/
+        run: npm run generate-ts-interop
+        working-directory: codegen
+
+      - name: Build codegen/
+        run: npm run build
+        working-directory: codegen
+
       # - name: Elm Publish
       #   uses: dillonkearns/elm-publish-action@v1
       #   with:
       #     github-token: ${{ secrets.GITHUB_TOKEN }}
       #     path-to-elm: ./node_modules/.bin/elm
-
-      - run: npm run build
 
       # - id: npm-publish
       #   if: github.ref == 'refs/heads/master'
