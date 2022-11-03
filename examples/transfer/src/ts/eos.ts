@@ -9,6 +9,14 @@ const endpoint = "https://staging.cambiatus.io";
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 const rpc = new eosjs_jsonrpc.JsonRpc(endpoint);
 
+const initialize = () => {
+  const privateKey = getPrivateKey();
+
+  if (privateKey !== null) {
+    login(privateKey);
+  }
+};
+
 const getPrivateKey = (): string | null => {
   return localStorage.getItem("privateKey");
 };
@@ -41,7 +49,7 @@ const transact = (
     blocksBehind: number;
     expireSeconds: number;
   }
-): Promise<void> => {
+): Promise<{ transaction_id: string }> => {
   if (api === null) {
     throw new Error("Api not initialized. Use `login` first");
   }
@@ -51,6 +59,8 @@ const transact = (
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
   return api.transact({ actions }, options);
 };
+
+initialize();
 
 export const eos = {
   login,
