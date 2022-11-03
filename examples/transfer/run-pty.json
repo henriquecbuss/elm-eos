@@ -1,0 +1,83 @@
+[
+  {
+    "command": ["npx", "elm-watch", "hot"],
+    "title": "elm-watch",
+    "status": {
+      "⏳": ["⏳", "W"],
+      "🚨": ["🚨", "E"],
+      "✅": ["🟢", "+"]
+    },
+    "defaultStatus": ["⏳", "W"]
+  },
+  {
+    "command": ["npm", "run", "build:esbuild", "--", "--watch"],
+    "title": "esbuild",
+    "status": {
+      "ERROR": ["🚨", "E"],
+      "200": null,
+      "build finished": ["🟢", "+"]
+    },
+    "defaultStatus": ["⏳", "W"]
+  },
+  {
+    "command": [
+      "npx",
+      "live-server",
+      "public",
+      "--port=3000",
+      "--entry-file=index.html"
+    ],
+    "title": "serve public"
+  },
+  {
+    "command": ["npm", "run", "generate:ts-interop", "--", "--watch"],
+    "title": "elm-ts-interop",
+    "status": {
+      "Detected problems": ["🚨", "E"],
+      "✅": ["🟢", "+"]
+    },
+    "defaultStatus": ["⏳", "W"]
+  },
+  {
+    "command": ["npx", "elm-review", "--watch"],
+    "title": "elm-review",
+    "status": {
+      "I found no errors!": ["🟢", "+"],
+      "ELM-REVIEW ERROR": ["🚨", "E"]
+    },
+    "defaultStatus": ["⏳", "W"]
+  },
+  {
+    "command": ["npx", "tsc", "--noEmit", "--watch"],
+    "title": "tsc",
+    "status": {
+      "error TS": ["🚨", "E"],
+      "Found 0 errors. Watching for file changes.": ["🟢", "+"]
+    },
+    "defaultStatus": ["⏳", "W"]
+  },
+  {
+    "command": ["npx", "elm-spa", "watch"],
+    "title": "elm-spa",
+    "status": {
+      "elm-spa generated new files.": ["🟢", "+"]
+    },
+    "defaultStatus": ["⏳", "W"]
+  },
+  {
+    "command": [
+      "npx",
+      "tailwindcss",
+      "-i",
+      "./src/css/index.css",
+      "-o",
+      "./public/build/index.css",
+      "--watch"
+    ],
+    "title": "tailwindcss",
+    "status": {
+      "Done in": ["🟢", "+"]
+    },
+    "defaultStatus": ["⏳", "W"]
+  }
+]

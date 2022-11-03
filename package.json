@@ -2,14 +2,14 @@
   "name": "elm-eos",
   "version": "1.0.0",
   "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
-  "main": "codegen/bin/index.js",
   "bin": {
     "elm-eos": "codegen/bin/index.js"
   },
   "scripts": {
     "test": "elm-verify-examples && elm-test-rs && cd codegen && elm-test-rs",
     "generate-helpers": "rm -rf codegen/src/Gen && elm-codegen install && mv codegen/Gen codegen/src/Gen",
-    "postinstall": "elm-tooling install"
+    "postinstall": "elm-tooling install",
+    "build": "cd codegen && npm run build"
   },
   "keywords": [
     "elm",
@@ -17,14 +17,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NeoVier/elm-eos.git"
+    "url": "git+https://github.com/henriquecbuss/elm-eos.git"
   },
   "author": "Henrique da Cunha Buss",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/NeoVier/elm-eos/issues"
+    "url": "https://github.com/henriquecbuss/elm-eos/issues"
   },
-  "homepage": "https://github.com/NeoVier/elm-eos#readme",
+  "homepage": "https://github.com/henriquecbuss/elm-eos#readme",
   "devDependencies": {
     "elm-codegen": "^0.1.3",
     "elm-review": "^2.7.3",

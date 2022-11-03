@@ -236,7 +236,7 @@ update cliOptions msg model =
             , "I got a weird internal error, when trying to decode something from a port:\n\n\t"
                 ++ Json.Decode.errorToString error
                 ++ "\n\n"
-                ++ "If you're up for it, please open an issue with the error message above, on this URL: https://github.com/NeoVier/elm-eos/issues.\n"
+                ++ "If you're up for it, please open an issue with the error message above, on this URL: https://github.com/henriquecbuss/elm-eos/issues.\n"
                 |> PrintAndExitFailure
             )
 

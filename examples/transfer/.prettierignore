@@ -1,0 +1,7 @@
+public/build
+public/dist-web
+elm-stuff
+generated
+elm.json
+elm-tooling.json
+*/**.css
