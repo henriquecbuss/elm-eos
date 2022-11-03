@@ -263,6 +263,16 @@ mapVerifyClaim fn model =
     { model | verifyClaim = fn model.verifyClaim }
 
 
+parseSymbol : { model_ | symbolCode : String, symbolPrecision : String } -> Maybe Eos.Symbol.Symbol
+parseSymbol model =
+    String.toInt model.symbolPrecision
+        |> Maybe.andThen
+            (\precision ->
+                Eos.Symbol.fromPrecisionAndCodeString precision model.symbolCode
+                    |> Result.toMaybe
+            )
+
+
 parseTransfer : Transfer -> Maybe Cambiatus.Tk.Action.Action
 parseTransfer transfer =
     let
@@ -316,18 +326,10 @@ parseVerifyClaim verifyClaim =
         )
         (parseSymbol verifyClaim)
         (String.toInt verifyClaim.claimId)
-        (Eos.Name.fromString verifyClaim.verifier |> Result.toMaybe)
+        (Eos.Name.fromString verifyClaim.verifier
+            |> Result.toMaybe
+        )
         (parseVote verifyClaim.vote)
-
-
-parseSymbol : { model_ | symbolCode : String, symbolPrecision : String } -> Maybe Eos.Symbol.Symbol
-parseSymbol model =
-    String.toInt model.symbolPrecision
-        |> Maybe.andThen
-            (\precision ->
-                Eos.Symbol.fromPrecisionAndCodeString precision model.symbolCode
-                    |> Result.toMaybe
-            )
 
 
 
@@ -356,6 +358,37 @@ view _ model =
             ]
         ]
     }
+
+
+viewInput :
+    { label : String
+    , onInput : String -> msg
+    , type_ : InputType
+    , value : String
+    }
+    -> Html.Html msg
+viewInput { label, onInput, type_, value } =
+    Html.label [ class "border rounded flex relative h-10" ]
+        [ Html.span [ class "absolute w-40 px-4 bg-slate-700 text-white -left-px -inset-y-px text-center flex items-center justify-center rounded-l" ]
+            [ Html.text label ]
+        , Html.input
+            [ class "w-full rounded py-2 pl-44 pr-2"
+            , inputTypeToAttribute type_
+            , Attr.value value
+            , Html.Events.onInput onInput
+            ]
+            []
+        ]
+
+
+inputTypeToAttribute : InputType -> Html.Attribute msg_
+inputTypeToAttribute inputType =
+    case inputType of
+        Text ->
+            Attr.type_ "text"
+
+        Number ->
+            Attr.type_ "number"
 
 
 viewTransfer : Transfer -> Html.Html Msg
@@ -460,27 +493,6 @@ viewVerifyClaim verifyClaim =
         ]
 
 
-viewInput :
-    { label : String
-    , onInput : String -> msg
-    , type_ : InputType
-    , value : String
-    }
-    -> Html.Html msg
-viewInput { label, onInput, type_, value } =
-    Html.label [ class "border rounded flex relative h-10" ]
-        [ Html.span [ class "absolute w-40 px-4 bg-slate-700 text-white -left-px -inset-y-px text-center flex items-center justify-center rounded-l" ]
-            [ Html.text label ]
-        , Html.input
-            [ class "w-full rounded py-2 pl-44 pr-2"
-            , inputTypeToAttribute type_
-            , Attr.value value
-            , Html.Events.onInput onInput
-            ]
-            []
-        ]
-
-
 viewSelectInput :
     { label : String
     , options : Dict String String
@@ -520,16 +532,6 @@ viewSelectInput { label, options, value } =
         ]
 
 
-inputTypeToAttribute : InputType -> Html.Attribute msg_
-inputTypeToAttribute inputType =
-    case inputType of
-        Text ->
-            Attr.type_ "text"
-
-        Number ->
-            Attr.type_ "number"
-
-
 
 -- PORT SUBSCRIPTION
 
@@ -544,8 +546,3 @@ toElmSubscription _ =
 type InputType
     = Text
     | Number
-
-
-type ClaimVote
-    = Approve
-    | Deny
