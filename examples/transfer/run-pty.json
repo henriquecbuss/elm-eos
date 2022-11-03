@@ -39,24 +39,6 @@
     "defaultStatus": ["⏳", "W"]
   },
   {
-    "command": ["npx", "elm-test-rs", "--watch"],
-    "title": "elm-test-rs",
-    "status": {
-      "TEST RUN FAILED": ["🚨", "E"],
-      "TEST RUN PASSED": ["🟢", "+"]
-    },
-    "defaultStatus": ["⏳", "W"]
-  },
-  {
-    "command": ["npx", "vitest"],
-    "title": "vitest",
-    "status": {
-      "FAIL": ["🚨", "E"],
-      "Waiting for file changes...": ["🟢", "+"]
-    },
-    "defaultStatus": ["⏳", "W"]
-  },
-  {
     "command": ["npx", "elm-review", "--watch"],
     "title": "elm-review",
     "status": {

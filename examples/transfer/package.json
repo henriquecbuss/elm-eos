@@ -16,12 +16,9 @@
     "generate:custom-elements": "ts-node scripts/generateCustomElements.ts",
     "generate:eos": "../../codegen/bin/elm-eos https://staging.cambiatus.io/v1/chain --contract cambiatus.cm --contract cambiatus.tk --output generated",
     "lint": "npm run lint:elm && npm run lint:ts && npm run lint:css",
-    "lint:elm": "elm-format --validate ./src ./tests && elm-review",
+    "lint:elm": "elm-format --validate ./src && elm-review",
     "lint:ts": "tsc --noEmit && eslint . && prettier --check .",
-    "lint:css": "stylelint src/**/*.css",
-    "test": "npm run test:elm && npm run test:ts",
-    "test:ts": "vitest run",
-    "test:elm": "elm-test-rs"
+    "lint:css": "stylelint src/**/*.css"
   },
   "keywords": [],
   "author": "henriquecbuss",
@@ -45,8 +42,7 @@
     "stylelint-config-standard": "^29.0.0",
     "tailwindcss": "^3.2.1",
     "ts-node": "^10.9.1",
-    "uglify-js": "^3.17.4",
-    "vitest": "^0.24.3"
+    "uglify-js": "^3.17.4"
   },
   "dependencies": {
     "@formkit/auto-animate": "^1.0.0-beta.3",
