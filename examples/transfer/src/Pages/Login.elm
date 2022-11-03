@@ -114,7 +114,7 @@ view model =
     , body =
         [ Html.div [ class "bg-slate-100 h-full flex items-center px-4" ]
             [ Html.form
-                [ class "w-full md:max-w-lg mx-auto px-4 pb-4 pt-4 bg-white rounded-lg shadow"
+                [ class "w-full max-w-lg mx-auto p-4 bg-white rounded-lg shadow"
                 , Html.Events.onSubmit ClickedLogin
                 ]
                 [ Html.h1 [ class "text-3xl font-bold" ]
