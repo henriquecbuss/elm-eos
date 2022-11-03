@@ -1,31 +1,13 @@
 import { defineCustomElements } from "../../generated/customElements";
+import { eos } from "./eos";
 
 const run = () => {
   defineCustomElements();
 
-  const defaultPrivateKey = "";
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  const signatureProvider = new eosjs_jssig.JsSignatureProvider([
-    defaultPrivateKey,
-  ]);
-
-  const defaultEndpoint = "https://staging.cambiatus.io";
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  const rpc = new eosjs_jsonrpc.JsonRpc(defaultEndpoint);
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  const api = new eosjs_api.Api({ rpc, signatureProvider });
-
   const app = window.Elm.Main.init({
-    flags: {},
+    flags: {
+      privateKey: localStorage.getItem("privateKey"),
+    },
   });
 
   app.ports.interopFromElm.subscribe(({ tag, data }) => {
@@ -45,14 +27,23 @@ const run = () => {
         break;
       }
 
+      case "login": {
+        const { privateKey } = data;
+        eos.login(privateKey);
+
+        app.ports.interopToElm.send({ tag: "loggedIn", privateKey });
+
+        // We shouldn't do this in production!!
+        localStorage.setItem("privateKey", privateKey);
+
+        break;
+      }
+
       case "transfer": {
         console.log("transferring", data.actions);
         void (async () => {
           try {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-            const result = await api.transact(
+            const result = await eos.transact(
               { actions: [data.actions] },
               {
                 blocksBehind: 3,
@@ -60,7 +51,7 @@ const run = () => {
               }
             );
 
-            console.dir(result);
+            console.log(result);
           } catch (err) {
             console.error(err);
           }

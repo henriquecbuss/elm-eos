@@ -20,7 +20,8 @@ import TsJson.Encode as TsEncode exposing (Encoder, required)
 {-| The initial flags that we receive from Typescript
 -}
 type alias Flags =
-    {}
+    { privateKey : Maybe String
+    }
 
 
 {-| Messages that we can send from Elm to Typescript
@@ -28,6 +29,7 @@ type alias Flags =
 type FromElm
     = Alert String
     | ScrollTo { querySelector : String }
+    | Login { privateKey : String }
     | Transfer { encodedAction : Encode.Value }
 
 
@@ -35,6 +37,7 @@ type FromElm
 -}
 type ToElm
     = Alerted
+    | LoggedIn { privateKey : String }
 
 
 {-| This is what elm-ts-interop uses to figure out what to do with our app
@@ -54,13 +57,16 @@ interop =
 fromElm : Encoder FromElm
 fromElm =
     TsEncode.union
-        (\vAlert vScrollTo vTransfer value ->
+        (\vAlert vScrollTo vLogin vTransfer value ->
             case value of
                 Alert string ->
                     vAlert string
 
                 ScrollTo querySelector ->
                     vScrollTo querySelector
+
+                Login privateKey ->
+                    vLogin privateKey
 
                 Transfer encodedAction ->
                     vTransfer encodedAction
@@ -69,6 +75,8 @@ fromElm =
             (TsEncode.object [ required "message" identity TsEncode.string ])
         |> TsEncode.variantTagged "scrollTo"
             (TsEncode.object [ required "querySelector" .querySelector TsEncode.string ])
+        |> TsEncode.variantTagged "login"
+            (TsEncode.object [ required "privateKey" .privateKey TsEncode.string ])
         |> TsEncode.variantTagged "transfer"
             (TsEncode.object [ required "actions" .encodedAction TsEncode.value ])
         |> TsEncode.buildUnion
@@ -80,9 +88,14 @@ toElm =
         [ ( "alerted"
           , TsDecode.succeed Alerted
           )
+        , ( "loggedIn"
+          , TsDecode.map (\privateKey -> LoggedIn { privateKey = privateKey })
+                (TsDecode.field "privateKey" TsDecode.string)
+          )
         ]
 
 
 flags : Decoder Flags
 flags =
-    TsDecode.succeed {}
+    TsDecode.map (\privateKey -> { privateKey = privateKey })
+        (TsDecode.optionalNullableField "privateKey" TsDecode.string)

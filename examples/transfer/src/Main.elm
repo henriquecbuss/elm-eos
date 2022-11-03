@@ -19,6 +19,7 @@ import InteropDefinitions
 import InteropPorts
 import Json.Decode as Decode
 import Pages.Home_
+import Pages.Login
 import Request
 import Shared
 import Task
@@ -232,6 +233,10 @@ toElmSubscription page toElm =
         Gen.Model.Home_ _ _ ->
             Pages.Home_.toElmSubscription toElm
                 |> Maybe.map Gen.Msg.Home_
+
+        Gen.Model.Login _ _ ->
+            Pages.Login.toElmSubscription toElm
+                |> Maybe.map Gen.Msg.Login
 
         Gen.Model.NotFound _ ->
             Nothing

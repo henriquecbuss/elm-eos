@@ -52,12 +52,14 @@ type Msg
 -}
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
 page shared _ =
-    Page.advanced
-        { init = init
-        , update = update
-        , view = view shared
-        , subscriptions = \_ -> Sub.none
-        }
+    Page.protected.advanced
+        (\user ->
+            { init = init
+            , update = update
+            , view = view shared
+            , subscriptions = \_ -> Sub.none
+            }
+        )
 
 
 

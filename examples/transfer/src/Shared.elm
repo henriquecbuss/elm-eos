@@ -18,6 +18,7 @@ should live.
 
 -}
 
+import Gen.Route
 import InteropDefinitions
 import Request exposing (Request)
 
@@ -25,7 +26,8 @@ import Request exposing (Request)
 {-| The shared model. Pages have access to this.
 -}
 type alias Model =
-    {}
+    { user : Maybe { privateKey : String }
+    }
 
 
 {-| Everything the Shared module can do. Other pages have read access to this.
@@ -33,27 +35,43 @@ You should expose functions to construct Msgs if you want to use them in other
 modules.
 -}
 type Msg
-    = NoOp
+    = LoggedIn { privateKey : String }
 
 
 {-| Initialize the shared module
 -}
 init : Request -> InteropDefinitions.Flags -> ( Model, Cmd Msg )
-init _ _ =
-    ( {}, Cmd.none )
+init _ flags =
+    case flags.privateKey of
+        Nothing ->
+            ( { user = Nothing }
+            , Cmd.none
+            )
+
+        Just privateKey ->
+            ( { user = Just { privateKey = privateKey } }
+            , Cmd.none
+            )
 
 
 {-| Update the shared module
 -}
 update : Request -> Msg -> Model -> ( Model, Cmd Msg )
-update _ msg model =
+update req msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
+        LoggedIn { privateKey } ->
+            ( { model | user = Just { privateKey = privateKey } }
+            , Request.pushRoute Gen.Route.Home_ req
+            )
 
 
 {-| Receive values from Typescript
 -}
 toElmSubscriptions : InteropDefinitions.ToElm -> Maybe Msg
-toElmSubscriptions _ =
-    Nothing
+toElmSubscriptions toElm =
+    case toElm of
+        InteropDefinitions.LoggedIn privateKey ->
+            Just (LoggedIn privateKey)
+
+        _ ->
+            Nothing
