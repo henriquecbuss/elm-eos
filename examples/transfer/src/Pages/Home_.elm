@@ -1,11 +1,11 @@
 module Pages.Home_ exposing
-    ( Model, Msg, page
+    ( Model, Transfer, Msg, page
     , toElmSubscription
     )
 
 {-| Home\_
 
-@docs Model, Msg, page
+@docs Model, Transfer, Msg, page
 
 @docs toElmSubscription
 
@@ -19,7 +19,7 @@ import Eos.Permission
 import Eos.Symbol
 import Gen.Params.Home_ exposing (Params)
 import Html
-import Html.Attributes exposing (class)
+import Html.Attributes as Attr exposing (class)
 import Html.Events
 import InteropDefinitions
 import InteropPorts
@@ -36,6 +36,8 @@ type alias Model =
     }
 
 
+{-| A record to hold values from the `Transfer` transaction card
+-}
 type alias Transfer =
     { from : String
     , to : String
@@ -64,7 +66,7 @@ type Msg
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
 page shared _ =
     Page.protected.advanced
-        (\user ->
+        (\_ ->
             { init = init
             , update = update
             , view = view shared
@@ -104,8 +106,7 @@ update msg model =
     case msg of
         ClickedLogout ->
             ( model
-            , InteropDefinitions.Logout
-                |> InteropPorts.fromElm
+            , InteropPorts.fromElm InteropDefinitions.Logout
                 |> Effect.fromCmd
             )
 
@@ -141,18 +142,18 @@ update msg model =
 
         ClickedTransfer ->
             case
-                Maybe.map2 Tuple.pair
-                    (parseTransfer model.transfer)
-                    (Result.toMaybe (Eos.Name.fromString model.transfer.from))
+                Eos.Name.fromString model.transfer.from
+                    |> Result.toMaybe
+                    |> Maybe.map2 Tuple.pair (parseTransfer model.transfer)
             of
                 Just ( transfer, actor ) ->
                     ( model
-                    , transfer
-                        |> Cambiatus.Tk.Action.encode
-                            [ { actor = actor
-                              , permission = Eos.Permission.Active
-                              }
-                            ]
+                    , Cambiatus.Tk.Action.encode
+                        [ { actor = actor
+                          , permission = Eos.Permission.Active
+                          }
+                        ]
+                        transfer
                         |> (\encodedAction ->
                                 InteropDefinitions.Transfer
                                     { encodedAction = encodedAction }
@@ -175,18 +176,18 @@ parseTransfer transfer =
     let
         parseQuantity : Maybe Eos.Asset.Asset
         parseQuantity =
-            Maybe.map2 Eos.Asset.Asset
+            Maybe.map2 (\amount symbol -> { amount = amount, symbol = symbol })
                 (String.toFloat transfer.amount)
                 parseSymbol
 
         parseSymbol : Maybe Eos.Symbol.Symbol
         parseSymbol =
-            Maybe.andThen
-                (\precision ->
-                    Eos.Symbol.fromPrecisionAndCodeString precision transfer.symbolCode
-                        |> Result.toMaybe
-                )
-                (String.toInt transfer.symbolPrecision)
+            String.toInt transfer.symbolPrecision
+                |> Maybe.andThen
+                    (\precision ->
+                        Eos.Symbol.fromPrecisionAndCodeString precision transfer.symbolCode
+                            |> Result.toMaybe
+                    )
     in
     Maybe.map3
         (\from to quantity ->
@@ -197,8 +198,12 @@ parseTransfer transfer =
                 , memo = transfer.memo
                 }
         )
-        (Eos.Name.fromString transfer.from |> Result.toMaybe)
-        (Eos.Name.fromString transfer.to |> Result.toMaybe)
+        (Eos.Name.fromString transfer.from
+            |> Result.toMaybe
+        )
+        (Eos.Name.fromString transfer.to
+            |> Result.toMaybe
+        )
         parseQuantity
 
 
@@ -208,11 +213,6 @@ parseTransfer transfer =
 
 view : Shared.Model -> Model -> View Msg
 view _ model =
-    let
-        inputClass : Html.Attribute msg
-        inputClass =
-            class "border"
-    in
     { title = "elm-watch starter"
     , body =
         [ Html.header [ class "w-full py-2 bg-slate-700 text-white" ]
@@ -236,39 +236,39 @@ view _ model =
                         , Html.div [ class "flex flex-col gap-2 mt-4" ]
                             [ viewInput
                                 { label = "From"
-                                , value = model.transfer.from
                                 , onInput = EnteredTransferFrom
                                 , type_ = Text
+                                , value = model.transfer.from
                                 }
                             , viewInput
                                 { label = "To"
-                                , value = model.transfer.to
                                 , onInput = EnteredTransferTo
                                 , type_ = Text
+                                , value = model.transfer.to
                                 }
                             , viewInput
                                 { label = "Amount"
-                                , value = model.transfer.amount
                                 , onInput = EnteredTransferAmount
                                 , type_ = Number
+                                , value = model.transfer.amount
                                 }
                             , viewInput
                                 { label = "Symbol Precision"
-                                , value = model.transfer.symbolPrecision
                                 , onInput = EnteredTransferSymbolPrecision
                                 , type_ = Number
+                                , value = model.transfer.symbolPrecision
                                 }
                             , viewInput
                                 { label = "Symbol Code"
-                                , value = model.transfer.symbolCode
                                 , onInput = EnteredTransferSymbolCode
                                 , type_ = Text
+                                , value = model.transfer.symbolCode
                                 }
                             , viewInput
                                 { label = "Memo"
-                                , value = model.transfer.memo
                                 , onInput = EnteredTransferMemo
                                 , type_ = Text
+                                , value = model.transfer.memo
                                 }
                             ]
                         , Html.button [ class "w-full rounded mt-6 bg-orange-400 text-white py-2 px-4 hover:bg-orange-300 active:bg-orange-500" ] [ Html.text "Transfer" ]
@@ -280,40 +280,35 @@ view _ model =
     }
 
 
-type InputType
-    = Text
-    | Number
-
-
 viewInput :
     { label : String
-    , value : String
     , onInput : String -> msg
     , type_ : InputType
+    , value : String
     }
     -> Html.Html msg
-viewInput { label, value, onInput, type_ } =
+viewInput { label, onInput, type_, value } =
     Html.label [ class "border rounded flex relative" ]
         [ Html.span [ class "absolute w-40 px-4 bg-slate-700 text-white -left-px -inset-y-px text-center flex items-center justify-center rounded-l" ]
             [ Html.text label ]
         , Html.input
             [ class "w-full rounded py-2 pl-44 pr-2"
             , inputTypeToAttribute type_
-            , Html.Attributes.value value
+            , Attr.value value
             , Html.Events.onInput onInput
             ]
             []
         ]
 
 
-inputTypeToAttribute : InputType -> Html.Attribute msg
+inputTypeToAttribute : InputType -> Html.Attribute msg_
 inputTypeToAttribute inputType =
     case inputType of
         Text ->
-            Html.Attributes.type_ "text"
+            Attr.type_ "text"
 
         Number ->
-            Html.Attributes.type_ "number"
+            Attr.type_ "number"
 
 
 
@@ -325,3 +320,8 @@ inputTypeToAttribute inputType =
 toElmSubscription : InteropDefinitions.ToElm -> Maybe Msg
 toElmSubscription _ =
     Nothing
+
+
+type InputType
+    = Text
+    | Number

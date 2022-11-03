@@ -44,13 +44,13 @@ type Msg
 init : Request -> InteropDefinitions.Flags -> ( Model, Cmd Msg )
 init _ flags =
     case flags.privateKey of
-        Nothing ->
-            ( { user = Nothing }
+        Just privateKey ->
+            ( { user = Just { privateKey = privateKey } }
             , Cmd.none
             )
 
-        Just privateKey ->
-            ( { user = Just { privateKey = privateKey } }
+        Nothing ->
+            ( { user = Nothing }
             , Cmd.none
             )
 

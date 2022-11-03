@@ -15,7 +15,7 @@ import Effect exposing (Effect)
 import Gen.Params.Login exposing (Params)
 import Gen.Route
 import Html
-import Html.Attributes exposing (class)
+import Html.Attributes as Attr exposing (class)
 import Html.Events
 import Html.Extra as HtmlX
 import InteropDefinitions
@@ -23,7 +23,6 @@ import InteropPorts
 import Page
 import Request
 import Shared
-import Ui.AutoAnimate
 import View exposing (View)
 
 
@@ -64,12 +63,12 @@ init shared req =
       , privateKeyError = Nothing
       }
     , case shared.user of
-        Nothing ->
-            Effect.none
-
         Just _ ->
             Request.pushRoute Gen.Route.Home_ req
                 |> Effect.fromCmd
+
+        Nothing ->
+            Effect.none
     )
 
 
@@ -124,7 +123,7 @@ view model =
                     [ Html.text "Private Key (base 58)"
                     , Html.input
                         [ class "border rounded px-2 py-1 mt-1"
-                        , Html.Attributes.value model.privateKey
+                        , Attr.value model.privateKey
                         , Html.Events.onInput EnteredPrivateKey
                         ]
                         []
