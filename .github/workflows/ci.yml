@@ -110,30 +110,8 @@ jobs:
         run: npm run build
         working-directory: codegen
 
-      # - name: Elm Publish
-      #   uses: dillonkearns/elm-publish-action@v1
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     path-to-elm: ./node_modules/.bin/elm
-
-      # - id: npm-publish
-      #   if: github.ref == 'refs/heads/master'
-      #   uses: JS-DevTools/npm-publish@v1
-      #   with:
-      #     token: ${{ secrets.NPM_TOKEN }}
-
-  transfer-example-ci:
-    needs: ci
-
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: examples/transfer
-
-    steps:
       # Re-use node_modules between runs until package.json or package-lock.json changes.
-      - name: Cache node_modules
+      - name: Cache  transfer example node_modules
         id: cache-transfer-example-node_modules
         uses: actions/cache@v3
         with:
@@ -150,6 +128,7 @@ jobs:
           # but this step won’t.
           NO_ELM_TOOLING_INSTALL: 1
         run: npm ci
+        working-directory: examples/transfer
 
       # Install tools from elm-tooling.json, unless we restored them from
       # cache. package-lock.json and elm-tooling.json can change independently,
@@ -160,12 +139,28 @@ jobs:
       # skipping the step doesn’t save much time.
       - name: elm-tooling install
         run: npx elm-tooling install
+        working-directory: examples/transfer
 
       - name: Generate
         run: npm run generate
+        working-directory: examples/transfer
 
       - name: Build
         run: npm run build
+        working-directory: examples/transfer
 
       - name: Lint
         run: npm run lint
+        working-directory: examples/transfer
+
+      # - name: Elm Publish
+      #   uses: dillonkearns/elm-publish-action@v1
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     path-to-elm: ./node_modules/.bin/elm
+
+      # - id: npm-publish
+      #   if: github.ref == 'refs/heads/master'
+      #   uses: JS-DevTools/npm-publish@v1
+      #   with:
+      #     token: ${{ secrets.NPM_TOKEN }}
