@@ -129,7 +129,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./examples/transfer
+        working-directory: examples/transfer
 
     steps:
       # Re-use node_modules between runs until package.json or package-lock.json changes.
