@@ -3,6 +3,7 @@
     "source-directories": [
         "src",
         "generated",
+        "../../src/",
         ".elm-spa/defaults",
         ".elm-spa/generated"
     ],

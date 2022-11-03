@@ -12,6 +12,7 @@ Typescript
 
 -}
 
+import Json.Encode as Encode
 import TsJson.Decode as TsDecode exposing (Decoder)
 import TsJson.Encode as TsEncode exposing (Encoder, required)
 
@@ -27,6 +28,7 @@ type alias Flags =
 type FromElm
     = Alert String
     | ScrollTo { querySelector : String }
+    | Transfer { encodedAction : Encode.Value }
 
 
 {-| Messages that we can send from Typescript to Elm
@@ -52,18 +54,23 @@ interop =
 fromElm : Encoder FromElm
 fromElm =
     TsEncode.union
-        (\vAlert vScrollTo value ->
+        (\vAlert vScrollTo vTransfer value ->
             case value of
                 Alert string ->
                     vAlert string
 
                 ScrollTo querySelector ->
                     vScrollTo querySelector
+
+                Transfer encodedAction ->
+                    vTransfer encodedAction
         )
         |> TsEncode.variantTagged "alert"
             (TsEncode.object [ required "message" identity TsEncode.string ])
         |> TsEncode.variantTagged "scrollTo"
             (TsEncode.object [ required "querySelector" .querySelector TsEncode.string ])
+        |> TsEncode.variantTagged "transfer"
+            (TsEncode.object [ required "actions" .encodedAction TsEncode.value ])
         |> TsEncode.buildUnion
 
 

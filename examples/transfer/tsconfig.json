@@ -9,6 +9,8 @@
     "./.eslintrc.cjs",
     "./tailwind.config.js",
     "scripts/**/*",
-    "tests/**/*.spec.ts"
+    "tests/**/*.spec.ts",
+    "src/ts/index.js",
+    "public/eosjs-web/**/*"
   ]
 }

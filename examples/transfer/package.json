@@ -10,7 +10,7 @@
     "build:esbuild": "esbuild src/ts/index.ts --bundle --outdir=public/build --public-path=/build/",
     "build:tailwind": "tailwindcss -i ./src/css/index.css -o ./public/build/index.css",
     "dev": "run-pty run-pty.json",
-    "generate": "npm run generate:elm-spa && npm run generate:custom-elements && npm run generate:ts-interop",
+    "generate": "npm run generate:elm-spa && npm run generate:eos && npm run generate:custom-elements && npm run generate:ts-interop",
     "generate:ts-interop": "elm-ts-interop --output generated/Main.d.ts",
     "generate:elm-spa": "elm-spa gen",
     "generate:custom-elements": "ts-node scripts/generateCustomElements.ts",
@@ -49,6 +49,7 @@
     "vitest": "^0.24.3"
   },
   "dependencies": {
-    "@formkit/auto-animate": "^1.0.0-beta.3"
+    "@formkit/auto-animate": "^1.0.0-beta.3",
+    "eosjs": "^16.0.5"
   }
 }

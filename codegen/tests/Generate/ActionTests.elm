@@ -139,15 +139,17 @@ encode =
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
-                            >> Expect.equal "encode : Eos.Authorization.Authorization -> Action -> Json.Encode.Value"
+                            >> Expect.equal "encode : List Eos.Authorization.Authorization -> Action -> Json.Encode.Value"
                         , .body
                             >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value to perform a transaction. You can then send it through a port to eosjs, or similar. -}
-encode : Eos.Authorization.Authorization -> Action -> Json.Encode.Value
-encode authorization action =
+encode : List Eos.Authorization.Authorization -> Action -> Json.Encode.Value
+encode authorizations action =
     Json.Encode.object
         [ ( "account", Json.Encode.string "fruits" )
         , ( "name", Json.Encode.string (getName action) )
-        , ( "authorization", Eos.Authorization.encode authorization )
+        , ( "authorization"
+          , Json.Encode.list Eos.Authorization.encode authorizations
+          )
         , ( "data", encodeSingleAction action )
         ]"""
                         ]

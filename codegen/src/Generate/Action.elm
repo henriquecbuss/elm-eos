@@ -34,9 +34,9 @@ actionParameter action =
 encode : Context.Context -> Elm.Declaration
 encode context =
     Elm.fn2
-        ( "authorization", Just Gen.Eos.Authorization.annotation_.authorization )
+        ( "authorizations", Just (Elm.Annotation.list Gen.Eos.Authorization.annotation_.authorization) )
         ( "action", Just (Elm.Annotation.named [] "Action") )
-        (\authorizationArg actionArg ->
+        (\authorizationsArg actionArg ->
             Gen.Json.Encode.object
                 [ Elm.tuple (Elm.string "account") (Gen.Json.Encode.string context.contract)
                 , Elm.tuple (Elm.string "name")
@@ -56,7 +56,7 @@ encode context =
                             [ actionArg ]
                         )
                     )
-                , Elm.tuple (Elm.string "authorization") (Gen.Eos.Authorization.encode authorizationArg)
+                , Elm.tuple (Elm.string "authorization") (Gen.Json.Encode.call_.list Gen.Eos.Authorization.values_.encode authorizationsArg)
                 , Elm.tuple (Elm.string "data")
                     (Elm.apply
                         (Elm.value
@@ -78,7 +78,7 @@ encode context =
         -- struggles to infer the type of the function and generates an error.
         |> Elm.withType
             (Elm.Annotation.function
-                [ Gen.Eos.Authorization.annotation_.authorization
+                [ Elm.Annotation.list Gen.Eos.Authorization.annotation_.authorization
                 , Elm.Annotation.named [] "Action"
                 ]
                 Gen.Json.Encode.annotation_.value
