@@ -216,68 +216,73 @@ view _ model =
     { title = "elm-watch starter"
     , body =
         [ Html.header [ class "w-full py-2 bg-slate-700 text-white" ]
-            [ Html.div [ class "container mx-auto px-4" ]
-                [ Html.button
-                    [ class "block ml-auto hover:bg-slate-100 hover:text-black transition-colors rounded px-4 py-1"
+            [ Html.div [ class "container mx-auto px-4 flex" ]
+                [ Html.h1 [ class "text-4xl font-bold" ] [ Html.text "elm-eos" ]
+                , Html.button
+                    [ class "ml-auto hover:bg-slate-100 hover:text-black transition-colors rounded px-4 py-1"
                     , Html.Events.onClick ClickedLogout
                     ]
                     [ Html.text "Logout" ]
                 ]
             ]
         , Html.main_ [ class "h-full bg-slate-100 pt-4" ]
-            [ Html.div [ class "container mx-auto px-4" ]
-                [ Html.h1 [ class "text-4xl font-bold" ] [ Html.text "elm-eos" ]
-                , Html.div [ class "grid grid-cols-1 md:grid-cols-2 w-full" ]
-                    [ Html.form
-                        [ Html.Events.onSubmit ClickedTransfer
-                        , class "mt-8 w-full p-4 bg-white rounded-lg shadow flex flex-col"
-                        ]
-                        [ Html.h2 [ class "font-bold text-xl" ] [ Html.text "Transfer" ]
-                        , Html.div [ class "flex flex-col gap-2 mt-4" ]
-                            [ viewInput
-                                { label = "From"
-                                , onInput = EnteredTransferFrom
-                                , type_ = Text
-                                , value = model.transfer.from
-                                }
-                            , viewInput
-                                { label = "To"
-                                , onInput = EnteredTransferTo
-                                , type_ = Text
-                                , value = model.transfer.to
-                                }
-                            , viewInput
-                                { label = "Amount"
-                                , onInput = EnteredTransferAmount
-                                , type_ = Number
-                                , value = model.transfer.amount
-                                }
-                            , viewInput
-                                { label = "Symbol Precision"
-                                , onInput = EnteredTransferSymbolPrecision
-                                , type_ = Number
-                                , value = model.transfer.symbolPrecision
-                                }
-                            , viewInput
-                                { label = "Symbol Code"
-                                , onInput = EnteredTransferSymbolCode
-                                , type_ = Text
-                                , value = model.transfer.symbolCode
-                                }
-                            , viewInput
-                                { label = "Memo"
-                                , onInput = EnteredTransferMemo
-                                , type_ = Text
-                                , value = model.transfer.memo
-                                }
-                            ]
-                        , Html.button [ class "w-full rounded mt-6 bg-orange-400 text-white py-2 px-4 hover:bg-orange-300 active:bg-orange-500" ] [ Html.text "Transfer" ]
-                        ]
-                    ]
+            [ Html.div [ class "container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-8 w-full mt-4" ]
+                [ viewTransfer model.transfer
                 ]
             ]
         ]
     }
+
+
+viewTransfer : Transfer -> Html.Html Msg
+viewTransfer transfer =
+    Html.div []
+        [ Html.h2 [ class "font-bold text-xl" ] [ Html.text "Transfer" ]
+        , Html.form
+            [ Html.Events.onSubmit ClickedTransfer
+            , class "w-full p-4 bg-white rounded-lg shadow flex flex-col mt-2"
+            ]
+            [ Html.div [ class "flex flex-col gap-2" ]
+                [ viewInput
+                    { label = "From"
+                    , onInput = EnteredTransferFrom
+                    , type_ = Text
+                    , value = transfer.from
+                    }
+                , viewInput
+                    { label = "To"
+                    , onInput = EnteredTransferTo
+                    , type_ = Text
+                    , value = transfer.to
+                    }
+                , viewInput
+                    { label = "Amount"
+                    , onInput = EnteredTransferAmount
+                    , type_ = Number
+                    , value = transfer.amount
+                    }
+                , viewInput
+                    { label = "Symbol Precision"
+                    , onInput = EnteredTransferSymbolPrecision
+                    , type_ = Number
+                    , value = transfer.symbolPrecision
+                    }
+                , viewInput
+                    { label = "Symbol Code"
+                    , onInput = EnteredTransferSymbolCode
+                    , type_ = Text
+                    , value = transfer.symbolCode
+                    }
+                , viewInput
+                    { label = "Memo"
+                    , onInput = EnteredTransferMemo
+                    , type_ = Text
+                    , value = transfer.memo
+                    }
+                ]
+            , Html.button [ class "w-full rounded mt-6 bg-orange-400 text-white py-2 px-4 hover:bg-orange-300 active:bg-orange-500" ] [ Html.text "Transfer" ]
+            ]
+        ]
 
 
 viewInput :
