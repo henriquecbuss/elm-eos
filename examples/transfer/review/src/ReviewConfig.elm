@@ -176,6 +176,7 @@ config =
                 [ ".elm-spa"
                 , "generated"
                 , "tests/VerifyExamples"
+                , "../../src"
                 ]
             )
 
