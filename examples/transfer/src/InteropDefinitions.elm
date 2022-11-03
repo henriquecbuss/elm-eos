@@ -31,7 +31,7 @@ type FromElm
     | ScrollTo { querySelector : String }
     | Login { privateKey : String }
     | Logout
-    | Transfer { encodedAction : Encode.Value }
+    | PerformEosTransaction { encodedAction : Encode.Value }
 
 
 {-| Messages that we can send from Typescript to Elm
@@ -59,7 +59,7 @@ interop =
 fromElm : Encoder FromElm
 fromElm =
     TsEncode.union
-        (\vAlert vScrollTo vLogin vLogout vTransfer value ->
+        (\vAlert vScrollTo vLogin vLogout vPerformEosTransaction value ->
             case value of
                 Alert string ->
                     vAlert string
@@ -73,8 +73,8 @@ fromElm =
                 Logout ->
                     vLogout {}
 
-                Transfer encodedAction ->
-                    vTransfer encodedAction
+                PerformEosTransaction encodedAction ->
+                    vPerformEosTransaction encodedAction
         )
         |> TsEncode.variantTagged "alert"
             (TsEncode.object [ required "message" identity TsEncode.string ])
@@ -83,7 +83,7 @@ fromElm =
         |> TsEncode.variantTagged "login"
             (TsEncode.object [ required "privateKey" .privateKey TsEncode.string ])
         |> TsEncode.variantTagged "logout" (TsEncode.object [])
-        |> TsEncode.variantTagged "transfer"
+        |> TsEncode.variantTagged "performEosTransaction"
             (TsEncode.object [ required "actions" .encodedAction TsEncode.value ])
         |> TsEncode.buildUnion
 

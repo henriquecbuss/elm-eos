@@ -1,17 +1,22 @@
 module Pages.Home_ exposing
-    ( Model, Transfer, Msg, page
+    ( Model, Transfer, VerifyClaim
+    , Msg, page
     , toElmSubscription
     )
 
 {-| Home\_
 
-@docs Model, Transfer, Msg, page
+@docs Model, Transfer, VerifyClaim
+
+@docs Msg, page
 
 @docs toElmSubscription
 
 -}
 
+import Cambiatus.Cm.Action
 import Cambiatus.Tk.Action
+import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Eos.Asset
 import Eos.Name
@@ -21,6 +26,8 @@ import Gen.Params.Home_ exposing (Params)
 import Html
 import Html.Attributes as Attr exposing (class)
 import Html.Events
+import Html.Extra as HtmlX
+import Html.Keyed
 import InteropDefinitions
 import InteropPorts
 import Page
@@ -33,6 +40,7 @@ import View exposing (View)
 -}
 type alias Model =
     { transfer : Transfer
+    , verifyClaim : VerifyClaim
     }
 
 
@@ -48,6 +56,17 @@ type alias Transfer =
     }
 
 
+{-| A record to hold values from the `VerifyClaim` transaction card
+-}
+type alias VerifyClaim =
+    { symbolPrecision : String
+    , symbolCode : String
+    , claimId : String
+    , verifier : String
+    , vote : String
+    }
+
+
 {-| Everything this page can do
 -}
 type Msg
@@ -59,6 +78,12 @@ type Msg
     | EnteredTransferSymbolCode String
     | EnteredTransferMemo String
     | ClickedTransfer
+    | EnteredVerifyClaimSymbolPrecision String
+    | EnteredVerifyClaimSymbolCode String
+    | EnteredVerifyClaimId String
+    | EnteredVerifyClaimVerifier String
+    | SelectedVerifyClaimVote String
+    | ClickedVerifyClaim
 
 
 {-| This is how elm-spa knows what to do with our app
@@ -81,19 +106,31 @@ page shared _ =
 
 init : ( Model, Effect Msg )
 init =
-    ( { transfer = initTransfer }
+    ( { transfer = initTransfer
+      , verifyClaim = initVerifyClaim
+      }
     , Effect.none
     )
 
 
 initTransfer : Transfer
 initTransfer =
-    { from = "henriquebuss"
-    , to = "henriquebus2"
-    , amount = "2"
+    { from = ""
+    , to = ""
+    , amount = "0"
     , symbolPrecision = "0"
-    , symbolCode = "BUSS"
-    , memo = "Hello from elm-eos!"
+    , symbolCode = ""
+    , memo = ""
+    }
+
+
+initVerifyClaim : VerifyClaim
+initVerifyClaim =
+    { symbolPrecision = "0"
+    , symbolCode = ""
+    , claimId = ""
+    , verifier = ""
+    , vote = ""
     }
 
 
@@ -155,7 +192,57 @@ update msg model =
                         ]
                         transfer
                         |> (\encodedAction ->
-                                InteropDefinitions.Transfer
+                                InteropDefinitions.PerformEosTransaction
+                                    { encodedAction = encodedAction }
+                           )
+                        |> InteropPorts.fromElm
+                        |> Effect.fromCmd
+                    )
+
+                Nothing ->
+                    ( model, Effect.none )
+
+        EnteredVerifyClaimSymbolPrecision symbolPrecision ->
+            ( mapVerifyClaim (\verifyClaim -> { verifyClaim | symbolPrecision = symbolPrecision }) model
+            , Effect.none
+            )
+
+        EnteredVerifyClaimSymbolCode symbolCode ->
+            ( mapVerifyClaim (\verifyClaim -> { verifyClaim | symbolCode = symbolCode }) model
+            , Effect.none
+            )
+
+        EnteredVerifyClaimId claimId ->
+            ( mapVerifyClaim (\verifyClaim -> { verifyClaim | claimId = claimId }) model
+            , Effect.none
+            )
+
+        EnteredVerifyClaimVerifier verifier ->
+            ( mapVerifyClaim (\verifyClaim -> { verifyClaim | verifier = verifier }) model
+            , Effect.none
+            )
+
+        SelectedVerifyClaimVote vote ->
+            ( mapVerifyClaim (\verifyClaim -> { verifyClaim | vote = vote }) model
+            , Effect.none
+            )
+
+        ClickedVerifyClaim ->
+            case
+                Eos.Name.fromString model.verifyClaim.verifier
+                    |> Result.toMaybe
+                    |> Maybe.map2 Tuple.pair (parseVerifyClaim model.verifyClaim)
+            of
+                Just ( verifyClaim, actor ) ->
+                    ( model
+                    , Cambiatus.Cm.Action.encode
+                        [ { actor = actor
+                          , permission = Eos.Permission.Active
+                          }
+                        ]
+                        verifyClaim
+                        |> (\encodedAction ->
+                                InteropDefinitions.PerformEosTransaction
                                     { encodedAction = encodedAction }
                            )
                         |> InteropPorts.fromElm
@@ -171,6 +258,11 @@ mapTransfer fn model =
     { model | transfer = fn model.transfer }
 
 
+mapVerifyClaim : (VerifyClaim -> VerifyClaim) -> Model -> Model
+mapVerifyClaim fn model =
+    { model | verifyClaim = fn model.verifyClaim }
+
+
 parseTransfer : Transfer -> Maybe Cambiatus.Tk.Action.Action
 parseTransfer transfer =
     let
@@ -178,16 +270,7 @@ parseTransfer transfer =
         parseQuantity =
             Maybe.map2 (\amount symbol -> { amount = amount, symbol = symbol })
                 (String.toFloat transfer.amount)
-                parseSymbol
-
-        parseSymbol : Maybe Eos.Symbol.Symbol
-        parseSymbol =
-            String.toInt transfer.symbolPrecision
-                |> Maybe.andThen
-                    (\precision ->
-                        Eos.Symbol.fromPrecisionAndCodeString precision transfer.symbolCode
-                            |> Result.toMaybe
-                    )
+                (parseSymbol transfer)
     in
     Maybe.map3
         (\from to quantity ->
@@ -205,6 +288,46 @@ parseTransfer transfer =
             |> Result.toMaybe
         )
         parseQuantity
+
+
+parseVerifyClaim : VerifyClaim -> Maybe Cambiatus.Cm.Action.Action
+parseVerifyClaim verifyClaim =
+    let
+        parseVote : String -> Maybe Int
+        parseVote vote =
+            case vote of
+                "approve" ->
+                    Just 1
+
+                "reject" ->
+                    Just 2
+
+                _ ->
+                    Nothing
+    in
+    Maybe.map4
+        (\communityId claimId verifier vote ->
+            Cambiatus.Cm.Action.Verifyclaim
+                { communityId = communityId
+                , claimId = claimId
+                , verifier = verifier
+                , vote = vote
+                }
+        )
+        (parseSymbol verifyClaim)
+        (String.toInt verifyClaim.claimId)
+        (Eos.Name.fromString verifyClaim.verifier |> Result.toMaybe)
+        (parseVote verifyClaim.vote)
+
+
+parseSymbol : { model_ | symbolCode : String, symbolPrecision : String } -> Maybe Eos.Symbol.Symbol
+parseSymbol model =
+    String.toInt model.symbolPrecision
+        |> Maybe.andThen
+            (\precision ->
+                Eos.Symbol.fromPrecisionAndCodeString precision model.symbolCode
+                    |> Result.toMaybe
+            )
 
 
 
@@ -228,6 +351,7 @@ view _ model =
         , Html.main_ [ class "h-full bg-slate-100 pt-4" ]
             [ Html.div [ class "container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-8 w-full mt-4" ]
                 [ viewTransfer model.transfer
+                , viewVerifyClaim model.verifyClaim
                 ]
             ]
         ]
@@ -280,7 +404,58 @@ viewTransfer transfer =
                     , value = transfer.memo
                     }
                 ]
-            , Html.button [ class "w-full rounded mt-6 bg-orange-400 text-white py-2 px-4 hover:bg-orange-300 active:bg-orange-500" ] [ Html.text "Transfer" ]
+            , Html.button [ class "w-full rounded mt-6 bg-orange-400 text-white py-2 px-4 hover:bg-orange-300 active:bg-orange-500" ]
+                [ Html.text "Transfer" ]
+            ]
+        ]
+
+
+viewVerifyClaim : VerifyClaim -> Html.Html Msg
+viewVerifyClaim verifyClaim =
+    Html.div []
+        [ Html.h2 [ class "font-bold text-xl" ] [ Html.text "Verify Claim" ]
+        , Html.form
+            [ Html.Events.onSubmit ClickedVerifyClaim
+            , class "w-full p-4 bg-white rounded-lg shadow flex flex-col mt-2"
+            ]
+            [ Html.div [ class "flex flex-col gap-2" ]
+                [ viewInput
+                    { label = "Symbol Precision"
+                    , onInput = EnteredVerifyClaimSymbolPrecision
+                    , type_ = Number
+                    , value = verifyClaim.symbolPrecision
+                    }
+                , viewInput
+                    { label = "Symbol Code"
+                    , onInput = EnteredVerifyClaimSymbolCode
+                    , type_ = Text
+                    , value = verifyClaim.symbolCode
+                    }
+                , viewInput
+                    { label = "Claim ID"
+                    , onInput = EnteredVerifyClaimId
+                    , type_ = Number
+                    , value = verifyClaim.claimId
+                    }
+                , viewInput
+                    { label = "Verifier"
+                    , onInput = EnteredVerifyClaimVerifier
+                    , type_ = Text
+                    , value = verifyClaim.verifier
+                    }
+                , viewSelectInput
+                    { label = "Vote"
+                    , options =
+                        [ ( "", "Choose an option" )
+                        , ( "approve", "Approve" )
+                        , ( "deny", "Deny" )
+                        ]
+                            |> Dict.fromList
+                    , value = verifyClaim.vote
+                    }
+                ]
+            , Html.button [ class "w-full rounded mt-6 bg-orange-400 text-white py-2 px-4 hover:bg-orange-300 active:bg-orange-500" ]
+                [ Html.text "Verify" ]
             ]
         ]
 
@@ -293,7 +468,7 @@ viewInput :
     }
     -> Html.Html msg
 viewInput { label, onInput, type_, value } =
-    Html.label [ class "border rounded flex relative" ]
+    Html.label [ class "border rounded flex relative h-10" ]
         [ Html.span [ class "absolute w-40 px-4 bg-slate-700 text-white -left-px -inset-y-px text-center flex items-center justify-center rounded-l" ]
             [ Html.text label ]
         , Html.input
@@ -303,6 +478,45 @@ viewInput { label, onInput, type_, value } =
             , Html.Events.onInput onInput
             ]
             []
+        ]
+
+
+viewSelectInput :
+    { label : String
+    , options : Dict String String
+    , value : String
+    }
+    -> Html.Html Msg
+viewSelectInput { label, options, value } =
+    Html.label [ class "border rounded flex relative h-10" ]
+        [ Html.Keyed.node "select"
+            [ class "absolute inset-0 appearance-none"
+            , Attr.value value
+            , Html.Events.onInput SelectedVerifyClaimVote
+            ]
+            (Dict.toList options
+                |> List.map
+                    (\( optionValue, optionLabel ) ->
+                        ( optionValue
+                        , Html.option
+                            [ Attr.value optionValue
+                            ]
+                            [ Html.text optionLabel ]
+                        )
+                    )
+            )
+        , Html.span [ class "absolute w-40 px-4 bg-slate-700 text-white -left-px -inset-y-px text-center flex items-center justify-center rounded-l pointer-events-none" ]
+            [ Html.text label ]
+        , HtmlX.viewMaybe
+            (\optionLabel ->
+                Html.div
+                    [ class "z-10 w-full pointer-events-none rounded pl-44 pr-2 py-2"
+                    , Attr.classList [ ( "text-gray-400", value == "" ) ]
+                    ]
+                    [ Html.text optionLabel ]
+            )
+            (Dict.get value options)
+        , Html.div [ class "absolute right-2 top-1/2 -translate-y-1/2 border-transparent border-t-8 border-t-slate-700 border-l-8 border-r-8" ] []
         ]
 
 
@@ -330,3 +544,8 @@ toElmSubscription _ =
 type InputType
     = Text
     | Number
+
+
+type ClaimVote
+    = Approve
+    | Deny

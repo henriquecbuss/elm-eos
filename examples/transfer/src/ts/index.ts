@@ -44,8 +44,7 @@ const run = () => {
         break;
       }
 
-      case "transfer": {
-        console.log("transferring", data.actions);
+      case "performEosTransaction": {
         void (async () => {
           try {
             const result = await eos.transact(
