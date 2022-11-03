@@ -6,7 +6,7 @@ const run = () => {
 
   const app = window.Elm.Main.init({
     flags: {
-      privateKey: localStorage.getItem("privateKey"),
+      privateKey: eos.getPrivateKey(),
     },
   });
 
@@ -33,8 +33,13 @@ const run = () => {
 
         app.ports.interopToElm.send({ tag: "loggedIn", privateKey });
 
-        // We shouldn't do this in production!!
-        localStorage.setItem("privateKey", privateKey);
+        break;
+      }
+
+      case "logout": {
+        eos.logout();
+
+        app.ports.interopToElm.send({ tag: "loggedOut" });
 
         break;
       }

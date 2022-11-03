@@ -36,6 +36,7 @@ modules.
 -}
 type Msg
     = LoggedIn { privateKey : String }
+    | LoggedOut
 
 
 {-| Initialize the shared module
@@ -64,6 +65,11 @@ update req msg model =
             , Request.pushRoute Gen.Route.Home_ req
             )
 
+        LoggedOut ->
+            ( { model | user = Nothing }
+            , Request.pushRoute Gen.Route.Login req
+            )
+
 
 {-| Receive values from Typescript
 -}
@@ -72,6 +78,9 @@ toElmSubscriptions toElm =
     case toElm of
         InteropDefinitions.LoggedIn privateKey ->
             Just (LoggedIn privateKey)
+
+        InteropDefinitions.LoggedOut ->
+            Just LoggedOut
 
         _ ->
             Nothing

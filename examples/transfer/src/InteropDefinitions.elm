@@ -30,6 +30,7 @@ type FromElm
     = Alert String
     | ScrollTo { querySelector : String }
     | Login { privateKey : String }
+    | Logout
     | Transfer { encodedAction : Encode.Value }
 
 
@@ -38,6 +39,7 @@ type FromElm
 type ToElm
     = Alerted
     | LoggedIn { privateKey : String }
+    | LoggedOut
 
 
 {-| This is what elm-ts-interop uses to figure out what to do with our app
@@ -57,7 +59,7 @@ interop =
 fromElm : Encoder FromElm
 fromElm =
     TsEncode.union
-        (\vAlert vScrollTo vLogin vTransfer value ->
+        (\vAlert vScrollTo vLogin vLogout vTransfer value ->
             case value of
                 Alert string ->
                     vAlert string
@@ -68,6 +70,9 @@ fromElm =
                 Login privateKey ->
                     vLogin privateKey
 
+                Logout ->
+                    vLogout {}
+
                 Transfer encodedAction ->
                     vTransfer encodedAction
         )
@@ -77,6 +82,7 @@ fromElm =
             (TsEncode.object [ required "querySelector" .querySelector TsEncode.string ])
         |> TsEncode.variantTagged "login"
             (TsEncode.object [ required "privateKey" .privateKey TsEncode.string ])
+        |> TsEncode.variantTagged "logout" (TsEncode.object [])
         |> TsEncode.variantTagged "transfer"
             (TsEncode.object [ required "actions" .encodedAction TsEncode.value ])
         |> TsEncode.buildUnion
@@ -91,6 +97,9 @@ toElm =
         , ( "loggedIn"
           , TsDecode.map (\privateKey -> LoggedIn { privateKey = privateKey })
                 (TsDecode.field "privateKey" TsDecode.string)
+          )
+        , ( "loggedOut"
+          , TsDecode.succeed LoggedOut
           )
         ]
 

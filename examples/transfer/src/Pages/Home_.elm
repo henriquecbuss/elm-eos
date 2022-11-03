@@ -46,6 +46,7 @@ type alias Model =
 -}
 type Msg
     = ClickedTransfer
+    | ClickedLogout
 
 
 {-| This is how elm-spa knows what to do with our app
@@ -87,6 +88,13 @@ init =
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
+        ClickedLogout ->
+            ( model
+            , InteropDefinitions.Logout
+                |> InteropPorts.fromElm
+                |> Effect.fromCmd
+            )
+
         ClickedTransfer ->
             case
                 Maybe.map2 Tuple.pair
@@ -158,7 +166,16 @@ view _ _ =
     in
     { title = "elm-watch starter"
     , body =
-        [ Html.main_ []
+        [ Html.header [ class "w-full py-2 bg-slate-700 text-white" ]
+            [ Html.div [ class "container mx-auto px-4" ]
+                [ Html.button
+                    [ class "block ml-auto hover:bg-slate-100 hover:text-black transition-colors rounded px-4 py-1"
+                    , Html.Events.onClick ClickedLogout
+                    ]
+                    [ Html.text "Logout" ]
+                ]
+            ]
+        , Html.main_ [ class "h-full bg-slate-100" ]
             [ Html.form
                 [ Html.Events.onSubmit ClickedTransfer
                 , class "flex flex-col"
