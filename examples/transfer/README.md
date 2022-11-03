@@ -15,7 +15,6 @@ npm run generate
 npm run dev
 ```
 
-
 To build the app:
 
 ```bash
