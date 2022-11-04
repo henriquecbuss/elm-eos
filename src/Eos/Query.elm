@@ -27,6 +27,7 @@ type-safe queries, and this module helps you actually turn them into Cmds.
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Url.Builder
 
 
 
@@ -124,7 +125,7 @@ send toMsg (Query query) =
                 )
                 (Decode.field "rows" (Decode.list query.decoder))
                 |> Http.expectJson toMsg
-        , url = query.baseUrl ++ "/get_table_rows"
+        , url = Url.Builder.crossOrigin query.baseUrl [ "get_table_rows" ] []
         }
 
 
@@ -168,7 +169,6 @@ encodeIndex index =
 
 
 
--- TODO - Can we have lowerBound and upperBound at the same time?
 -- RESPONSE
 
 
