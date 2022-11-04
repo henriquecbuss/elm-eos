@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
   "bin": {
-    "elm-eos": "codegen/bin/index.js"
+    "elm-eos": "codegen/bin/elm-eos"
   },
+  "files": [
+    "codegen/bin/elm-eos"
+  ],
   "scripts": {
     "test": "elm-verify-examples && elm-test-rs && cd codegen && elm-test-rs",
     "generate-helpers": "rm -rf codegen/src/Gen && elm-codegen install && mv codegen/Gen codegen/src/Gen",
