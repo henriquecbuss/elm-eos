@@ -20,8 +20,8 @@ module Eos.SymbolCode exposing
 
 -}
 
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 {-| The symbol code is the "name" of the symbol. For example, the symbol `0,ABC` has
@@ -72,15 +72,14 @@ fromString code =
 
     else
         case
-            code
-                |> String.filter (\c -> not (Char.isAlpha c) || not (Char.isUpper c))
+            String.filter (\c -> not (Char.isAlpha c) || not (Char.isUpper c)) code
                 |> String.toList
         of
-            firstInvalidCharacter :: otherInvalidCharacters ->
-                Err (InvalidCharacters ( firstInvalidCharacter, otherInvalidCharacters ))
-
             [] ->
                 Ok (SymbolCode code)
+
+            firstInvalidCharacter :: otherInvalidCharacters ->
+                Err (InvalidCharacters ( firstInvalidCharacter, otherInvalidCharacters ))
 
 
 {-| Converting a `String` into a `SymbolCode` (with [fromString](#fromString))
@@ -128,23 +127,23 @@ errorToString error =
 
 {-| Encode a [SymbolCode](#SymbolCode) into JSON.
 -}
-encode : SymbolCode -> Json.Encode.Value
+encode : SymbolCode -> Encode.Value
 encode (SymbolCode symbolCode) =
-    Json.Encode.string symbolCode
+    Encode.string symbolCode
 
 
 {-| Decode a [SymbolCode](#SymbolCode) from JSON. It already does all of the
 validation necessary to ensure the [SymbolCode](#SymbolCode) is valid.
 -}
-decoder : Json.Decode.Decoder SymbolCode
+decoder : Decode.Decoder SymbolCode
 decoder =
-    Json.Decode.string
-        |> Json.Decode.andThen
+    Decode.string
+        |> Decode.andThen
             (\code ->
                 case fromString code of
                     Ok symbolCode ->
-                        Json.Decode.succeed symbolCode
+                        Decode.succeed symbolCode
 
                     Err error ->
-                        Json.Decode.fail (errorToString error ++ ". Received: " ++ code)
+                        Decode.fail (errorToString error ++ ". Received: " ++ code)
             )

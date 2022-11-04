@@ -16,8 +16,8 @@ module Eos.Asset exposing
 
 import Eos.Symbol
 import Eos.SymbolCode
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 {-| An asset is simply an amount of a given symbol.
@@ -30,13 +30,9 @@ type alias Asset =
 
 {-| Encode an [Asset](#Asset) into JSON.
 -}
-encode : Asset -> Json.Encode.Value
+encode : Asset -> Encode.Value
 encode asset =
     let
-        precision : Int
-        precision =
-            Eos.Symbol.precision asset.symbol
-
         padWithDecimals : String -> String
         padWithDecimals amountString =
             if precision == 0 then
@@ -52,8 +48,12 @@ encode asset =
 
                     _ ->
                         amountString
+
+        precision : Int
+        precision =
+            Eos.Symbol.precision asset.symbol
     in
-    Json.Encode.string
+    Encode.string
         (padWithDecimals (String.fromFloat asset.amount)
             ++ " "
             ++ Eos.SymbolCode.toString (Eos.Symbol.code asset.symbol)
@@ -62,10 +62,10 @@ encode asset =
 
 {-| Decode an [Asset](#Asset) from JSON.
 -}
-decoder : Json.Decode.Decoder Asset
+decoder : Decode.Decoder Asset
 decoder =
-    Json.Decode.string
-        |> Json.Decode.andThen
+    Decode.string
+        |> Decode.andThen
             (\decodedString ->
                 case String.split " " decodedString of
                     [ amount, symbol ] ->
@@ -73,6 +73,11 @@ decoder =
                             floatAmount : Maybe Float
                             floatAmount =
                                 String.toFloat amount
+
+                            symbolValue : Maybe (Result Eos.Symbol.Error Eos.Symbol.Symbol)
+                            symbolValue =
+                                Maybe.map (\validPrecision -> Eos.Symbol.fromPrecisionAndCodeString validPrecision symbol)
+                                    precision
 
                             precision : Maybe Int
                             precision =
@@ -85,31 +90,26 @@ decoder =
 
                                     _ ->
                                         Nothing
-
-                            symbolValue : Maybe (Result Eos.Symbol.Error Eos.Symbol.Symbol)
-                            symbolValue =
-                                Maybe.map (\validPrecision -> Eos.Symbol.fromPrecisionAndCodeString validPrecision symbol)
-                                    precision
                         in
                         case ( symbolValue, floatAmount ) of
                             ( Just (Ok validSymbol), Just validAmount ) ->
-                                Json.Decode.succeed
+                                Decode.succeed
                                     { amount = validAmount
                                     , symbol = validSymbol
                                     }
 
                             ( Just (Ok _), Nothing ) ->
-                                Json.Decode.fail ("Invalid amount: " ++ amount)
+                                Decode.fail ("Invalid amount: " ++ amount)
 
                             ( Just (Err err), _ ) ->
-                                Json.Decode.fail (Eos.Symbol.errorToString err)
+                                Decode.fail (Eos.Symbol.errorToString err)
 
                             ( Nothing, Just _ ) ->
-                                Json.Decode.fail ("Invalid symbol: " ++ symbol)
+                                Decode.fail ("Invalid symbol: " ++ symbol)
 
                             ( Nothing, Nothing ) ->
-                                Json.Decode.fail ("Invalid precision and symbol:\n" ++ "Amount: " ++ amount ++ "\nSymbol: " ++ symbol)
+                                Decode.fail ("Invalid precision and symbol:\n" ++ "Amount: " ++ amount ++ "\nSymbol: " ++ symbol)
 
                     _ ->
-                        Json.Decode.fail "Invalid asset format"
+                        Decode.fail "Invalid asset format"
             )

@@ -11,8 +11,8 @@ module Eos.Signature exposing
 
 -}
 
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 {-| A Signature
@@ -23,13 +23,13 @@ type Signature
 
 {-| Encode a [Signature](#Signature) into JSON.
 -}
-encode : Signature -> Json.Encode.Value
+encode : Signature -> Encode.Value
 encode (Signature signature) =
-    Json.Encode.string signature
+    Encode.string signature
 
 
 {-| Decode a Signature.
 -}
-decoder : Json.Decode.Decoder Signature
+decoder : Decode.Decoder Signature
 decoder =
-    Json.Decode.map Signature Json.Decode.string
+    Decode.map Signature Decode.string

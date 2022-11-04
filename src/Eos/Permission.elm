@@ -17,8 +17,8 @@ the `Owner` permission. The `Active` permission is a child of the `Owner`.
 -}
 
 import Eos.Name
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 {-| There are two permissions by default: Owner and Active. However, each account
@@ -32,14 +32,14 @@ type Permission
 
 {-| Turn a permission into a JSON value.
 -}
-encode : Permission -> Json.Encode.Value
+encode : Permission -> Encode.Value
 encode permission =
     case permission of
         Owner ->
-            Json.Encode.string "owner"
+            Encode.string "owner"
 
         Active ->
-            Json.Encode.string "active"
+            Encode.string "active"
 
         Custom name ->
             Eos.Name.encode name
@@ -47,21 +47,21 @@ encode permission =
 
 {-| Decode a JSON value into a Permission
 -}
-decoder : Json.Decode.Decoder Permission
+decoder : Decode.Decoder Permission
 decoder =
-    Json.Decode.oneOf
-        [ Json.Decode.string
-            |> Json.Decode.andThen
+    Decode.oneOf
+        [ Decode.string
+            |> Decode.andThen
                 (\string ->
                     case String.toLower string of
-                        "owner" ->
-                            Json.Decode.succeed Owner
-
                         "active" ->
-                            Json.Decode.succeed Active
+                            Decode.succeed Active
+
+                        "owner" ->
+                            Decode.succeed Owner
 
                         _ ->
-                            Json.Decode.fail ("Invalid permission. I was expecting either `owner` or `active`, but got " ++ string)
+                            Decode.fail ("Invalid permission. I was expecting either `owner` or `active`, but got " ++ string)
                 )
-        , Json.Decode.map Custom Eos.Name.decoder
+        , Decode.map Custom Eos.Name.decoder
         ]

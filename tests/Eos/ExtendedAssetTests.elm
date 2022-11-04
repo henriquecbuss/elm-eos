@@ -4,7 +4,7 @@ import Eos.ExtendedAsset
 import Eos.Name
 import Eos.Symbol
 import Expect
-import Json.Decode
+import Json.Decode as Decode
 import Test exposing (Test, describe, test)
 
 
@@ -19,7 +19,7 @@ jsonRoundtrip : Test
 jsonRoundtrip =
     describe "encode and decode roundtrip"
         [ test "10 EOS from contract eos.io encoding and decoding results in 10 EOS from contract eos.io" <|
-            \_ ->
+            \() ->
                 case
                     ( Eos.Symbol.fromPrecisionAndCodeString 0 "EOS"
                     , Eos.Name.fromString "eos.io"
@@ -31,7 +31,7 @@ jsonRoundtrip =
                         , contract = name
                         }
                             |> Eos.ExtendedAsset.encode
-                            |> Json.Decode.decodeValue Eos.ExtendedAsset.decoder
+                            |> Decode.decodeValue Eos.ExtendedAsset.decoder
                             |> Expect.equal
                                 (Ok
                                     { amount = 10

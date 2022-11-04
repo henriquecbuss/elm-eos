@@ -25,8 +25,8 @@ type-safe queries, and this module helps you actually turn them into Cmds.
 -}
 
 import Http
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 
@@ -47,7 +47,7 @@ type Query response
         , baseUrl : String
         , contract : String
         , table : String
-        , decoder : Json.Decode.Decoder response
+        , decoder : Decode.Decoder response
         }
 
 
@@ -87,46 +87,88 @@ If you want to paginate, keep the [Cursor](#Cursor) returned in the
 send : (Result Http.Error (Response response) -> msg) -> Query response -> Cmd msg
 send toMsg (Query query) =
     let
-        encodeOptional : (a -> Json.Encode.Value) -> Maybe a -> Json.Encode.Value
+        encodeOptional : (a -> Encode.Value) -> Maybe a -> Encode.Value
         encodeOptional encoder maybeValue =
             case maybeValue of
-                Nothing ->
-                    Json.Encode.null
-
                 Just value ->
                     encoder value
+
+                Nothing ->
+                    Encode.null
     in
     Http.post
-        { url = query.baseUrl ++ "/get_table_rows"
-        , body =
-            Json.Encode.object
-                [ ( "code", Json.Encode.string query.contract )
-                , ( "table", Json.Encode.string query.table )
-                , ( "scope", Json.Encode.string query.scope )
+        { body =
+            Encode.object
+                [ ( "code", Encode.string query.contract )
+                , ( "table", Encode.string query.table )
+                , ( "scope", Encode.string query.scope )
                 , ( "index_position", encodeOptional encodeIndex query.indexPosition )
                 , ( "lower_bound", encodeOptional encodeCursor query.lowerBound )
                 , ( "upper_bound", encodeOptional encodeCursor query.upperBound )
-                , ( "limit", encodeOptional Json.Encode.int query.limit )
-                , ( "reverse", Json.Encode.bool query.reverse )
-                , ( "json", Json.Encode.bool True )
+                , ( "limit", encodeOptional Encode.int query.limit )
+                , ( "reverse", Encode.bool query.reverse )
+                , ( "json", Encode.bool True )
                 ]
                 |> Http.jsonBody
         , expect =
-            Json.Decode.map3
+            Decode.map3
                 (\hasMore nextCursor result ->
                     { hasMore = hasMore
                     , nextCursor = nextCursor
                     , result = result
                     }
                 )
-                (Json.Decode.field "more" Json.Decode.bool)
-                (Json.Decode.field "next_key" (Json.Decode.string |> Json.Decode.map Cursor))
-                (Json.Decode.field "rows" (Json.Decode.list query.decoder))
+                (Decode.field "more" Decode.bool)
+                (Decode.field "next_key"
+                    (Decode.map Cursor Decode.string)
+                )
+                (Decode.field "rows" (Decode.list query.decoder))
                 |> Http.expectJson toMsg
+        , url = query.baseUrl ++ "/get_table_rows"
         }
 
 
+encodeCursor : Cursor -> Encode.Value
+encodeCursor (Cursor cursor) =
+    Encode.string cursor
 
+
+encodeIndex : Index -> Encode.Value
+encodeIndex index =
+    case index of
+        Primary ->
+            Encode.string "primary"
+
+        Secondary ->
+            Encode.string "secondary"
+
+        Tertiary ->
+            Encode.string "tertiary"
+
+        Fourth ->
+            Encode.string "fourth"
+
+        Fifth ->
+            Encode.string "fifth"
+
+        Sixth ->
+            Encode.string "sixth"
+
+        Seventh ->
+            Encode.string "seventh"
+
+        Eighth ->
+            Encode.string "eighth"
+
+        Ninth ->
+            Encode.string "ninth"
+
+        Tenth ->
+            Encode.string "tenth"
+
+
+
+-- TODO - Can we have lowerBound and upperBound at the same time?
 -- RESPONSE
 
 
@@ -155,8 +197,11 @@ withBaseUrl baseUrl (Query query) =
     Query { query | baseUrl = baseUrl }
 
 
-
--- TODO - Can we have lowerBound and upperBound at the same time?
+{-| Set how many entries to fetch on [send](#send).
+-}
+withLimit : Int -> Query response -> Query response
+withLimit limit (Query query) =
+    Query { query | limit = Just limit }
 
 
 {-| Define the lower bound of a [Query](#Query). This is used to paginate the
@@ -177,13 +222,6 @@ withUpperBound cursor (Query query) =
     Query { query | upperBound = Just cursor }
 
 
-{-| Set how many entries to fetch on [send](#send).
--}
-withLimit : Int -> Query response -> Query response
-withLimit limit (Query query) =
-    Query { query | limit = Just limit }
-
-
 {-| Define if the [Query](#Query) results should be reversed.
 -}
 withReverse : Bool -> Query response -> Query response
@@ -200,11 +238,6 @@ or [withUpperBound](#withUpperBound). You can get one of these from [send](#send
 -}
 type Cursor
     = Cursor String
-
-
-encodeCursor : Cursor -> Json.Encode.Value
-encodeCursor (Cursor cursor) =
-    Json.Encode.string cursor
 
 
 
@@ -224,37 +257,3 @@ type Index
     | Eighth
     | Ninth
     | Tenth
-
-
-encodeIndex : Index -> Json.Encode.Value
-encodeIndex index =
-    case index of
-        Primary ->
-            Json.Encode.string "primary"
-
-        Secondary ->
-            Json.Encode.string "secondary"
-
-        Tertiary ->
-            Json.Encode.string "tertiary"
-
-        Fourth ->
-            Json.Encode.string "fourth"
-
-        Fifth ->
-            Json.Encode.string "fifth"
-
-        Sixth ->
-            Json.Encode.string "sixth"
-
-        Seventh ->
-            Json.Encode.string "seventh"
-
-        Eighth ->
-            Json.Encode.string "eighth"
-
-        Ninth ->
-            Json.Encode.string "ninth"
-
-        Tenth ->
-            Json.Encode.string "tenth"
