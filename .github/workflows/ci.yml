@@ -111,7 +111,7 @@ jobs:
         working-directory: codegen
 
       # Re-use node_modules between runs until package.json or package-lock.json changes.
-      - name: Cache  transfer example node_modules
+      - name: Cache transfer example node_modules
         id: cache-transfer-example-node_modules
         uses: actions/cache@v3
         with:
@@ -153,14 +153,15 @@ jobs:
         run: npm run lint
         working-directory: examples/transfer
 
-      # - name: Elm Publish
-      #   uses: dillonkearns/elm-publish-action@v1
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     path-to-elm: ./node_modules/.bin/elm
+      - name: Elm Publish
+        uses: dillonkearns/elm-publish-action@v1.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-elm: ./node_modules/.bin/elm
 
-      # - id: npm-publish
-      #   if: github.ref == 'refs/heads/master'
-      #   uses: JS-DevTools/npm-publish@v1
-      #   with:
-      #     token: ${{ secrets.NPM_TOKEN }}
+      - name: NPM Publish
+        id: npm-publish
+        if: github.ref == 'refs/heads/master'
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
