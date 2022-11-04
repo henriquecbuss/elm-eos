@@ -1,7 +1,7 @@
 {
-  "name": "elm-watch-starter",
+  "name": "transfer-example",
   "version": "1.0.0",
-  "description": "A template repository using Elm, elm-watch, and some goodies",
+  "description": "An example showing a more complete use with eosjs",
   "scripts": {
     "postinstall": "elm-tooling install",
     "build": "npm run build:elm && npm run build:check-tsc && npm run build:esbuild --tsconfig=./tsconfig.build.json && npm run build:tailwind",
