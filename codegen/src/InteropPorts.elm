@@ -9,25 +9,25 @@ can be sent/received by your ports.
 -}
 
 import InteropDefinitions
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode
+import Json.Encode as Encode
 import TsJson.Decode as TsDecode
 import TsJson.Encode as TsEncode
 
 
 {-| -}
-fromElm : InteropDefinitions.FromElm -> Cmd msg
+fromElm : InteropDefinitions.FromElm -> Cmd msg_
 fromElm value =
-    value
-        |> (InteropDefinitions.interop.fromElm |> TsEncode.encoder)
+    TsEncode.encoder InteropDefinitions.interop.fromElm
+        value
         |> interopFromElm
 
 
 {-| -}
-toElm : Sub (Result Json.Decode.Error InteropDefinitions.ToElm)
+toElm : Sub (Result Decode.Error InteropDefinitions.ToElm)
 toElm =
-    (InteropDefinitions.interop.toElm |> TsDecode.decoder)
-        |> Json.Decode.decodeValue
+    TsDecode.decoder InteropDefinitions.interop.toElm
+        |> Decode.decodeValue
         |> interopToElm
 
 
@@ -35,7 +35,7 @@ toElm =
 -- internals - do not expose
 
 
-port interopFromElm : Json.Encode.Value -> Cmd msg
+port interopFromElm : Encode.Value -> Cmd msg_
 
 
-port interopToElm : (Json.Decode.Value -> msg) -> Sub msg
+port interopToElm : (Decode.Value -> msg) -> Sub msg

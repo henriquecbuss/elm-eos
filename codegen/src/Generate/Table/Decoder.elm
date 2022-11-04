@@ -21,9 +21,9 @@ generate context table =
             )
             (Gen.Json.Decode.succeed
                 (Elm.value
-                    { importFrom = Context.prefixed context [ "Table" ]
+                    { annotation = Nothing
+                    , importFrom = Context.prefixed context [ "Table" ]
                     , name = String.Extra.classify table.name
-                    , annotation = Nothing
                     }
                 )
             )

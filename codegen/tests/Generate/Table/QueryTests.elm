@@ -20,9 +20,8 @@ generateQuery : Test
 generateQuery =
     describe "generateQuery"
         [ test "peopleTable" <|
-            \_ ->
-                peopleTable
-                    |> Generate.Table.Query.generateQuery context
+            \() ->
+                Generate.Table.Query.generateQuery context peopleTable
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
@@ -44,9 +43,8 @@ people arg =
         }"""
                         ]
         , test "snakeCaseTable" <|
-            \_ ->
-                snakeCaseTable
-                    |> Generate.Table.Query.generateQuery context
+            \() ->
+                Generate.Table.Query.generateQuery context snakeCaseTable
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature

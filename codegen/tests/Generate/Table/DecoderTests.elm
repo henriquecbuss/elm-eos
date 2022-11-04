@@ -19,9 +19,8 @@ decoder : Test
 decoder =
     describe "decoder"
         [ test "peopleTable" <|
-            \_ ->
-                peopleTable
-                    |> Generate.Table.Decoder.generate context
+            \() ->
+                Generate.Table.Decoder.generate context peopleTable
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
@@ -41,9 +40,8 @@ people =
         )"""
                         ]
         , test "snakeCaseTable" <|
-            \_ ->
-                snakeCaseTable
-                    |> Generate.Table.Decoder.generate context
+            \() ->
+                Generate.Table.Decoder.generate context snakeCaseTable
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
