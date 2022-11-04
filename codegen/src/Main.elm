@@ -14,6 +14,7 @@ import InteropPorts
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Task
+import Url.Builder
 
 
 type alias CliOptions =
@@ -269,10 +270,10 @@ effectToCmd effect =
                                                     Ok valid
 
                                                 Err error ->
-                                                    Err ("Failed to decode response from " ++ baseUrl ++ "/get_abi:\n\n\t " ++ Decode.errorToString error ++ "\n")
+                                                    Err ("Failed to decode response from " ++ Url.Builder.crossOrigin baseUrl [ "/get_abi" ] [] ++ "\n\n\t " ++ Decode.errorToString error ++ "\n")
                                 )
                         , timeout = Nothing
-                        , url = baseUrl ++ "/get_abi"
+                        , url = Url.Builder.crossOrigin baseUrl [ "/get_abi" ] []
                         }
 
                 contractDecoder :

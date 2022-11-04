@@ -60,6 +60,7 @@ decoder =
 
 fromString : String -> Maybe EosType
 fromString stringType =
+    -- elm-review: IGNORE TCO
     if String.endsWith "[]" stringType then
         String.dropRight 2 stringType
             |> fromString
@@ -163,6 +164,7 @@ fromString stringType =
 
 generateDecoder : EosType -> Elm.Expression
 generateDecoder eosType =
+    -- elm-review: IGNORE TCO
     case eosType of
         EosBool ->
             Gen.Json.Decode.values_.bool
@@ -215,6 +217,7 @@ generateDecoder eosType =
 
 generateEncoder : EosType -> Elm.Expression
 generateEncoder eosType =
+    -- elm-review: IGNORE TCO
     case eosType of
         EosBool ->
             Gen.Json.Encode.values_.bool
@@ -267,6 +270,7 @@ generateEncoder eosType =
 
 toAnnotation : EosType -> Elm.Annotation.Annotation
 toAnnotation eosType =
+    -- elm-review: IGNORE TCO
     case eosType of
         EosBool ->
             Elm.Annotation.bool

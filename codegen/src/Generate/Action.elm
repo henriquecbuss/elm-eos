@@ -118,21 +118,13 @@ encodeActionBranch action =
 
 getName : List Abi.Action -> Elm.Declaration
 getName actions =
-    -- \actionArg ->
-    --     Elm.Case.custom actionArg
-    --         (Elm.Annotation.named [] "Action")
-    --         (List.map getNameBranch actions)
-    --         |> Elm.fn ( "action", Just (Elm.Annotation.named [] "Action") )
-    --         |> Elm.declaration "getName"
-    -- TODO - Fix this one
-    Elm.declaration "getName"
-        (Elm.fn ( "action", Just (Elm.Annotation.named [] "Action") )
-            (\actionArg ->
-                Elm.Case.custom actionArg
-                    (Elm.Annotation.named [] "Action")
-                    (List.map getNameBranch actions)
-            )
+    Elm.fn ( "action", Just (Elm.Annotation.named [] "Action") )
+        (\actionArg ->
+            Elm.Case.custom actionArg
+                (Elm.Annotation.named [] "Action")
+                (List.map getNameBranch actions)
         )
+        |> Elm.declaration "getName"
 
 
 getNameBranch : Abi.Action -> Elm.Case.Branch
