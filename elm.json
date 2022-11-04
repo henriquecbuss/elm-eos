@@ -1,6 +1,6 @@
 {
     "type": "package",
-    "name": "NeoVier/elm-eos",
+    "name": "henriquecbuss/elm-eos",
     "summary": "Type-safe interaction with the EOSIO blockchain in Elm.",
     "license": "BSD-3-Clause",
     "version": "1.0.0",

@@ -1,4 +1,4 @@
-# NeoVier/elm-eos
+# henriquecbuss/elm-eos
 
 This package provides a way to interact with the EOS blockchain, while maintaining
 Elm's type safety. In order to do so, it reads the ABI of the contracts you want
@@ -8,9 +8,9 @@ them.
 
 ## Overview
 
-This package mainly servers to translate EOSIO types to Elm types. There is a
+This package mainly serves to translate EOSIO types to Elm types. There is a
 [CLI app](#cli) that is responsible for generating code specific to the contracts
-you need. The expection to that is the [Eos.Query](https://package.elm-lang.org/packages/NeoVier/elm-eos/1.0.0/Eos-Query) module, which is
+you need. The exception to that is the [Eos.Query](https://package.elm-lang.org/packages/henriquecbuss/elm-eos/1.0.0/Eos-Query) module, which is
 used to send queries to the blockchain.
 
 For example, let's say you have a contract named `company.acc`, with an `accounts`
@@ -115,7 +115,7 @@ sendMoney { currentUser, currentPermission, to, amount } =
         , to = to
         , amount = amount
         }
-        |> Company.Acc.Action.encode { actor = currentUser, ermission = currentPermission }
+        |> Company.Acc.Action.encode { actor = currentUser, permission = currentPermission }
 ```
 
 You can then send that JSON to the blockchain using the `eosjs` library (through
@@ -124,11 +124,11 @@ a port), or using your preferred method.
 ## Setup
 
 There are a few moving pieces that need to work together in order to use
-`NeoVier/elm-eos`. Here's how to set them up:
+`henriquecbuss/elm-eos`. Here's how to set them up:
 
 1. Add the elm package as a dependency in your `elm.json`, along with `elm/json` and `elm/http`:
    ```bash
-   elm install NeoVier/elm-eos
+   elm install henriquecbuss/elm-eos
    elm install elm/json
    elm install elm/http
    ```
