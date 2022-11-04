@@ -115,22 +115,24 @@ sendMoney { currentUser, currentPermission, to, amount } =
         , to = to
         , amount = amount
         }
-        |> Company.Acc.Action.encode { actor = currentUser, permission = currentPermission }
+        |> Company.Acc.Action.encode [ { actor = currentUser, permission = currentPermission } ]
 ```
 
 You can then send that JSON to the blockchain using the `eosjs` library (through
-a port), or using your preferred method.
+a port), or using your preferred method. Check out the [examples](https://github.com/henriquecbuss/elm-eos/examples) folder for
+complete examples.
 
 ## Setup
 
 There are a few moving pieces that need to work together in order to use
 `henriquecbuss/elm-eos`. Here's how to set them up:
 
-1. Add the elm package as a dependency in your `elm.json`, along with `elm/json` and `elm/http`:
+1. Add the elm package as a dependency in your `elm.json`, along with `elm/json`, `elm/http` and `NoRedInk/elm-json-decode-pipeline`:
    ```bash
    elm install henriquecbuss/elm-eos
    elm install elm/json
    elm install elm/http
+   elm install NoRedInk/elm-json-decode-pipeline
    ```
 
 2. Install the `elm-eos` command line through npm. This is what you will
@@ -149,10 +151,12 @@ There are a few moving pieces that need to work together in order to use
    ```json
    {
        "scripts": {
-           "generate-eos": "elm-eos https://mydomain.com/v1/chain --contract first --contract second --output generated --base My.Contract"
+           "generate:eos": "elm-eos https://mydomain.com/v1/chain --contract my.first --contract my.second --output generated --base Contracts"
        }
    }
    ```
+
+   This will generate files in `Contracts/My/First` and `Contracts/My/Second`
 
 4. Now whenever you need to refresh the generated code, you can run `npm run generate-eos`.
 

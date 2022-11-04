@@ -21,7 +21,7 @@ import Json.Decode
 import Json.Encode
 
 
-{-| An asset is simply an [Asset](Eos-Asset), but with a contract [Name](Eos-Name)
+{-| An extended asset is simply an [Asset](Eos-Asset), but with a contract [Name](Eos-Name)
 -}
 type alias ExtendedAsset =
     { amount : Float
