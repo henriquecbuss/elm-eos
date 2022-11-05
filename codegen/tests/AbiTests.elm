@@ -3,7 +3,7 @@ module AbiTests exposing (suite)
 import Abi
 import EosType
 import Expect
-import Json.Decode
+import Json.Decode as Decode
 import Test exposing (Test, describe, test)
 
 
@@ -17,9 +17,8 @@ suite =
 decodesExampleAbiJson : Test
 decodesExampleAbiJson =
     test "decodes example ABI Json" <|
-        \_ ->
-            exampleAbiJson
-                |> Json.Decode.decodeString Abi.decoder
+        \() ->
+            Decode.decodeString Abi.decoder exampleAbiJson
                 |> Expect.equal
                     (Ok
                         { actions =

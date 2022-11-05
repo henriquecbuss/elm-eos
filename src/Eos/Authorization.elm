@@ -17,7 +17,7 @@ uses the user's name and a [Permission](Eos-Permission).
 
 import Eos.Name
 import Eos.Permission
-import Json.Encode
+import Json.Encode as Encode
 
 
 {-| An authorization is just a name and a permission.
@@ -30,9 +30,9 @@ type alias Authorization =
 
 {-| Turn an authorization into a JSON value.
 -}
-encode : Authorization -> Json.Encode.Value
+encode : Authorization -> Encode.Value
 encode authorization =
-    Json.Encode.object
+    Encode.object
         [ ( "actor", Eos.Name.encode authorization.actor )
         , ( "permission", Eos.Permission.encode authorization.permission )
         ]

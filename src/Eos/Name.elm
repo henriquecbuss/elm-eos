@@ -21,8 +21,8 @@ accounts, permissions, actions, tables, etc.
 
 -}
 
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 {-| Names are strings of up to 12 characters in length. They can include
@@ -56,6 +56,16 @@ toString (Name name) =
     name
 
 
+minLength : Int
+minLength =
+    1
+
+
+maxLength : Int
+maxLength =
+    12
+
+
 {-| Convert a regular `String` into a [Name](#Name). Since there are some
 restrictions on the possible names, this function can fail with an [Error](#Error).
 
@@ -81,18 +91,17 @@ fromString name =
     let
         sanitizedString : String
         sanitizedString =
-            name
-                |> String.trim
+            String.trim name
                 |> String.toLower
 
         isCharacterAllowed : Char -> Bool
         isCharacterAllowed char =
             Char.isAlpha char || List.member char [ '1', '2', '3', '4', '5', '.' ]
     in
-    case String.filter (not << isCharacterAllowed) sanitizedString |> String.toList of
-        firstInvalidCharacter :: otherInvalidCharacters ->
-            Err (InvalidCharacters ( firstInvalidCharacter, otherInvalidCharacters ))
-
+    case
+        String.filter (not << isCharacterAllowed) sanitizedString
+            |> String.toList
+    of
         [] ->
             if String.length sanitizedString < minLength then
                 Err TooShort
@@ -105,6 +114,9 @@ fromString name =
 
             else
                 Ok (Name sanitizedString)
+
+        firstInvalidCharacter :: otherInvalidCharacters ->
+            Err (InvalidCharacters ( firstInvalidCharacter, otherInvalidCharacters ))
 
 
 {-| The `Error` type represents all of the possible errors when converting a [Name](#Name)
@@ -163,38 +175,24 @@ errorToString error =
 {-| Encode a [Name](#Name) into JSON. You can use this to send a [Name](#Name) to
 the blockchain or some server.
 -}
-encode : Name -> Json.Encode.Value
+encode : Name -> Encode.Value
 encode (Name name) =
-    Json.Encode.string name
+    Encode.string name
 
 
 {-| Decode a [Name](#Name) from JSON. You can use this to receive a [Name](#Name)
 from the blockchain or some server. It already does all of the validation necessary
 to ensure the [Name](#Name) is valid.
 -}
-decoder : Json.Decode.Decoder Name
+decoder : Decode.Decoder Name
 decoder =
-    Json.Decode.string
-        |> Json.Decode.andThen
+    Decode.string
+        |> Decode.andThen
             (\name ->
                 case fromString name of
                     Ok validName ->
-                        Json.Decode.succeed validName
+                        Decode.succeed validName
 
                     Err error ->
-                        Json.Decode.fail (errorToString error)
+                        Decode.fail (errorToString error)
             )
-
-
-
--- UTILS
-
-
-minLength : Int
-minLength =
-    1
-
-
-maxLength : Int
-maxLength =
-    12

@@ -20,9 +20,8 @@ generateQuery : Test
 generateQuery =
     describe "generateQuery"
         [ test "peopleTable" <|
-            \_ ->
-                peopleTable
-                    |> Generate.Table.Query.generateQuery context
+            \() ->
+                Generate.Table.Query.generateQuery context peopleTable
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
@@ -41,12 +40,14 @@ people arg =
         , contract = "eos.io"
         , table = "people"
         , decoder = Eos.Io.Table.Decoder.people
-        }"""
+        }
+
+
+"""
                         ]
         , test "snakeCaseTable" <|
-            \_ ->
-                snakeCaseTable
-                    |> Generate.Table.Query.generateQuery context
+            \() ->
+                Generate.Table.Query.generateQuery context snakeCaseTable
                     |> Elm.ToString.declaration
                     |> Expect.all
                         [ .signature
@@ -65,7 +66,10 @@ snakeCase arg =
         , contract = "eos.io"
         , table = "snake_case"
         , decoder = Eos.Io.Table.Decoder.snakeCase
-        }"""
+        }
+
+
+"""
                         ]
         ]
 

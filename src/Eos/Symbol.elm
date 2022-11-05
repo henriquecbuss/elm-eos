@@ -27,8 +27,8 @@ module Eos.Symbol exposing
 -}
 
 import Eos.SymbolCode
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 {-| A Symbol is what identifies a currency, and is made of a `precision` and a
@@ -80,17 +80,6 @@ code (Symbol symbol) =
 -- CONVERTING FROM STRINGS AND INTS
 
 
-{-| Create a [Symbol](#Symbol) from a precision and a [SymbolCode](Eos-SymbolCode).
--}
-fromPrecisionAndCode : Int -> Eos.SymbolCode.SymbolCode -> Result PrecisionError Symbol
-fromPrecisionAndCode precision_ code_ =
-    if precision_ < 0 then
-        Err NegativePrecision
-
-    else
-        Ok (Symbol { precision = precision_, code = code_ })
-
-
 {-| Create a [Symbol](#Symbol) from a precision and a `String` that represents a
 [SymbolCode](Eos-SymbolCode). If you already have a [SymbolCode](Eos-SymbolCode),
 use [fromPrecisionAndCode](#fromPrecisionAndCode) instead.
@@ -124,11 +113,15 @@ fromPrecisionAndCodeString precision_ code_ =
             Err (SymbolCodeError err)
 
 
-{-| Precisions must be >= 0. This type represents the error that can happen when
-trying to create a [Symbol](#Symbol) with a negative precision.
+{-| Create a [Symbol](#Symbol) from a precision and a [SymbolCode](Eos-SymbolCode).
 -}
-type PrecisionError
-    = NegativePrecision
+fromPrecisionAndCode : Int -> Eos.SymbolCode.SymbolCode -> Result PrecisionError Symbol
+fromPrecisionAndCode precision_ code_ =
+    if precision_ < 0 then
+        Err NegativePrecision
+
+    else
+        Ok (Symbol { precision = precision_, code = code_ })
 
 
 {-| When creating a [Symbol](#Symbol), there are two things we validate: the
@@ -139,44 +132,11 @@ type Error
     | SymbolCodeError Eos.SymbolCode.Error
 
 
-
--- JSON
-
-
-{-| Encode a [Symbol](#Symbol) into a JSON value.
+{-| Precisions must be >= 0. This type represents the error that can happen when
+trying to create a [Symbol](#Symbol) with a negative precision.
 -}
-encode : Symbol -> Json.Encode.Value
-encode (Symbol symbol) =
-    "{{precision}},{{code}}"
-        |> String.replace "{{precision}}" (String.fromInt symbol.precision)
-        |> String.replace "{{code}}" (Eos.SymbolCode.toString symbol.code)
-        |> Json.Encode.string
-
-
-{-| Decode a [Symbol](#Symbol) from a JSON value.
--}
-decoder : Json.Decode.Decoder Symbol
-decoder =
-    Json.Decode.string
-        |> Json.Decode.andThen
-            (\symbolString ->
-                case String.split "," symbolString of
-                    [ precisionString, codeString ] ->
-                        case String.toInt precisionString of
-                            Just precision_ ->
-                                case fromPrecisionAndCodeString precision_ codeString of
-                                    Ok symbol ->
-                                        Json.Decode.succeed symbol
-
-                                    Err err ->
-                                        Json.Decode.fail (errorToString err ++ ". Received: " ++ symbolString)
-
-                            Nothing ->
-                                Json.Decode.fail ("Invalid precision. I was expecting something in the format 0,EOS, with a number before the comma. Received: " ++ symbolString)
-
-                    _ ->
-                        Json.Decode.fail ("Invalid symbol. I was expecting something in the format 0,EOS. Received: " ++ symbolString)
-            )
+type PrecisionError
+    = NegativePrecision
 
 
 {-| You can use this function to convert an [Error](#Error) to a human-readable
@@ -190,3 +150,42 @@ errorToString error =
 
         SymbolCodeError err ->
             Eos.SymbolCode.errorToString err
+
+
+
+-- JSON
+
+
+{-| Encode a [Symbol](#Symbol) into a JSON value.
+-}
+encode : Symbol -> Encode.Value
+encode (Symbol symbol) =
+    String.replace "{{precision}}" (String.fromInt symbol.precision) "{{precision}},{{code}}"
+        |> String.replace "{{code}}" (Eos.SymbolCode.toString symbol.code)
+        |> Encode.string
+
+
+{-| Decode a [Symbol](#Symbol) from a JSON value.
+-}
+decoder : Decode.Decoder Symbol
+decoder =
+    Decode.string
+        |> Decode.andThen
+            (\symbolString ->
+                case String.split "," symbolString of
+                    [ precisionString, codeString ] ->
+                        case String.toInt precisionString of
+                            Just precision_ ->
+                                case fromPrecisionAndCodeString precision_ codeString of
+                                    Ok symbol ->
+                                        Decode.succeed symbol
+
+                                    Err err ->
+                                        Decode.fail (errorToString err ++ ". Received: " ++ symbolString)
+
+                            Nothing ->
+                                Decode.fail ("Invalid precision. I was expecting something in the format 0,EOS, with a number before the comma. Received: " ++ symbolString)
+
+                    _ ->
+                        Decode.fail ("Invalid symbol. I was expecting something in the format 0,EOS. Received: " ++ symbolString)
+            )

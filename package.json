@@ -1,6 +1,6 @@
 {
   "name": "elm-eos",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
   "bin": {
     "elm-eos": "codegen/bin/elm-eos"
@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/henriquecbuss/elm-eos#readme",
   "devDependencies": {
-    "elm-codegen": "^0.1.3",
+    "elm-codegen": "^0.2.0",
     "elm-review": "^2.7.3",
     "elm-tooling": "^1.8.0",
     "elm-verify-examples": "^5.2.0"

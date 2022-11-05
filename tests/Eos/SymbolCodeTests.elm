@@ -3,7 +3,7 @@ module Eos.SymbolCodeTests exposing (suite)
 import Eos.SymbolCode
 import Expect
 import Fuzz
-import Json.Decode
+import Json.Decode as Decode
 import Test exposing (Test, describe, fuzz, test)
 
 
@@ -19,9 +19,8 @@ stringRoundtrip : Test
 stringRoundtrip =
     describe "toString and fromString roundtrip"
         [ test "EOS fromString and toString results in EOS" <|
-            \_ ->
-                "EOS"
-                    |> Eos.SymbolCode.fromString
+            \() ->
+                Eos.SymbolCode.fromString "EOS"
                     |> Result.map Eos.SymbolCode.toString
                     |> Expect.equal (Ok "EOS")
         , fuzz Fuzz.string "fuzz fromString and toString" <|
@@ -40,33 +39,31 @@ jsonRoundTrip : Test
 jsonRoundTrip =
     describe "encode and decode roundtrip"
         [ test "EOS encoding and decoding results in EOS" <|
-            \_ ->
+            \() ->
                 case Eos.SymbolCode.fromString "EOS" of
-                    Err _ ->
-                        Expect.fail "Invalid symbol code"
-
                     Ok code ->
-                        code
-                            |> Eos.SymbolCode.encode
-                            |> Json.Decode.decodeValue Eos.SymbolCode.decoder
+                        Eos.SymbolCode.encode code
+                            |> Decode.decodeValue Eos.SymbolCode.decoder
                             |> Expect.all
                                 [ Expect.equal (Ok code)
                                 , Result.map Eos.SymbolCode.toString
                                     >> Expect.equal (Ok "EOS")
                                 ]
+
+                    Err _ ->
+                        Expect.fail "Invalid symbol code"
         , fuzz Fuzz.string "fuzz encoding and decoding" <|
             \fuzzedCode ->
                 case Eos.SymbolCode.fromString fuzzedCode of
-                    Err _ ->
-                        Expect.pass
-
                     Ok code ->
-                        code
-                            |> Eos.SymbolCode.encode
-                            |> Json.Decode.decodeValue Eos.SymbolCode.decoder
+                        Eos.SymbolCode.encode code
+                            |> Decode.decodeValue Eos.SymbolCode.decoder
                             |> Expect.all
                                 [ Expect.equal (Ok code)
                                 , Result.map Eos.SymbolCode.toString
                                     >> Expect.equal (Ok fuzzedCode)
                                 ]
+
+                    Err _ ->
+                        Expect.pass
         ]

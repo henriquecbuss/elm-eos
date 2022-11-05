@@ -29,9 +29,9 @@ generateQuery context table =
                         , ( "table", Elm.string table.name )
                         , ( "decoder"
                           , Elm.value
-                                { importFrom = Context.prefixed context [ "Table", "Decoder" ]
+                                { annotation = Nothing
+                                , importFrom = Context.prefixed context [ "Table", "Decoder" ]
                                 , name = String.Extra.camelize table.name
-                                , annotation = Nothing
                                 }
                           )
                         ]

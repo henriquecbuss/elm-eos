@@ -26,8 +26,8 @@ module Eos.TimePoint exposing
 
 -}
 
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode
+import Json.Encode as Encode
 import Time
 
 
@@ -82,15 +82,14 @@ fromPosix posix =
 {-| Encode a [TimePoint](#TimePoint) into JSON. You can use this to send a
 [TimePoint](#TimePoint) to the blockchain or some server.
 -}
-encode : TimePoint -> Json.Encode.Value
+encode : TimePoint -> Encode.Value
 encode (TimePoint microseconds) =
-    Json.Encode.int microseconds
+    Encode.int microseconds
 
 
 {-| Decode a [TimePoint](#TimePoint) from JSON. You can use this to receive a
 [TimePoint](#TimePoint) from the blockchain or some server.
 -}
-decoder : Json.Decode.Decoder TimePoint
+decoder : Decode.Decoder TimePoint
 decoder =
-    Json.Decode.int
-        |> Json.Decode.map TimePoint
+    Decode.map TimePoint Decode.int

@@ -19,17 +19,17 @@ decoder : Test
 decoder =
     describe "decoder"
         [ test "peopleTable" <|
-            \_ ->
-                peopleTable
-                    |> Generate.Table.Decoder.generate context
+            \() ->
+                Generate.Table.Decoder.generate context peopleTable
                     |> Elm.ToString.declaration
                     |> Expect.all
-                        [ .signature
+                        [ .docs
+                            >> Expect.equal "Decoder for the people table."
+                        , .signature
                             >> Expect.equal
                                 "people : Json.Decode.Decoder Eos.Io.Table.People"
                         , .body
-                            >> Expect.equal """{-| Decoder for the people table. -}
-people : Json.Decode.Decoder Eos.Io.Table.People
+                            >> Expect.equal """people : Json.Decode.Decoder Eos.Io.Table.People
 people =
     Json.Decode.Pipeline.required
         "assets"
@@ -38,25 +38,31 @@ people =
             "name"
             Eos.Name.decoder
             (Json.Decode.succeed Eos.Io.Table.People)
-        )"""
+        )
+
+
+"""
                         ]
         , test "snakeCaseTable" <|
-            \_ ->
-                snakeCaseTable
-                    |> Generate.Table.Decoder.generate context
+            \() ->
+                Generate.Table.Decoder.generate context snakeCaseTable
                     |> Elm.ToString.declaration
                     |> Expect.all
-                        [ .signature
+                        [ .docs
+                            >> Expect.equal "Decoder for the snake_case table."
+                        , .signature
                             >> Expect.equal
                                 "snakeCase : Json.Decode.Decoder Eos.Io.Table.SnakeCase"
                         , .body
-                            >> Expect.equal """{-| Decoder for the snake_case table. -}
-snakeCase : Json.Decode.Decoder Eos.Io.Table.SnakeCase
+                            >> Expect.equal """snakeCase : Json.Decode.Decoder Eos.Io.Table.SnakeCase
 snakeCase =
     Json.Decode.Pipeline.required
         "snake_case"
         Json.Decode.bool
-        (Json.Decode.succeed Eos.Io.Table.SnakeCase)"""
+        (Json.Decode.succeed Eos.Io.Table.SnakeCase)
+
+
+"""
                         ]
         ]
 

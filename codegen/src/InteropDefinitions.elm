@@ -6,16 +6,12 @@ import TsJson.Decode as TsDecode exposing (Decoder)
 import TsJson.Encode as TsEncode exposing (Encoder, required)
 
 
-interop :
-    { toElm : Decoder ToElm
-    , fromElm : Encoder FromElm
-    , flags : Decoder Flags
-    }
-interop =
-    { toElm = toElm
-    , fromElm = fromElm
-    , flags = flags
-    }
+type alias Flags =
+    Cli.Program.FlagsIncludingArgv {}
+
+
+type alias FlagsWithoutArgv =
+    {}
 
 
 type FromElm
@@ -29,12 +25,16 @@ type ToElm
     | FinishedWritingToFilesWithError
 
 
-type alias Flags =
-    Cli.Program.FlagsIncludingArgv {}
-
-
-type alias FlagsWithoutArgv =
-    {}
+interop :
+    { flags : Decoder Flags
+    , fromElm : Encoder FromElm
+    , toElm : Decoder ToElm
+    }
+interop =
+    { flags = flags
+    , fromElm = fromElm
+    , toElm = toElm
+    }
 
 
 fromElm : Encoder FromElm
@@ -58,15 +58,12 @@ fromElm =
         |> TsEncode.variantTagged "writeToFiles"
             (TsEncode.object
                 [ required "output" .output TsEncode.string
-                , required "files"
-                    .files
-                    (TsEncode.list
-                        (TsEncode.object
-                            [ required "path" .path TsEncode.string
-                            , required "contents" .contents TsEncode.string
-                            ]
-                        )
-                    )
+                , TsEncode.object
+                    [ required "path" .path TsEncode.string
+                    , required "contents" .contents TsEncode.string
+                    ]
+                    |> TsEncode.list
+                    |> required "files" .files
                 ]
             )
         |> TsEncode.buildUnion

@@ -3,8 +3,8 @@ module EosTypeTests exposing (suite)
 import Elm.ToString
 import EosType
 import Expect
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode
+import Json.Encode as Encode
 import Test exposing (Test, describe, test)
 
 
@@ -24,10 +24,9 @@ decoder =
         decodeTypeTest : String -> EosType.EosType -> Test
         decodeTypeTest typeName typeValue =
             test typeName <|
-                \_ ->
-                    typeName
-                        |> Json.Encode.string
-                        |> Json.Decode.decodeValue EosType.decoder
+                \() ->
+                    Encode.string typeName
+                        |> Decode.decodeValue EosType.decoder
                         |> Expect.equal (Ok typeValue)
     in
     describe "decoder"
@@ -62,7 +61,9 @@ decoder =
         , decodeTypeTest "asset" EosType.Asset
         , decodeTypeTest "extended_asset" EosType.ExtendedAsset
         , decodeTypeTest "bool[]" (EosType.EosList EosType.EosBool)
-        , decodeTypeTest "bool[][]" (EosType.EosList (EosType.EosList EosType.EosBool))
+        , EosType.EosList EosType.EosBool
+            |> EosType.EosList
+            |> decodeTypeTest "bool[][]"
         ]
 
 
@@ -72,9 +73,8 @@ generateEncoder =
         generateEncoderTest : EosType.EosType -> String -> Test
         generateEncoderTest eosType expectedBody =
             test expectedBody <|
-                \_ ->
-                    eosType
-                        |> EosType.generateEncoder
+                \() ->
+                    EosType.generateEncoder eosType
                         |> Elm.ToString.expression
                         |> .body
                         |> Expect.equal expectedBody
@@ -106,9 +106,8 @@ generateDecoder =
         generateDecoderTest : EosType.EosType -> String -> Test
         generateDecoderTest eosType expectedBody =
             test expectedBody <|
-                \_ ->
-                    eosType
-                        |> EosType.generateDecoder
+                \() ->
+                    EosType.generateDecoder eosType
                         |> Elm.ToString.expression
                         |> .body
                         |> Expect.equal expectedBody
@@ -140,9 +139,8 @@ toAnnotation =
         toAnnotationTest : EosType.EosType -> String -> Test
         toAnnotationTest eosType expectedSignature =
             test expectedSignature <|
-                \_ ->
-                    eosType
-                        |> EosType.toAnnotation
+                \() ->
+                    EosType.toAnnotation eosType
                         |> Elm.ToString.annotation
                         |> .signature
                         |> Expect.equal expectedSignature
