@@ -18,5 +18,5 @@ type_ table =
             )
             table.columns
         )
-        |> Elm.alias (String.Extra.camelize table.name)
+        |> Elm.alias (String.Extra.classify table.name)
         |> Elm.withDocumentation ("Type representing the " ++ table.name ++ " table.")

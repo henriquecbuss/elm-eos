@@ -229,40 +229,120 @@ generateEncoder eosType =
             Gen.Json.Encode.values_.float
 
         TimePoint ->
-            Gen.Eos.TimePoint.values_.encode
+            Elm.value
+                { annotation =
+                    Just
+                        (Elm.Annotation.function [ Gen.Eos.TimePoint.annotation_.timePoint ]
+                            Gen.Json.Encode.annotation_.value
+                        )
+                , importFrom = [ "Eos", "TimePoint" ]
+                , name = "encode"
+                }
 
         TimePointSec ->
-            Gen.Eos.TimePointSec.values_.encode
+            Elm.value
+                { annotation =
+                    Just
+                        (Elm.Annotation.function [ Gen.Eos.TimePointSec.annotation_.timePointSec ]
+                            Gen.Json.Encode.annotation_.value
+                        )
+                , importFrom = [ "Eos", "TimePointSec" ]
+                , name = "encode"
+                }
 
         BlockTimestampType ->
             Elm.Op.pipe Gen.Json.Encode.values_.int Gen.Time.values_.posixToMillis
 
         Name ->
-            Gen.Eos.Name.values_.encode
+            Elm.value
+                { annotation =
+                    Just
+                        (Elm.Annotation.function [ Gen.Eos.Name.annotation_.name ]
+                            Gen.Json.Encode.annotation_.value
+                        )
+                , importFrom = [ "Eos", "Name" ]
+                , name = "encode"
+                }
 
         EosString ->
             Gen.Json.Encode.values_.string
 
         Checksum ->
-            Gen.Eos.Checksum.values_.encode
+            Elm.value
+                { annotation =
+                    Just
+                        (Elm.Annotation.function [ Gen.Eos.Checksum.annotation_.checksum ]
+                            Gen.Json.Encode.annotation_.value
+                        )
+                , importFrom = [ "Eos", "Checksum" ]
+                , name = "encode"
+                }
 
         PublicKey ->
-            Gen.Eos.PublicKey.values_.encode
+            Elm.value
+                { annotation =
+                    Just
+                        (Elm.Annotation.function [ Gen.Eos.PublicKey.annotation_.publicKey ]
+                            Gen.Json.Encode.annotation_.value
+                        )
+                , importFrom = [ "Eos", "PublicKey" ]
+                , name = "encode"
+                }
 
         Signature ->
-            Gen.Eos.Signature.values_.encode
+            Elm.value
+                { annotation =
+                    Just
+                        (Elm.Annotation.function [ Gen.Eos.Signature.annotation_.signature ]
+                            Gen.Json.Encode.annotation_.value
+                        )
+                , importFrom = [ "Eos", "Signature" ]
+                , name = "encode"
+                }
 
         Symbol ->
-            Gen.Eos.Symbol.values_.encode
+            Elm.value
+                { annotation =
+                    Just
+                        (Elm.Annotation.function [ Gen.Eos.Symbol.annotation_.symbol ]
+                            Gen.Json.Encode.annotation_.value
+                        )
+                , importFrom = [ "Eos", "Symbol" ]
+                , name = "encode"
+                }
 
         SymbolCode ->
-            Gen.Eos.SymbolCode.values_.encode
+            Elm.value
+                { annotation =
+                    Just
+                        (Elm.Annotation.function [ Gen.Eos.SymbolCode.annotation_.symbolCode ]
+                            Gen.Json.Encode.annotation_.value
+                        )
+                , importFrom = [ "Eos", "SymbolCode" ]
+                , name = "encode"
+                }
 
         Asset ->
-            Gen.Eos.Asset.values_.encode
+            Elm.value
+                { annotation =
+                    Just
+                        (Elm.Annotation.function [ Gen.Eos.Asset.annotation_.asset ]
+                            Gen.Json.Encode.annotation_.value
+                        )
+                , importFrom = [ "Eos", "Asset" ]
+                , name = "encode"
+                }
 
         ExtendedAsset ->
-            Gen.Eos.ExtendedAsset.values_.encode
+            Elm.value
+                { annotation =
+                    Just
+                        (Elm.Annotation.function [ Gen.Eos.ExtendedAsset.annotation_.extendedAsset ]
+                            Gen.Json.Encode.annotation_.value
+                        )
+                , importFrom = [ "Eos", "ExtendedAsset" ]
+                , name = "encode"
+                }
 
         EosList innerType ->
             Elm.apply Gen.Json.Encode.values_.list [ generateEncoder innerType ]

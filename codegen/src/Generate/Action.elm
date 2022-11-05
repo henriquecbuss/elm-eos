@@ -35,7 +35,22 @@ encode context =
                     [ actionArg ]
                     |> Gen.Json.Encode.call_.string
                     |> Elm.tuple (Elm.string "name")
-                , Elm.tuple (Elm.string "authorization") (Gen.Json.Encode.call_.list Gen.Eos.Authorization.values_.encode authorizationsArg)
+                , Elm.tuple (Elm.string "authorization")
+                    (Gen.Json.Encode.call_.list
+                        -- elm-codegen messes up the imports if we don't do this
+                        (Elm.value
+                            { annotation =
+                                Just
+                                    (Elm.Annotation.function
+                                        [ Gen.Eos.Authorization.annotation_.authorization ]
+                                        Gen.Json.Encode.annotation_.value
+                                    )
+                            , importFrom = [ "Eos", "Authorization" ]
+                            , name = "encode"
+                            }
+                        )
+                        authorizationsArg
+                    )
                 , Elm.tuple (Elm.string "data")
                     (Elm.apply
                         (Elm.value
@@ -53,15 +68,6 @@ encode context =
                     )
                 ]
         )
-        -- For some reason, if we don't use `withType` here, elm-codegen
-        -- struggles to infer the type of the function and generates an error.
-        |> Elm.withType
-            (Elm.Annotation.function
-                [ Elm.Annotation.list Gen.Eos.Authorization.annotation_.authorization
-                , Elm.Annotation.named [] "Action"
-                ]
-                Gen.Json.Encode.annotation_.value
-            )
         |> Elm.declaration "encode"
         |> Elm.withDocumentation "Turn an [Action](#Action) into a JSON value to perform a transaction. You can then send it through a port to eosjs, or similar."
 

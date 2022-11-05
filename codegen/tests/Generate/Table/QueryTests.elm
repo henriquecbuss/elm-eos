@@ -40,7 +40,10 @@ people arg =
         , contract = "eos.io"
         , table = "people"
         , decoder = Eos.Io.Table.Decoder.people
-        }"""
+        }
+
+
+"""
                         ]
         , test "snakeCaseTable" <|
             \() ->
@@ -63,7 +66,10 @@ snakeCase arg =
         , contract = "eos.io"
         , table = "snake_case"
         , decoder = Eos.Io.Table.Decoder.snakeCase
-        }"""
+        }
+
+
+"""
                         ]
         ]
 

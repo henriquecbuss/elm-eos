@@ -174,18 +174,23 @@ type_ =
             \() ->
                 Generate.Action.type_ [ transferAction ]
                     |> Elm.ToString.declaration
-                    |> .body
-                    |> Expect.equal """{-| Represents an action that can be sent to the blockchain.
+                    |> Expect.all
+                        [ .docs
+                            >> Expect.equal """Represents an action that can be sent to the blockchain.
 
-You can [encode](#encode) it and send it through a port to eosjs or similar.
--}
-type Action
+You can [encode](#encode) it and send it through a port to eosjs or similar."""
+                        , .body
+                            >> Expect.equal """type Action
     = Transfer
         { from : Eos.Name.Name
         , to : Eos.Name.Name
         , quantity : Eos.Asset.Asset
         , memo : String
-        }"""
+        }
+
+
+"""
+                        ]
         , test "works correctly for multiple actions" <|
             \() ->
                 [ transferAction
@@ -193,12 +198,13 @@ type Action
                 ]
                     |> Generate.Action.type_
                     |> Elm.ToString.declaration
-                    |> .body
-                    |> Expect.equal """{-| Represents an action that can be sent to the blockchain.
+                    |> Expect.all
+                        [ .docs
+                            >> Expect.equal """Represents an action that can be sent to the blockchain.
 
-You can [encode](#encode) it and send it through a port to eosjs or similar.
--}
-type Action
+You can [encode](#encode) it and send it through a port to eosjs or similar."""
+                        , .body
+                            >> Expect.equal """type Action
     = Transfer
         { from : Eos.Name.Name
         , to : Eos.Name.Name
@@ -210,18 +216,23 @@ type Action
         , awarder : Eos.Name.Name
         , quantity : Eos.Asset.Asset
         , reason : String
-        }"""
+        }
+
+
+"""
+                        ]
         , test "works correctly for all types" <|
             \() ->
                 Generate.Action.type_ [ allTypesAction ]
                     |> Elm.ToString.declaration
-                    |> .body
-                    |> Expect.equal
-                        """{-| Represents an action that can be sent to the blockchain.
+                    |> Expect.all
+                        [ .docs
+                            >> Expect.equal """Represents an action that can be sent to the blockchain.
 
-You can [encode](#encode) it and send it through a port to eosjs or similar.
--}
-type Action
+You can [encode](#encode) it and send it through a port to eosjs or similar."""
+                        , .body
+                            >> Expect.equal
+                                """type Action
     = Test
         { bool : Bool
         , int8 : Int
@@ -253,19 +264,28 @@ type Action
         , symbolCode : Eos.SymbolCode.SymbolCode
         , asset : Eos.Asset.Asset
         , extendedAsset : Eos.ExtendedAsset.ExtendedAsset
-        }"""
+        }
+
+
+"""
+                        ]
         , test "transforms snake_case into camelCase and PascalCase" <|
             \() ->
                 Generate.Action.type_ [ snakeCaseAction ]
                     |> Elm.ToString.declaration
-                    |> .body
-                    |> Expect.equal
-                        """{-| Represents an action that can be sent to the blockchain.
+                    |> Expect.all
+                        [ .docs
+                            >> Expect.equal """Represents an action that can be sent to the blockchain.
 
-You can [encode](#encode) it and send it through a port to eosjs or similar.
--}
-type Action
-    = SnakeCase { snakeCase : String }"""
+You can [encode](#encode) it and send it through a port to eosjs or similar."""
+                        , .body
+                            >> Expect.equal
+                                """type Action
+    = SnakeCase { snakeCase : String }
+
+
+"""
+                        ]
         ]
 
 
@@ -284,11 +304,12 @@ encode =
                 Generate.Action.encode context
                     |> Elm.ToString.declaration
                     |> Expect.all
-                        [ .signature
+                        [ .docs
+                            >> Expect.equal "Turn an [Action](#Action) into a JSON value to perform a transaction. You can then send it through a port to eosjs, or similar."
+                        , .signature
                             >> Expect.equal "encode : List Eos.Authorization.Authorization -> Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value to perform a transaction. You can then send it through a port to eosjs, or similar. -}
-encode : List Eos.Authorization.Authorization -> Action -> Json.Encode.Value
+                            >> Expect.equal """encode : List Eos.Authorization.Authorization -> Action -> Json.Encode.Value
 encode authorizations action =
     Json.Encode.object
         [ ( "account", Json.Encode.string "fruits" )
@@ -297,7 +318,10 @@ encode authorizations action =
           , Json.Encode.list Eos.Authorization.encode authorizations
           )
         , ( "data", encodeSingleAction action )
-        ]"""
+        ]
+
+
+"""
                         ]
         ]
 
@@ -310,11 +334,12 @@ encodeSingleAction =
                 Generate.Action.encodeSingleAction [ transferAction ]
                     |> Elm.ToString.declaration
                     |> Expect.all
-                        [ .signature
+                        [ .docs
+                            >> Expect.equal "Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead."
+                        , .signature
                             >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead. -}
-encodeSingleAction : Action -> Json.Encode.Value
+                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
 encodeSingleAction action =
     case action of
         Transfer args ->
@@ -323,7 +348,10 @@ encodeSingleAction action =
                 , ( "to", args.to |> Eos.Name.encode )
                 , ( "quantity", args.quantity |> Eos.Asset.encode )
                 , ( "memo", args.memo |> Json.Encode.string )
-                ]"""
+                ]
+
+
+"""
                         ]
         , test "works correctly for multiple actions" <|
             \() ->
@@ -333,11 +361,12 @@ encodeSingleAction action =
                     |> Generate.Action.encodeSingleAction
                     |> Elm.ToString.declaration
                     |> Expect.all
-                        [ .signature
+                        [ .docs
+                            >> Expect.equal "Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead."
+                        , .signature
                             >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead. -}
-encodeSingleAction : Action -> Json.Encode.Value
+                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
 encodeSingleAction action =
     case action of
         Transfer args ->
@@ -356,18 +385,22 @@ encodeSingleAction action =
                 , ( "awarder", args.awarder |> Eos.Name.encode )
                 , ( "quantity", args.quantity |> Eos.Asset.encode )
                 , ( "reason", args.reason |> Json.Encode.string )
-                ]"""
+                ]
+
+
+"""
                         ]
         , test "works correctly for all types" <|
             \() ->
                 Generate.Action.encodeSingleAction [ allTypesAction ]
                     |> Elm.ToString.declaration
                     |> Expect.all
-                        [ .signature
+                        [ .docs
+                            >> Expect.equal "Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead."
+                        , .signature
                             >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead. -}
-encodeSingleAction : Action -> Json.Encode.Value
+                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
 encodeSingleAction action =
     case action of
         Test args ->
@@ -394,7 +427,8 @@ encodeSingleAction action =
                   )
                 , ( "block_timestamp_type"
                   , args.blockTimestampType
-                        |> (Time.posixToMillis |> Json.Encode.int)
+                        |> Time.posixToMillis
+                        |> Json.Encode.int
                   )
                 , ( "name", args.name |> Eos.Name.encode )
                 , ( "string", args.string |> Json.Encode.string )
@@ -409,22 +443,29 @@ encodeSingleAction action =
                 , ( "extended_asset"
                   , args.extendedAsset |> Eos.ExtendedAsset.encode
                   )
-                ]"""
+                ]
+
+
+"""
                         ]
         , test "works correctly for snake_cased actions" <|
             \() ->
                 Generate.Action.encodeSingleAction [ snakeCaseAction ]
                     |> Elm.ToString.declaration
                     |> Expect.all
-                        [ .signature
+                        [ .docs
+                            >> Expect.equal "Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead."
+                        , .signature
                             >> Expect.equal "encodeSingleAction : Action -> Json.Encode.Value"
                         , .body
-                            >> Expect.equal """{-| Turn an [Action](#Action) into a JSON value. If you want to send the action to the blockchain, use [encode](#encode) instead. -}
-encodeSingleAction : Action -> Json.Encode.Value
+                            >> Expect.equal """encodeSingleAction : Action -> Json.Encode.Value
 encodeSingleAction action =
     case action of
         SnakeCase args ->
             Json.Encode.object
-                [ ( "snake_case", args.snakeCase |> Json.Encode.string ) ]"""
+                [ ( "snake_case", args.snakeCase |> Json.Encode.string ) ]
+
+
+"""
                         ]
         ]
