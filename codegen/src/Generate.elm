@@ -1,4 +1,4 @@
-module Generate exposing (files)
+module Generate exposing (apiFiles)
 
 {-| -}
 
@@ -12,19 +12,19 @@ import Generate.Table.Query
 import String.Extra
 
 
-files : List String -> List { abi : Abi.Abi, baseUrl : String, contract : String } -> List Elm.File
-files base abis =
+apiFiles : List String -> List { abi : Abi.Abi, baseUrl : String, contract : String } -> List Elm.File
+apiFiles base abis =
     List.concatMap
         (\{ abi, baseUrl, contract } ->
-            filesFromAbi base
+            apiFilesFromAbi base
                 { baseUrl = baseUrl, contract = contract }
                 abi
         )
         abis
 
 
-filesFromAbi : List String -> Context.Context -> Abi.Abi -> List Elm.File
-filesFromAbi base context abi =
+apiFilesFromAbi : List String -> Context.Context -> Abi.Abi -> List Elm.File
+apiFilesFromAbi base context abi =
     let
         fileName : List String -> List String
         fileName suffix =
