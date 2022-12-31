@@ -18,15 +18,19 @@ should live.
 
 -}
 
+import AssocList as Dict
+import Eos.Name
 import Gen.Route
 import InteropDefinitions
 import Request exposing (Request)
+import Result.Extra as ResultX
 
 
 {-| The shared model. Pages have access to this.
 -}
 type alias Model =
     { user : Maybe { privateKey : String }
+    , contracts : Dict.Dict Eos.Name.Name { actions : List (), tables : List () }
     }
 
 
@@ -43,14 +47,71 @@ type Msg
 -}
 init : Request -> InteropDefinitions.Flags -> ( Model, Cmd Msg )
 init _ flags =
+    let
+        makeContract :
+            { actions : List ()
+            , tables : List ()
+            }
+            -> Eos.Name.Name
+            ->
+                ( Eos.Name.Name
+                , { actions : List ()
+                  , tables : List ()
+                  }
+                )
+        makeContract actionsAndTables name =
+            ( name
+            , actionsAndTables
+            )
+
+        cambiatusCm : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List () } )
+        cambiatusCm =
+            Eos.Name.fromString "cambiatus.cm"
+                |> Result.map
+                    (makeContract { actions = List.repeat 16 (), tables = List.repeat 4 () })
+
+        cambiatusTk : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List () } )
+        cambiatusTk =
+            Eos.Name.fromString "cambiatus.tk"
+                |> Result.map
+                    (makeContract
+                        { actions = List.repeat 12 ()
+                        , tables = List.repeat 8 ()
+                        }
+                    )
+
+        eosIo : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List () } )
+        eosIo =
+            Eos.Name.fromString "eos.io"
+                |> Result.map
+                    (makeContract
+                        { actions = List.repeat 4 ()
+                        , tables = List.repeat 2 ()
+                        }
+                    )
+
+        contracts : Dict.Dict Eos.Name.Name { actions : List (), tables : List () }
+        contracts =
+            ResultX.combine
+                [ eosIo
+                , cambiatusTk
+                , cambiatusCm
+                ]
+                |> Result.withDefault []
+                |> Dict.fromList
+    in
     case flags.privateKey of
         Just privateKey ->
-            ( { user = Just { privateKey = privateKey } }
+            ( { user = Just { privateKey = privateKey }
+              , contracts = contracts
+              }
             , Cmd.none
             )
 
         Nothing ->
-            ( { user = Nothing }
+            ( { user = Nothing
+              , contracts = contracts
+              }
             , Cmd.none
             )
 

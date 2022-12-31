@@ -14,15 +14,16 @@ module Pages.Home_ exposing
 
 -}
 
+import AssocList as Dict
 import Cambiatus.Cm.Action
 import Cambiatus.Tk.Action
-import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Eos.Asset
 import Eos.Name
 import Eos.Permission
 import Eos.Symbol
 import Gen.Params.Home_ exposing (Params)
+import Gen.Route
 import Heroicons.Solid
 import Html
 import Html.Attributes as Attr exposing (class)
@@ -38,15 +39,14 @@ import Shared
 import Simple.Fuzzy
 import Svg.Attributes
 import Ui.AutoAnimate
+import Ui.Header
 import View exposing (View)
 
 
 {-| The model for this page
 -}
 type alias Model =
-    { contracts : List { name : Eos.Name.Name, actions : List (), tables : List () }
-    , searchString : String
-    }
+    { searchString : String }
 
 
 {-| Everything this page can do
@@ -60,14 +60,12 @@ type Msg
 -}
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
 page shared _ =
-    Page.protected.advanced
-        (\_ ->
-            { init = init
-            , update = update
-            , view = view shared
-            , subscriptions = \_ -> Sub.none
-            }
-        )
+    Page.advanced
+        { init = init
+        , update = update
+        , view = view shared
+        , subscriptions = \_ -> Sub.none
+        }
 
 
 
@@ -76,51 +74,7 @@ page shared _ =
 
 init : ( Model, Effect Msg )
 init =
-    let
-        cambiatusCm : Result Eos.Name.Error { name : Eos.Name.Name, actions : List (), tables : List () }
-        cambiatusCm =
-            Eos.Name.fromString "cambiatus.cm"
-                |> Result.map
-                    (\name ->
-                        { name = name
-                        , actions = List.repeat 16 ()
-                        , tables = List.repeat 4 ()
-                        }
-                    )
-
-        cambiatusTk : Result Eos.Name.Error { name : Eos.Name.Name, actions : List (), tables : List () }
-        cambiatusTk =
-            Eos.Name.fromString "cambiatus.tk"
-                |> Result.map
-                    (\name ->
-                        { name = name
-                        , actions = List.repeat 12 ()
-                        , tables = List.repeat 8 ()
-                        }
-                    )
-
-        eosIo : Result Eos.Name.Error { name : Eos.Name.Name, actions : List (), tables : List () }
-        eosIo =
-            Eos.Name.fromString "eos.io"
-                |> Result.map
-                    (\name ->
-                        { name = name
-                        , actions = List.repeat 4 ()
-                        , tables = List.repeat 2 ()
-                        }
-                    )
-
-        contracts : Result Eos.Name.Error (List { name : Eos.Name.Name, actions : List (), tables : List () })
-        contracts =
-            ResultX.combine
-                [ cambiatusCm
-                , cambiatusTk
-                , eosIo
-                ]
-    in
-    ( { contracts = Result.withDefault [] contracts
-      , searchString = ""
-      }
+    ( { searchString = "" }
     , Effect.none
     )
 
@@ -147,31 +101,20 @@ update msg model =
 
 
 view : Shared.Model -> Model -> View Msg
-view _ model =
-    { title = "elm-watch starter"
+view shared model =
+    { title = "elm-eos"
     , body =
-        [ viewHeader { logout = ClickedLogout }
-        , viewContracts model
+        [ Ui.Header.view { logout = ClickedLogout }
+        , viewContracts shared.contracts model
         ]
     }
 
 
-viewHeader : { logout : msg } -> Html.Html msg
-viewHeader { logout } =
-    Html.header [ class "w-full py-2 bg-slate-700 text-white" ]
-        [ Html.div [ class "container mx-auto px-4 flex" ]
-            [ Html.h1 [ class "text-4xl font-bold" ] [ Html.text "elm-eos" ]
-            , Html.button
-                [ class "ml-auto hover:bg-slate-100 hover:text-black transition-colors rounded px-4 py-1"
-                , Html.Events.onClick logout
-                ]
-                [ Html.text "Logout" ]
-            ]
-        ]
-
-
-viewContracts : Model -> Html.Html Msg
-viewContracts model =
+viewContracts :
+    Dict.Dict Eos.Name.Name { actions : List (), tables : List () }
+    -> Model
+    -> Html.Html Msg
+viewContracts contractsDict model =
     Html.main_ [ class "h-full bg-slate-100 pt-4" ]
         [ Html.div [ class "container mx-auto px-4 flex items-center justify-between" ]
             [ Html.h2 [ class "text-xl" ] [ Html.text "Contracts" ]
@@ -189,12 +132,18 @@ viewContracts model =
         , Ui.AutoAnimate.viewKeyed
             [ class "container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-4"
             ]
-            (model.contracts
-                |> Simple.Fuzzy.filter (.name >> Eos.Name.toString) model.searchString
+            (contractsDict
+                |> Dict.toList
+                |> Simple.Fuzzy.filter (Tuple.first >> Eos.Name.toString)
+                    model.searchString
                 |> List.map
-                    (\contract ->
-                        ( Eos.Name.toString contract.name
-                        , viewContractCard contract
+                    (\( contractName, { actions, tables } ) ->
+                        ( Eos.Name.toString contractName
+                        , viewContractCard
+                            { name = contractName
+                            , actions = actions
+                            , tables = tables
+                            }
                         )
                     )
             )
@@ -203,7 +152,10 @@ viewContracts model =
 
 viewContractCard : { name : Eos.Name.Name, actions : List (), tables : List () } -> Html.Html msg
 viewContractCard { name, actions, tables } =
-    Html.a [ class "flex items-center justify-between bg-white rounded shadow py-4 px-6 group" ]
+    Html.a
+        [ class "flex items-center justify-between bg-white rounded shadow py-4 px-6 hover:shadow-md transition-shadow"
+        , Attr.href (Gen.Route.toHref (Gen.Route.Contract__Name_ { name = Eos.Name.toString name }))
+        ]
         [ Html.div []
             [ Html.div [ class "font-semibold leading-tight" ]
                 [ Html.text (Eos.Name.toString name) ]
@@ -214,7 +166,7 @@ viewContractCard { name, actions, tables } =
                 , Html.text " tables"
                 ]
             ]
-        , Heroicons.Solid.chevronRight [ Svg.Attributes.class "w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" ]
+        , Heroicons.Solid.chevronRight [ Svg.Attributes.class "w-4 h-4 text-gray-400" ]
         ]
 
 

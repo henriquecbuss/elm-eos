@@ -238,6 +238,9 @@ toElmSubscription page toElm =
             Pages.Login.toElmSubscription toElm
                 |> Maybe.map Gen.Msg.Login
 
+        Gen.Model.Contract__Name_ _ _ ->
+            Nothing
+
         Gen.Model.NotFound _ ->
             Nothing
 

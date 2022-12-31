@@ -21,6 +21,7 @@
             "elm-community/html-extra": "3.4.0",
             "elm-community/result-extra": "2.4.0",
             "jasonliang-dev/elm-heroicons": "2.0.0",
+            "pzp1997/assoc-list": "1.0.0",
             "ryannhg/elm-spa": "6.0.0"
         },
         "indirect": {
