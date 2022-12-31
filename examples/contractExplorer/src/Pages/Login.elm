@@ -133,7 +133,7 @@ view model =
                         )
                         model.privateKeyError
                     ]
-                , Html.button [ class "w-full rounded mt-6 bg-orange-400 text-white py-2 px-4 hover:bg-orange-300 active:bg-orange-500" ]
+                , Html.button [ class "w-full rounded mt-6 bg-indigo-500 text-white py-2 px-4 hover:bg-indigo-400 active:bg-indigo-600" ]
                     [ Html.text "Login" ]
                 ]
             ]
