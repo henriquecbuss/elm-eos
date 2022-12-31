@@ -19,7 +19,7 @@ files =
     describe "files"
         [ test "generates from example abi" <|
             \() ->
-                Generate.files []
+                Generate.apiFiles []
                     [ { abi = exampleAbi
                       , baseUrl = exampleBaseUrl
                       , contract = exampleContract
