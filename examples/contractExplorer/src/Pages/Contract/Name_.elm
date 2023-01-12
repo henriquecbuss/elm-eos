@@ -11,6 +11,7 @@ import AssocList as Dict
 import Effect exposing (Effect)
 import Eos.Name
 import Eos.Query
+import EosTable
 import Gen.Params.Contract.Name_ exposing (Params)
 import Gen.Route
 import Heroicons.Outline
@@ -18,12 +19,16 @@ import Heroicons.Solid
 import Html
 import Html.Attributes as Attr exposing (class)
 import Html.Events exposing (onClick)
+import Http
 import InteropDefinitions
 import InteropPorts
+import List.Extra as ListX
 import Page
+import RemoteData
 import Request
 import Shared
 import Svg.Attributes as SvgAttr
+import Table
 import Ui.Header
 import View exposing (View)
 
@@ -50,12 +55,13 @@ init shared req =
         Ok validName ->
             case Dict.get validName shared.contracts of
                 Just { actions, tables } ->
-                    ( ValidContract validName
-                        { actions = actions
+                    ( ValidContract
+                        { contractName = validName
+                        , actions = actions
                         , tables = tables
-                        , selectedTable =
-                            List.head tables
-                                |> Maybe.map .name
+                        , selectedTable = Nothing
+                        , tableState = Table.initialSort ""
+                        , tableData = RemoteData.NotAsked
                         }
                     , Effect.none
                     )
@@ -78,8 +84,47 @@ update msg model =
 
         SelectedTable tableName ->
             case model of
-                ValidContract contract otherInfo ->
-                    ( ValidContract contract { otherInfo | selectedTable = Just tableName }
+                ValidContract info ->
+                    case ListX.find (\t -> t.name == tableName) info.tables of
+                        Just validTable ->
+                            ( ValidContract
+                                { info
+                                    | selectedTable = Just tableName
+                                    , tableData = RemoteData.Loading
+                                }
+                              -- TODO - Accept scope as input
+                            , validTable.queryFunction { scope = "cambiatus.cm" }
+                                |> Eos.Query.withLimit 100
+                                |> Eos.Query.send GotTableData
+                                |> Effect.fromCmd
+                            )
+
+                        Nothing ->
+                            ( model, Effect.none )
+
+                _ ->
+                    ( model, Effect.none )
+
+        GotTableData (Ok response) ->
+            case model of
+                ValidContract info ->
+                    ( ValidContract { info | tableData = RemoteData.Success response }, Effect.none )
+
+                _ ->
+                    ( model, Effect.none )
+
+        GotTableData (Err err) ->
+            case model of
+                ValidContract info ->
+                    ( ValidContract { info | tableData = RemoteData.Failure err }, Effect.none )
+
+                _ ->
+                    ( model, Effect.none )
+
+        UpdatedTable newState ->
+            case model of
+                ValidContract info ->
+                    ( ValidContract { info | tableState = newState }
                     , Effect.none
                     )
 
@@ -123,12 +168,17 @@ view req model =
                             ]
                         )
 
-                ValidContract name { actions, tables, selectedTable } ->
+                ValidContract { contractName, actions, tables, selectedTable, tableState, tableData } ->
                     Html.div [ class "container mx-auto px-4" ]
                         [ Html.div [ class "flex items-center justify-between" ]
-                            [ Html.h2 [ class "py-2 text-xl" ] [ Html.text <| Eos.Name.toString name ]
+                            [ Html.h2 [ class "py-2 text-xl" ] [ Html.text <| Eos.Name.toString contractName ]
                             ]
-                        , viewTables { selectedTable = selectedTable, tables = tables }
+                        , viewTables
+                            { selectedTable = selectedTable
+                            , tableData = tableData
+                            , tableState = tableState
+                            , tables = tables
+                            }
                         , viewActions actions
                         ]
             ]
@@ -162,14 +212,20 @@ viewError err =
 -- VIEW
 
 
-viewTables : { selectedTable : Maybe Eos.Name.Name, tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Shared.Table } } -> Html.Html Msg
-viewTables { selectedTable, tables } =
-    Html.details [ class "border border-zinc-200 bg-white w-full rounded mt-4 group" ]
+viewTables :
+    { selectedTable : Maybe Eos.Name.Name
+    , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
+    , tableState : Table.State
+    , tables : List EosTable.Metadata
+    }
+    -> Html.Html Msg
+viewTables { selectedTable, tableData, tableState, tables } =
+    Html.details [ class "border border-zinc-200 bg-white w-full rounded mt-4 group open:pb-4" ]
         [ Html.summary [ class "p-4 marker-hidden flex justify-between items-center cursor-pointer" ]
             [ Html.h3 [ class "text-lg" ] [ Html.text "Tables" ]
             , Heroicons.Solid.chevronDown [ SvgAttr.class "w-5 h-5 ml-2 group-open:rotate-180 transition-transform" ]
             ]
-        , Html.div [ class "mt-4 px-4 pb-4 grid gap-2 grid-col-auto-fit-150" ]
+        , Html.div [ class "mt-4 px-4 grid gap-2 grid-col-auto-fit-150" ]
             (List.map
                 (\table ->
                     let
@@ -189,6 +245,58 @@ viewTables { selectedTable, tables } =
                 )
                 tables
             )
+        , case tableData of
+            RemoteData.NotAsked ->
+                Html.p [] [ Html.text "Select a table" ]
+
+            RemoteData.Loading ->
+                Html.p [] [ Html.text "Loading..." ]
+
+            RemoteData.Failure err ->
+                Html.p [] [ Html.text "Error: ", Html.text (Debug.toString err) ]
+
+            RemoteData.Success data ->
+                case data.result of
+                    [] ->
+                        Html.p [] [ Html.text "Table is empty" ]
+
+                    first :: rest ->
+                        viewSelectedTable tableState
+                            { hasMore = data.hasMore
+                            , nextCursor = data.nextCursor
+                            , result = ( first, rest )
+                            }
+        ]
+
+
+
+-- viewSelectedTable : Table.State -> Eos.Query.Response EosTable.Table -> Html.Html Msg
+
+
+viewSelectedTable :
+    Table.State
+    ->
+        { hasMore : Bool
+        , nextCursor : Eos.Query.Cursor
+        , result : ( EosTable.Table, List EosTable.Table )
+        }
+    -> Html.Html Msg
+viewSelectedTable tableState tableData =
+    let
+        tableConfig : Table.Config EosTable.Table Msg
+        tableConfig =
+            Table.config
+                { columns = EosTable.columns (Tuple.first tableData.result)
+                , toId = EosTable.toId
+                , toMsg = UpdatedTable
+                }
+
+        allData : List EosTable.Table
+        allData =
+            Tuple.first tableData.result :: Tuple.second tableData.result
+    in
+    Html.div [ class "mx-4 max-w-full overflow-x-scroll" ]
+        [ Table.view tableConfig tableState allData
         ]
 
 
@@ -208,10 +316,12 @@ type Model
     = InvalidContractName Eos.Name.Error
     | ContractNameDoesntExist Eos.Name.Name
     | ValidContract
-        Eos.Name.Name
-        { actions : List ()
-        , tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Shared.Table }
+        { contractName : Eos.Name.Name
+        , actions : List ()
+        , tables : List EosTable.Metadata
         , selectedTable : Maybe Eos.Name.Name
+        , tableState : Table.State
+        , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
         }
 
 
@@ -220,3 +330,5 @@ type Model
 type Msg
     = ClickedLogout
     | SelectedTable Eos.Name.Name
+    | GotTableData (Result Http.Error (Eos.Query.Response EosTable.Table))
+    | UpdatedTable Table.State

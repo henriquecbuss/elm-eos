@@ -17,7 +17,7 @@ module Pages.Home_ exposing
 import AssocList as Dict
 import Effect exposing (Effect)
 import Eos.Name
-import Eos.Query
+import EosTable
 import Gen.Params.Home_ exposing (Params)
 import Gen.Route
 import Heroicons.Solid
@@ -104,7 +104,7 @@ view shared model =
 
 
 viewContracts :
-    Dict.Dict Eos.Name.Name { actions : List (), tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Shared.Table } }
+    Dict.Dict Eos.Name.Name { actions : List (), tables : List EosTable.Metadata }
     -> Model
     -> Html.Html Msg
 viewContracts contractsDict model =
@@ -145,7 +145,7 @@ viewContracts contractsDict model =
         ]
 
 
-viewContractCard : { actions : List (), name : Eos.Name.Name, tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Shared.Table } } -> Html.Html msg_
+viewContractCard : { actions : List (), name : Eos.Name.Name, tables : List EosTable.Metadata } -> Html.Html msg_
 viewContractCard { actions, name, tables } =
     Html.a
         [ class "flex items-center justify-between bg-white rounded shadow py-4 px-6 hover:shadow-md transition-shadow"

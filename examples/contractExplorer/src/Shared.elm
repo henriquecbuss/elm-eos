@@ -1,6 +1,5 @@
 module Shared exposing
     ( Model
-    , Table(..)
     , Msg
     , init, update
     , toElmSubscriptions
@@ -10,8 +9,6 @@ module Shared exposing
 should live.
 
 @docs Model
-
-@docs Table
 
 @docs Msg
 
@@ -26,6 +23,7 @@ import Cambiatus.Cm.Table.Metadata
 import Cambiatus.Tk.Table.Metadata
 import Eos.Name
 import Eos.Query
+import EosTable
 import Gen.Route
 import InteropDefinitions
 import Request exposing (Request)
@@ -40,17 +38,13 @@ type alias Model =
         Dict.Dict
             Eos.Name.Name
             { actions : List ()
-            , tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Table }
+            , tables :
+                List
+                    { name : Eos.Name.Name
+                    , queryFunction : { scope : String } -> Eos.Query.Query EosTable.Table
+                    }
             }
     }
-
-
-{-| All possible tables
--}
-type Table
-    = CambiatusCmTable Cambiatus.Cm.Table.Metadata.Table
-    | CambiatusTkTable Cambiatus.Tk.Table.Metadata.Table
-    | EosIoTable
 
 
 {-| Everything the Shared module can do. Other pages have read access to this.
@@ -67,7 +61,7 @@ type Msg
 init : Request -> InteropDefinitions.Flags -> ( Model, Cmd Msg )
 init _ flags =
     let
-        contracts : Dict.Dict Eos.Name.Name { actions : List (), tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Table } }
+        contracts : Dict.Dict Eos.Name.Name { actions : List (), tables : List EosTable.Metadata }
         contracts =
             ResultX.combine
                 [ eosIo
@@ -77,7 +71,11 @@ init _ flags =
                 |> Result.withDefault []
                 |> Dict.fromList
 
-        makeContract : { actions : List (), tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query response } } -> (response -> Table) -> Eos.Name.Name -> ( Eos.Name.Name, { actions : List (), tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Table } } )
+        makeContract :
+            { actions : List (), tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query response } }
+            -> (response -> EosTable.Table)
+            -> Eos.Name.Name
+            -> ( Eos.Name.Name, { actions : List (), tables : List EosTable.Metadata } )
         makeContract { actions, tables } toTable name =
             ( name
             , { actions = actions
@@ -94,7 +92,7 @@ init _ flags =
               }
             )
 
-        cambiatusCm : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Table } } )
+        cambiatusCm : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List EosTable.Metadata } )
         cambiatusCm =
             Eos.Name.fromString "cambiatus.cm"
                 |> Result.map
@@ -102,10 +100,10 @@ init _ flags =
                         { actions = List.repeat 16 ()
                         , tables = Cambiatus.Cm.Table.Metadata.metadata
                         }
-                        CambiatusCmTable
+                        EosTable.CambiatusCmTable
                     )
 
-        cambiatusTk : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Table } } )
+        cambiatusTk : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List EosTable.Metadata } )
         cambiatusTk =
             Eos.Name.fromString "cambiatus.tk"
                 |> Result.map
@@ -113,10 +111,10 @@ init _ flags =
                         { actions = List.repeat 12 ()
                         , tables = Cambiatus.Tk.Table.Metadata.metadata
                         }
-                        CambiatusTkTable
+                        EosTable.CambiatusTkTable
                     )
 
-        eosIo : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Table } } )
+        eosIo : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List EosTable.Metadata } )
         eosIo =
             Eos.Name.fromString "eos.io"
                 |> Result.map
@@ -124,7 +122,7 @@ init _ flags =
                         { actions = List.repeat 4 ()
                         , tables = []
                         }
-                        (\_ -> EosIoTable)
+                        (\_ -> EosTable.EosIoTable)
                     )
     in
     case flags.privateKey of
