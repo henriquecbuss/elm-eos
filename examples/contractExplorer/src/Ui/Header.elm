@@ -1,4 +1,7 @@
-module Ui.Header exposing (..)
+module Ui.Header exposing (view)
+
+{-| View the header that is present in most pages
+-}
 
 import Gen.Route
 import Html
@@ -6,6 +9,12 @@ import Html.Attributes as Attr exposing (class)
 import Html.Events
 
 
+{-| View the header. You need to handle logging out yourself, by calling
+
+    InteropPorts.fromElm InteropDefinitions.Logout
+        |> Effect.fromCmd
+
+-}
 view : { logout : msg } -> Html.Html msg
 view { logout } =
     Html.header [ class "w-full py-2 bg-slate-700 text-white" ]

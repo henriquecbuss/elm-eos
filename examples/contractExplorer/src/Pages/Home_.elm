@@ -15,29 +15,22 @@ module Pages.Home_ exposing
 -}
 
 import AssocList as Dict
-import Cambiatus.Cm.Action
-import Cambiatus.Tk.Action
 import Effect exposing (Effect)
-import Eos.Asset
 import Eos.Name
-import Eos.Permission
-import Eos.Symbol
+import Eos.Query
 import Gen.Params.Home_ exposing (Params)
 import Gen.Route
 import Heroicons.Solid
 import Html
 import Html.Attributes as Attr exposing (class)
 import Html.Events
-import Html.Extra as HtmlX
-import Html.Keyed
 import InteropDefinitions
 import InteropPorts
 import Page
 import Request
-import Result.Extra as ResultX
 import Shared
 import Simple.Fuzzy
-import Svg.Attributes
+import Svg.Attributes as SvgAttr
 import Ui.AutoAnimate
 import Ui.Header
 import View exposing (View)
@@ -111,7 +104,7 @@ view shared model =
 
 
 viewContracts :
-    Dict.Dict Eos.Name.Name { actions : List (), tables : List () }
+    Dict.Dict Eos.Name.Name { actions : List (), tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Shared.Table } }
     -> Model
     -> Html.Html Msg
 viewContracts contractsDict model =
@@ -126,22 +119,24 @@ viewContracts contractsDict model =
                     , Html.Events.onInput EnteredSearchString
                     ]
                     []
-                , Heroicons.Solid.magnifyingGlass [ Svg.Attributes.class "text-gray-400 w-4 h-4 absolute top-1/2 -translate-y-1/2 right-4 pointer-events-none" ]
+                , Heroicons.Solid.magnifyingGlass [ SvgAttr.class "text-gray-400 w-4 h-4 absolute top-1/2 -translate-y-1/2 right-4 pointer-events-none" ]
                 ]
             ]
         , Ui.AutoAnimate.viewKeyed
             [ class "container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-4"
             ]
-            (contractsDict
-                |> Dict.toList
-                |> Simple.Fuzzy.filter (Tuple.first >> Eos.Name.toString)
+            (Dict.toList contractsDict
+                |> Simple.Fuzzy.filter
+                    (Tuple.first
+                        >> Eos.Name.toString
+                    )
                     model.searchString
                 |> List.map
                     (\( contractName, { actions, tables } ) ->
                         ( Eos.Name.toString contractName
                         , viewContractCard
-                            { name = contractName
-                            , actions = actions
+                            { actions = actions
+                            , name = contractName
                             , tables = tables
                             }
                         )
@@ -150,23 +145,29 @@ viewContracts contractsDict model =
         ]
 
 
-viewContractCard : { name : Eos.Name.Name, actions : List (), tables : List () } -> Html.Html msg
-viewContractCard { name, actions, tables } =
+viewContractCard : { actions : List (), name : Eos.Name.Name, tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query Shared.Table } } -> Html.Html msg_
+viewContractCard { actions, name, tables } =
     Html.a
         [ class "flex items-center justify-between bg-white rounded shadow py-4 px-6 hover:shadow-md transition-shadow"
-        , Attr.href (Gen.Route.toHref (Gen.Route.Contract__Name_ { name = Eos.Name.toString name }))
+        , Gen.Route.Contract__Name_ { name = Eos.Name.toString name }
+            |> Gen.Route.toHref
+            |> Attr.href
         ]
         [ Html.div []
             [ Html.div [ class "font-semibold leading-tight" ]
                 [ Html.text (Eos.Name.toString name) ]
             , Html.div [ class "text-gray-500 leading-tight" ]
-                [ Html.text (String.fromInt (List.length actions))
+                [ List.length actions
+                    |> String.fromInt
+                    |> Html.text
                 , Html.text " actions, "
-                , Html.text (String.fromInt (List.length tables))
+                , List.length tables
+                    |> String.fromInt
+                    |> Html.text
                 , Html.text " tables"
                 ]
             ]
-        , Heroicons.Solid.chevronRight [ Svg.Attributes.class "w-4 h-4 text-gray-400" ]
+        , Heroicons.Solid.chevronRight [ SvgAttr.class "w-4 h-4 text-gray-400" ]
         ]
 
 
@@ -179,8 +180,3 @@ viewContractCard { name, actions, tables } =
 toElmSubscription : InteropDefinitions.ToElm -> Maybe Msg
 toElmSubscription _ =
     Nothing
-
-
-type InputType
-    = Text
-    | Number
