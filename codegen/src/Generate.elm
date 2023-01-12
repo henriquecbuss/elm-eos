@@ -8,6 +8,7 @@ import Elm
 import Generate.Action
 import Generate.Table
 import Generate.Table.Decoder
+import Generate.Table.Metadata
 import Generate.Table.Query
 import String.Extra
 
@@ -90,6 +91,20 @@ apiFilesFromAbi base context abi =
             )
             abi.tables
         )
+    , prefixedFile [ "Table", "Metadata" ]
+        { docs =
+            \groupsAndMembers ->
+                ("This file contains metadata about tables from the "
+                    ++ context.contract
+                    ++ " contract. You should only need this if you're building something like a contract explorer or an auto generated app"
+                )
+                    :: makeDocs groupsAndMembers
+        }
+        [ Generate.Table.Metadata.typeUnion (fileName []) abi.tables
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "Metadata" }
+        , Generate.Table.Metadata.allMetadata (fileName []) abi.tables
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "Metadata" }
+        ]
     , prefixedFile [ "Table", "Decoder" ]
         { docs =
             \groupsAndMembers ->
