@@ -4,6 +4,7 @@ import Abi
 import Context exposing (Context)
 import Elm
 import Elm.Annotation
+import Elm.Op
 import EosType
 import Gen.Json.Decode
 import Gen.Json.Decode.Pipeline
@@ -14,10 +15,11 @@ generate : Context -> Abi.Table -> Elm.Declaration
 generate context table =
     Elm.declaration (String.Extra.camelize table.name)
         (List.foldl
-            (\column expression ->
-                Gen.Json.Decode.Pipeline.required column.name
-                    (EosType.generateDecoder column.type_)
-                    expression
+            (\column ->
+                Elm.Op.pipe
+                    (Elm.apply Gen.Json.Decode.Pipeline.values_.required
+                        [ Elm.string column.name, EosType.generateDecoder column.type_ ]
+                    )
             )
             (Gen.Json.Decode.succeed
                 (Elm.value

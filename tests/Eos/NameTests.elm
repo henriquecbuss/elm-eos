@@ -3,7 +3,7 @@ module Eos.NameTests exposing (suite)
 import Eos.Name
 import Expect
 import Fuzz
-import Json.Decode as Decode
+import Json.Decode
 import Test exposing (Test, describe, fuzz, test)
 
 
@@ -49,7 +49,7 @@ jsonRoundTrip =
                 case Eos.Name.fromString "eosio.token" of
                     Ok name ->
                         Eos.Name.encode name
-                            |> Decode.decodeValue Eos.Name.decoder
+                            |> Json.Decode.decodeValue Eos.Name.decoder
                             |> Expect.all
                                 [ Expect.equal (Ok name)
                                 , Result.map Eos.Name.toString
@@ -63,7 +63,7 @@ jsonRoundTrip =
                 case Eos.Name.fromString fuzzedName of
                     Ok name ->
                         Eos.Name.encode name
-                            |> Decode.decodeValue Eos.Name.decoder
+                            |> Json.Decode.decodeValue Eos.Name.decoder
                             |> Expect.all
                                 [ Expect.equal (Ok name)
                                 , Result.map Eos.Name.toString

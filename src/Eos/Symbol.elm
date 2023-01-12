@@ -27,7 +27,7 @@ module Eos.Symbol exposing
 -}
 
 import Eos.SymbolCode
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 
 
@@ -167,10 +167,10 @@ encode (Symbol symbol) =
 
 {-| Decode a [Symbol](#Symbol) from a JSON value.
 -}
-decoder : Decode.Decoder Symbol
+decoder : Json.Decode.Decoder Symbol
 decoder =
-    Decode.string
-        |> Decode.andThen
+    Json.Decode.string
+        |> Json.Decode.andThen
             (\symbolString ->
                 case String.split "," symbolString of
                     [ precisionString, codeString ] ->
@@ -178,14 +178,14 @@ decoder =
                             Just precision_ ->
                                 case fromPrecisionAndCodeString precision_ codeString of
                                     Ok symbol ->
-                                        Decode.succeed symbol
+                                        Json.Decode.succeed symbol
 
                                     Err err ->
-                                        Decode.fail (errorToString err ++ ". Received: " ++ symbolString)
+                                        Json.Decode.fail (errorToString err ++ ". Received: " ++ symbolString)
 
                             Nothing ->
-                                Decode.fail ("Invalid precision. I was expecting something in the format 0,EOS, with a number before the comma. Received: " ++ symbolString)
+                                Json.Decode.fail ("Invalid precision. I was expecting something in the format 0,EOS, with a number before the comma. Received: " ++ symbolString)
 
                     _ ->
-                        Decode.fail ("Invalid symbol. I was expecting something in the format 0,EOS. Received: " ++ symbolString)
+                        Json.Decode.fail ("Invalid symbol. I was expecting something in the format 0,EOS. Received: " ++ symbolString)
             )

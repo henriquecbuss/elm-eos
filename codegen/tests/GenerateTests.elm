@@ -194,7 +194,6 @@ This file contains functions that decode the results of queries to the blockchai
 
 
 import Contract.Ct.Table
-import Decode
 import Eos.Asset
 import Json.Decode
 import Json.Decode.Pipeline
@@ -203,10 +202,8 @@ import Json.Decode.Pipeline
 {-| Decoder for the accounts table. -}
 accounts : Json.Decode.Decoder Contract.Ct.Table.Accounts
 accounts =
-    Json.Decode.Pipeline.required
-        "balance"
-        Eos.Asset.decoder
-        (Json.Decode.succeed Contract.Ct.Table.Accounts)
+    Json.Decode.succeed Contract.Ct.Table.Accounts
+        |> Json.Decode.Pipeline.required "balance" Eos.Asset.decoder
 
 
 """

@@ -17,7 +17,7 @@ module Eos.ExtendedAsset exposing
 import Eos.Asset
 import Eos.Name
 import Eos.Symbol
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 
 
@@ -44,14 +44,14 @@ encode asset =
 
 {-| Decode an [ExtendedAsset](#ExtendedAsset) from JSON.
 -}
-decoder : Decode.Decoder ExtendedAsset
+decoder : Json.Decode.Decoder ExtendedAsset
 decoder =
-    Decode.map2
+    Json.Decode.map2
         (\asset contract ->
             { amount = asset.amount
             , symbol = asset.symbol
             , contract = contract
             }
         )
-        (Decode.field "asset" Eos.Asset.decoder)
-        (Decode.field "contract" Eos.Name.decoder)
+        (Json.Decode.field "asset" Eos.Asset.decoder)
+        (Json.Decode.field "contract" Eos.Name.decoder)

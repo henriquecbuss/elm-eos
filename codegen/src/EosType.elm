@@ -212,7 +212,7 @@ generateDecoder eosType =
             Gen.Eos.ExtendedAsset.values_.decoder
 
         EosList innerType ->
-            Elm.apply Gen.Json.Decode.values_.list [ generateDecoder innerType ]
+            Gen.Json.Decode.call_.list (generateDecoder innerType)
 
 
 generateEncoder : EosType -> Elm.Expression

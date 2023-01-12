@@ -11,7 +11,7 @@ module Eos.Checksum exposing
 
 -}
 
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 
 
@@ -30,6 +30,6 @@ encode (Checksum checksum) =
 
 {-| Decode a Checksum.
 -}
-decoder : Decode.Decoder Checksum
+decoder : Json.Decode.Decoder Checksum
 decoder =
-    Decode.map Checksum Decode.string
+    Json.Decode.map Checksum Json.Decode.string

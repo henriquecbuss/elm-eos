@@ -21,7 +21,7 @@ accounts, permissions, actions, tables, etc.
 
 -}
 
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 
 
@@ -184,15 +184,15 @@ encode (Name name) =
 from the blockchain or some server. It already does all of the validation necessary
 to ensure the [Name](#Name) is valid.
 -}
-decoder : Decode.Decoder Name
+decoder : Json.Decode.Decoder Name
 decoder =
-    Decode.string
-        |> Decode.andThen
+    Json.Decode.string
+        |> Json.Decode.andThen
             (\name ->
                 case fromString name of
                     Ok validName ->
-                        Decode.succeed validName
+                        Json.Decode.succeed validName
 
                     Err error ->
-                        Decode.fail (errorToString error)
+                        Json.Decode.fail (errorToString error)
             )

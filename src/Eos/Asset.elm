@@ -16,7 +16,7 @@ module Eos.Asset exposing
 
 import Eos.Symbol
 import Eos.SymbolCode
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 
 
@@ -62,10 +62,10 @@ encode asset =
 
 {-| Decode an [Asset](#Asset) from JSON.
 -}
-decoder : Decode.Decoder Asset
+decoder : Json.Decode.Decoder Asset
 decoder =
-    Decode.string
-        |> Decode.andThen
+    Json.Decode.string
+        |> Json.Decode.andThen
             (\decodedString ->
                 case String.split " " decodedString of
                     [ amount, symbol ] ->
@@ -93,23 +93,23 @@ decoder =
                         in
                         case ( symbolValue, floatAmount ) of
                             ( Just (Ok validSymbol), Just validAmount ) ->
-                                Decode.succeed
+                                Json.Decode.succeed
                                     { amount = validAmount
                                     , symbol = validSymbol
                                     }
 
                             ( Just (Ok _), Nothing ) ->
-                                Decode.fail ("Invalid amount: " ++ amount)
+                                Json.Decode.fail ("Invalid amount: " ++ amount)
 
                             ( Just (Err err), _ ) ->
-                                Decode.fail (Eos.Symbol.errorToString err)
+                                Json.Decode.fail (Eos.Symbol.errorToString err)
 
                             ( Nothing, Just _ ) ->
-                                Decode.fail ("Invalid symbol: " ++ symbol)
+                                Json.Decode.fail ("Invalid symbol: " ++ symbol)
 
                             ( Nothing, Nothing ) ->
-                                Decode.fail ("Invalid precision and symbol:\n" ++ "Amount: " ++ amount ++ "\nSymbol: " ++ symbol)
+                                Json.Decode.fail ("Invalid precision and symbol:\n" ++ "Amount: " ++ amount ++ "\nSymbol: " ++ symbol)
 
                     _ ->
-                        Decode.fail "Invalid asset format"
+                        Json.Decode.fail "Invalid asset format"
             )

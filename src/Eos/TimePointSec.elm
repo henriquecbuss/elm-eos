@@ -26,7 +26,7 @@ module Eos.TimePointSec exposing
 
 -}
 
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 import Time
 
@@ -88,6 +88,6 @@ encode (TimePointSec seconds) =
 {-| Decode a [TimePointSec](#TimePointSec) from JSON. You can use this to receive a
 [TimePointSec](#TimePointSec) from the blockchain or some server.
 -}
-decoder : Decode.Decoder TimePointSec
+decoder : Json.Decode.Decoder TimePointSec
 decoder =
-    Decode.map TimePointSec Decode.int
+    Json.Decode.map TimePointSec Json.Decode.int

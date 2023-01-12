@@ -210,7 +210,6 @@ aliases =
     [ ( "Array.Extra", "ArrayX" )
     , ( "Html.Attributes", "Attr" )
     , ( "Html.Extra", "HtmlX" )
-    , ( "Json.Decode", "Decode" )
     , ( "Json.Decode.Ancillary", "DecodeA" )
     , ( "Json.Decode.Extra", "DecodeX" )
     , ( "Json.Encode", "Encode" )
