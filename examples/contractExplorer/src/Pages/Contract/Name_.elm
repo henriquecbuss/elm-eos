@@ -20,6 +20,7 @@ import Html
 import Html.Attributes as Attr exposing (class)
 import Html.Events exposing (onClick)
 import Http
+import Icons
 import InteropDefinitions
 import InteropPorts
 import List.Extra as ListX
@@ -247,18 +248,29 @@ viewTables { selectedTable, tableData, tableState, tables } =
             )
         , case tableData of
             RemoteData.NotAsked ->
-                Html.p [] [ Html.text "Select a table" ]
+                Html.p [ class "px-4 text-center text-gray-500 mt-8 mb-6" ] [ Html.text "No table selected" ]
 
             RemoteData.Loading ->
-                Html.p [] [ Html.text "Loading..." ]
+                Icons.arrowPath [ SvgAttr.class "animate-spin text-slate-400 w-6 h-6 mt-8 mb-6 mx-auto" ]
 
             RemoteData.Failure err ->
-                Html.p [] [ Html.text "Error: ", Html.text (Debug.toString err) ]
+                Html.div [ class "px-4" ]
+                    [ Html.div [ class "border border-red-500 bg-red-200 text-black max-w-lg mt-8 mb-4 mx-auto p-4 rounded" ]
+                        [ Html.p [ class "text-red-700 flex items-center gap-2 font-bold mb-4" ]
+                            [ Heroicons.Outline.exclamationTriangle [ SvgAttr.class "w-6 h-6" ]
+                            , Html.text "Something went wrong"
+                            ]
+                        , viewHttpError err
+                        ]
+                    ]
 
             RemoteData.Success data ->
                 case data.result of
                     [] ->
-                        Html.p [] [ Html.text "Table is empty" ]
+                        Html.div [ class "px-4 text-center text-gray-500 mt-8 mb-4" ]
+                            [ Html.p [] [ Html.text "This table is empty." ]
+                            , Html.p [] [ Html.text "If you think there should be some data here, try adjusting the scope" ]
+                            ]
 
                     first :: rest ->
                         viewSelectedTable tableState
@@ -269,8 +281,30 @@ viewTables { selectedTable, tableData, tableState, tables } =
         ]
 
 
+viewHttpError : Http.Error -> Html.Html msg_
+viewHttpError error =
+    case error of
+        Http.BadUrl givenUrl ->
+            Html.text ("The given URL was not valid. I tried using " ++ givenUrl ++ ". Check the command you used to generate the code to get the correct URL - that's the one I used!")
 
--- viewSelectedTable : Table.State -> Eos.Query.Response EosTable.Table -> Html.Html Msg
+        Http.Timeout ->
+            Html.text "The server timed out. Is the server online? Is your internet working?"
+
+        Http.NetworkError ->
+            Html.text "There was a network error. Are you connected to the internet?"
+
+        Http.BadStatus status ->
+            Html.text ("I got a failure response from the server. The status code was " ++ String.fromInt status ++ ". Is the server running correctly?")
+
+        Http.BadBody reason ->
+            Html.div []
+                [ Html.p [] [ Html.text "I couldn't decode the server's response! Here's the error I got:" ]
+                , Html.div [ class "border-l-4 border-red-500 rounded bg-red-100 p-2 my-2" ] [ Html.text reason ]
+                , Html.p []
+                    [ Html.text "This is probably a bug in the library! Please consider "
+                    , Html.a [ Attr.href "https://github.com/henriquecbuss/elm-eos", class "underline" ] [ Html.text "submitting a new issue." ]
+                    ]
+                ]
 
 
 viewSelectedTable :
@@ -285,17 +319,75 @@ viewSelectedTable tableState tableData =
     let
         tableConfig : Table.Config EosTable.Table Msg
         tableConfig =
-            Table.config
-                { columns = EosTable.columns (Tuple.first tableData.result)
+            Table.customConfig
+                { columns =
+                    Tuple.first tableData.result
+                        |> EosTable.columns
+                , customizations =
+                    { tableAttrs = [ class "min-w-full" ]
+                    , caption = Nothing
+                    , thead =
+                        \details ->
+                            { attributes = [ class "border-b bg-slate-700 text-white" ]
+                            , children =
+                                List.map
+                                    (\( name, status, onClick_ ) ->
+                                        viewTableHead name status onClick_
+                                    )
+                                    details
+                            }
+                    , tfoot = Nothing
+                    , tbodyAttrs = [ class "px-6" ]
+                    , rowAttrs = \_ -> [ class "even:bg-slate-200 hover:even:bg-slate-100 hover:bg-slate-100 transition-colors" ]
+                    }
                 , toId = EosTable.toId
                 , toMsg = UpdatedTable
                 }
+
+        viewTableHead : String -> Table.Status -> Html.Attribute Msg -> Html.Html Msg
+        viewTableHead name status onClick_ =
+            let
+                content : List (Html.Html Msg)
+                content =
+                    case status of
+                        Table.Unsortable ->
+                            [ Html.text name ]
+
+                        Table.Sortable selected ->
+                            [ Html.text name
+                            , if selected then
+                                Heroicons.Solid.chevronDown [ SvgAttr.class "w-4 h-4 ml-2 text-white inline" ]
+
+                              else
+                                Heroicons.Solid.chevronDown [ SvgAttr.class "w-4 h-4 ml-2 text-slate-100 inline" ]
+                            ]
+
+                        Table.Reversible (Just isReversed) ->
+                            [ Html.text name
+                            , if isReversed then
+                                Heroicons.Solid.chevronUp [ SvgAttr.class "w-4 h-4 ml-2 text-white inline" ]
+
+                              else
+                                Heroicons.Solid.chevronDown [ SvgAttr.class "w-4 h-4 ml-2 text-white inline" ]
+                            ]
+
+                        Table.Reversible Nothing ->
+                            [ Html.text name
+                            , Heroicons.Solid.chevronUpDown [ SvgAttr.class "w-4 h-4 ml-2 text-slate-100 inline" ]
+                            ]
+            in
+            Html.th
+                [ onClick_
+                , Attr.classList [ ( "cursor-pointer", status /= Table.Unsortable ) ]
+                , class "select-none text-left px-6 py-2 whitespace-nowrap capitalize"
+                ]
+                content
 
         allData : List EosTable.Table
         allData =
             Tuple.first tableData.result :: Tuple.second tableData.result
     in
-    Html.div [ class "mx-4 max-w-full overflow-x-scroll" ]
+    Html.div [ class "mx-4 flex overflow-x-scroll border rounded mt-8 mb-4" ]
         [ Table.view tableConfig tableState allData
         ]
 

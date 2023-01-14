@@ -23,6 +23,10 @@ import Eos.Name
 import Eos.Query
 import Eos.Symbol
 import Eos.SymbolCode
+import Html
+import Html.Attributes as Attr exposing (class)
+import Html.Attributes.Extra as AttrX
+import Html.Extra as HtmlX
 import Mask
 import Table
 
@@ -153,9 +157,38 @@ columns genericTable =
             []
 
 
+customColumn : { name : String, sorter : Table.Sorter data, viewData : data -> String } -> Table.Column data msg_
+customColumn { name, sorter, viewData } =
+    Table.veryCustomColumn
+        { name = name
+        , sorter = sorter
+        , viewData =
+            \data ->
+                customColumnHtmlDetails (viewData data)
+        }
+
+
+customColumnHtmlDetails : String -> Table.HtmlDetails msg_
+customColumnHtmlDetails stringData =
+    let
+        maxLength : Int
+        maxLength =
+            40
+    in
+    { attributes =
+        [ AttrX.attributeIf (String.length stringData > maxLength) (Attr.title stringData)
+        , class "whitespace-nowrap py-2 px-6"
+        ]
+    , children =
+        [ Html.text (String.left maxLength stringData)
+        , HtmlX.viewIf (String.length stringData > maxLength) (Html.text "...")
+        ]
+    }
+
+
 assetColumn : String -> (data -> Eos.Asset.Asset) -> Table.Column data msg_
 assetColumn name toAsset =
-    Table.customColumn
+    customColumn
         { name = name
         , sorter =
             Table.increasingOrDecreasingBy
@@ -187,9 +220,29 @@ assetColumn name toAsset =
         }
 
 
+stringColumn : String -> (data -> String) -> Table.Column data msg_
+stringColumn name toString =
+    customColumn
+        { name = name
+        , sorter = Table.increasingOrDecreasingBy toString
+        , viewData = toString
+        }
+
+
+intColumn : String -> (data -> Int) -> Table.Column data msg_
+intColumn name toInt =
+    customColumn
+        { name = name
+        , sorter = Table.increasingOrDecreasingBy toInt
+        , viewData =
+            toInt
+                >> String.fromInt
+        }
+
+
 boolColumn : String -> (data -> Int) -> Table.Column data msg_
 boolColumn name toBool =
-    Table.customColumn
+    customColumn
         { name = name
         , sorter = Table.increasingOrDecreasingBy toBool
         , viewData =
@@ -204,7 +257,7 @@ boolColumn name toBool =
 
 nameColumn : String -> (data -> Eos.Name.Name) -> Table.Column data msg_
 nameColumn name toName =
-    Table.customColumn
+    customColumn
         { name = name
         , sorter =
             Table.increasingOrDecreasingBy
@@ -234,23 +287,23 @@ cambiatusCmActionColumns exampleData =
                 _ ->
                     exampleData
     in
-    [ wrapCol Table.intColumn "id" .id unwrap
-    , wrapCol Table.intColumn "objectiveId" .objectiveId unwrap
-    , wrapCol Table.stringColumn "description" .description unwrap
+    [ wrapCol intColumn "id" .id unwrap
+    , wrapCol intColumn "objectiveId" .objectiveId unwrap
+    , wrapCol stringColumn "description" .description unwrap
     , wrapCol assetColumn "reward" .reward unwrap
     , wrapCol assetColumn "verifierReward" .reward unwrap
 
     -- TODO - Turn this into posix?
-    , wrapCol Table.intColumn "deadline" .deadline unwrap
-    , wrapCol Table.intColumn "usages" .usages unwrap
-    , wrapCol Table.intColumn "usagesLeft" .usagesLeft unwrap
-    , wrapCol Table.intColumn "verifications" .verifications unwrap
-    , wrapCol Table.stringColumn "verificationType" .verificationType unwrap
+    , wrapCol intColumn "deadline" .deadline unwrap
+    , wrapCol intColumn "usages" .usages unwrap
+    , wrapCol intColumn "usagesLeft" .usagesLeft unwrap
+    , wrapCol intColumn "verifications" .verifications unwrap
+    , wrapCol stringColumn "verificationType" .verificationType unwrap
     , wrapCol boolColumn "isCompleted" .isCompleted unwrap
     , wrapCol nameColumn "creator" .creator unwrap
     , wrapCol boolColumn "hasProofPhoto" .hasProofPhoto unwrap
     , wrapCol boolColumn "hasProofCode" .hasProofCode unwrap
-    , wrapCol Table.stringColumn "photoProofInstructions" .photoProofInstructions unwrap
+    , wrapCol stringColumn "photoProofInstructions" .photoProofInstructions unwrap
     ]
 
 
@@ -266,8 +319,8 @@ cambiatusCmCheckColumns exampleData =
                 _ ->
                     exampleData
     in
-    [ wrapCol Table.intColumn "id" .id unwrap
-    , wrapCol Table.intColumn "claimId" .claimId unwrap
+    [ wrapCol intColumn "id" .id unwrap
+    , wrapCol intColumn "claimId" .claimId unwrap
     , wrapCol nameColumn "validator" .validator unwrap
     , wrapCol boolColumn "isVerified" .isVerified unwrap
     ]
@@ -285,18 +338,18 @@ cambiatusCmClaimColumns exampleData =
                 _ ->
                     exampleData
     in
-    [ wrapCol Table.intColumn "id" .id unwrap
-    , wrapCol Table.intColumn "actionId" .actionId unwrap
+    [ wrapCol intColumn "id" .id unwrap
+    , wrapCol intColumn "actionId" .actionId unwrap
     , wrapCol nameColumn "claimer" .claimer unwrap
-    , wrapCol Table.stringColumn "status" .status unwrap
-    , wrapCol Table.stringColumn "proofPhoto" .proofPhoto unwrap
-    , wrapCol Table.stringColumn "proofCode" .proofCode unwrap
+    , wrapCol stringColumn "status" .status unwrap
+    , wrapCol stringColumn "proofPhoto" .proofPhoto unwrap
+    , wrapCol stringColumn "proofCode" .proofCode unwrap
     ]
 
 
 symbolColumn : String -> (data -> Eos.Symbol.Symbol) -> Table.Column data msg_
 symbolColumn name toSymbol =
-    Table.customColumn
+    customColumn
         { name = name
         , sorter =
             Table.increasingOrDecreasingBy
@@ -328,9 +381,9 @@ cambiatusCmCommunityColumns exampleData =
     in
     [ wrapCol symbolColumn "symbol" .symbol unwrap
     , wrapCol nameColumn "creator" .creator unwrap
-    , wrapCol Table.stringColumn "logo" .logo unwrap
-    , wrapCol Table.stringColumn "name" .name unwrap
-    , wrapCol Table.stringColumn "description" .description unwrap
+    , wrapCol stringColumn "logo" .logo unwrap
+    , wrapCol stringColumn "name" .name unwrap
+    , wrapCol stringColumn "description" .description unwrap
     , wrapCol assetColumn "inviterReward" .inviterReward unwrap
     , wrapCol assetColumn "invitedReward" .invitedReward unwrap
     , wrapCol boolColumn "hasObjectives" .hasObjectives unwrap
@@ -351,16 +404,16 @@ cambiatusCmIndexesColumns exampleData =
                 _ ->
                     exampleData
     in
-    [ wrapCol Table.intColumn "lastUsedSaleId" .lastUsedSaleId unwrap
-    , wrapCol Table.intColumn "lastUsedObjectiveId" .lastUsedObjectiveId unwrap
-    , wrapCol Table.intColumn "lastUsedActionId" .lastUsedActionId unwrap
-    , wrapCol Table.intColumn "lastUsedClaimId" .lastUsedClaimId unwrap
+    [ wrapCol intColumn "lastUsedSaleId" .lastUsedSaleId unwrap
+    , wrapCol intColumn "lastUsedObjectiveId" .lastUsedObjectiveId unwrap
+    , wrapCol intColumn "lastUsedActionId" .lastUsedActionId unwrap
+    , wrapCol intColumn "lastUsedClaimId" .lastUsedClaimId unwrap
     ]
 
 
 listColumn : String -> (data -> List item) -> (item -> String) -> (Table -> data) -> Table.Column Table msg_
 listColumn name toList itemToString toData =
-    Table.customColumn
+    customColumn
         { name = name
         , sorter =
             Table.increasingOrDecreasingBy
@@ -393,7 +446,7 @@ cambiatusCmMemberColumns exampleData =
     in
     [ wrapCol nameColumn "name" .name unwrap
     , wrapCol nameColumn "inviter" .inviter unwrap
-    , wrapCol Table.stringColumn "userType" .userType unwrap
+    , wrapCol stringColumn "userType" .userType unwrap
     , listColumn "roles" .roles Eos.Name.toString unwrap
     ]
 
@@ -410,11 +463,11 @@ cambiatusCmNetworkColumns exampleData =
                 _ ->
                     exampleData
     in
-    [ wrapCol Table.intColumn "id" .id unwrap
+    [ wrapCol intColumn "id" .id unwrap
     , wrapCol symbolColumn "community" .community unwrap
     , wrapCol nameColumn "invitedUser" .invitedUser unwrap
     , wrapCol nameColumn "invitedBy" .invitedBy unwrap
-    , wrapCol Table.stringColumn "userType" .userType unwrap
+    , wrapCol stringColumn "userType" .userType unwrap
     ]
 
 
@@ -430,8 +483,8 @@ cambiatusCmObjectiveColumns exampleData =
                 _ ->
                     exampleData
     in
-    [ wrapCol Table.intColumn "id" .id unwrap
-    , wrapCol Table.stringColumn "description" .description unwrap
+    [ wrapCol intColumn "id" .id unwrap
+    , wrapCol stringColumn "description" .description unwrap
     , wrapCol symbolColumn "community" .community unwrap
     , wrapCol nameColumn "creator" .creator unwrap
     ]
@@ -466,8 +519,8 @@ cambiatusCmValidatorColumns exampleData =
                 _ ->
                     exampleData
     in
-    [ wrapCol Table.intColumn "id" .id unwrap
-    , wrapCol Table.intColumn "actionId" .actionId unwrap
+    [ wrapCol intColumn "id" .id unwrap
+    , wrapCol intColumn "actionId" .actionId unwrap
     , wrapCol nameColumn "validator" .validator unwrap
     ]
 
@@ -487,7 +540,7 @@ cambiatusTkAccountsColumns exampleData =
     [ wrapCol assetColumn "balance" .balance unwrap
 
     -- TODO - Posix?
-    , wrapCol Table.intColumn "lastActivity" .lastActivity unwrap
+    , wrapCol intColumn "lastActivity" .lastActivity unwrap
     ]
 
 
@@ -504,8 +557,8 @@ cambiatusTkExpiryoptsColumns exampleData =
                     exampleData
     in
     [ wrapCol symbolColumn "currency" .currency unwrap
-    , wrapCol Table.intColumn "naturalExpirationPeriod" .naturalExpirationPeriod unwrap
-    , wrapCol Table.intColumn "juridicalExpirationPeriod" .juridicalExpirationPeriod unwrap
+    , wrapCol intColumn "naturalExpirationPeriod" .naturalExpirationPeriod unwrap
+    , wrapCol intColumn "juridicalExpirationPeriod" .juridicalExpirationPeriod unwrap
     , wrapCol assetColumn "renovationAmount" .renovationAmount unwrap
     ]
 
@@ -526,5 +579,5 @@ cambiatusTkStatColumns exampleData =
     , wrapCol assetColumn "maxSupply" .maxSupply unwrap
     , wrapCol assetColumn "minBalance" .minBalance unwrap
     , wrapCol nameColumn "issuer" .issuer unwrap
-    , wrapCol Table.stringColumn "type_" .type_ unwrap
+    , wrapCol stringColumn "type_" .type_ unwrap
     ]
