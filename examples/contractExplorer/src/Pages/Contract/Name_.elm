@@ -18,7 +18,8 @@ import Heroicons.Outline
 import Heroicons.Solid
 import Html
 import Html.Attributes as Attr exposing (class)
-import Html.Events exposing (onClick)
+import Html.Events as Events exposing (onClick)
+import Html.Extra as HtmlX
 import Http
 import Icons
 import InteropDefinitions
@@ -30,6 +31,7 @@ import Request
 import Shared
 import Svg.Attributes as SvgAttr
 import Table
+import Ui.Form.Input
 import Ui.Header
 import View exposing (View)
 
@@ -61,6 +63,9 @@ init shared req =
                         , actions = actions
                         , tables = tables
                         , selectedTable = Nothing
+                        , scope = Eos.Name.toString validName
+                        , limit = "100"
+                        , reverse = False
                         , tableState = Table.initialSort ""
                         , tableData = RemoteData.NotAsked
                         }
@@ -84,19 +89,60 @@ update msg model =
             )
 
         SelectedTable tableName ->
+            ( updateValidContractInfo
+                (\info ->
+                    { info | selectedTable = Just tableName }
+                )
+                model
+            , Effect.none
+            )
+
+        EnteredScope scope ->
+            ( updateValidContractInfo
+                (\info -> { info | scope = scope })
+                model
+            , Effect.none
+            )
+
+        EnteredLimit limit ->
+            ( updateValidContractInfo
+                (\info -> { info | limit = limit })
+                model
+            , Effect.none
+            )
+
+        CheckedReverse reverse ->
+            ( updateValidContractInfo (\info -> { info | reverse = reverse }) model
+            , Effect.none
+            )
+
+        RequestedTableData ->
             case model of
                 ValidContract info ->
-                    case ListX.find (\t -> t.name == tableName) info.tables of
-                        Just validTable ->
-                            ( ValidContract
-                                { info
-                                    | selectedTable = Just tableName
-                                    , tableData = RemoteData.Loading
-                                }
-                              -- TODO - Accept scope as input
-                            , validTable.queryFunction { scope = "cambiatus.cm" }
-                                |> Eos.Query.withLimit 100
-                                |> Eos.Query.send GotTableData
+                    let
+                        maybeQuery : Maybe (Eos.Query.Query EosTable.Table)
+                        maybeQuery =
+                            Maybe.map2
+                                (\validTable validLimit ->
+                                    validTable.queryFunction { scope = info.scope }
+                                        |> Eos.Query.withLimit validLimit
+                                        |> Eos.Query.withReverse info.reverse
+                                )
+                                maybeValidTable
+                                maybeValidLimit
+
+                        maybeValidTable : Maybe EosTable.Metadata
+                        maybeValidTable =
+                            ListX.find (\t -> Just t.name == info.selectedTable) info.tables
+
+                        maybeValidLimit : Maybe Int
+                        maybeValidLimit =
+                            String.toInt info.limit
+                    in
+                    case maybeQuery of
+                        Just query ->
+                            ( ValidContract { info | tableData = RemoteData.Loading }
+                            , Eos.Query.send GotTableData query
                                 |> Effect.fromCmd
                             )
 
@@ -107,30 +153,35 @@ update msg model =
                     ( model, Effect.none )
 
         GotTableData (Ok response) ->
-            case model of
-                ValidContract info ->
-                    ( ValidContract { info | tableData = RemoteData.Success response }, Effect.none )
-
-                _ ->
-                    ( model, Effect.none )
+            ( updateValidContractInfo
+                (\info ->
+                    { info | tableData = RemoteData.Success response }
+                )
+                model
+            , Effect.none
+            )
 
         GotTableData (Err err) ->
-            case model of
-                ValidContract info ->
-                    ( ValidContract { info | tableData = RemoteData.Failure err }, Effect.none )
-
-                _ ->
-                    ( model, Effect.none )
+            ( updateValidContractInfo
+                (\info -> { info | tableData = RemoteData.Failure err })
+                model
+            , Effect.none
+            )
 
         UpdatedTable newState ->
-            case model of
-                ValidContract info ->
-                    ( ValidContract { info | tableState = newState }
-                    , Effect.none
-                    )
+            ( updateValidContractInfo (\info -> { info | tableState = newState }) model
+            , Effect.none
+            )
 
-                _ ->
-                    ( model, Effect.none )
+
+updateValidContractInfo : (ValidContractInfo -> ValidContractInfo) -> Model -> Model
+updateValidContractInfo updateFn model =
+    case model of
+        ValidContract info ->
+            ValidContract (updateFn info)
+
+        _ ->
+            model
 
 
 
@@ -169,13 +220,16 @@ view req model =
                             ]
                         )
 
-                ValidContract { contractName, actions, tables, selectedTable, tableState, tableData } ->
+                ValidContract { contractName, actions, tables, selectedTable, scope, limit, reverse, tableState, tableData } ->
                     Html.div [ class "container mx-auto px-4" ]
                         [ Html.div [ class "flex items-center justify-between" ]
                             [ Html.h2 [ class "py-2 text-xl" ] [ Html.text <| Eos.Name.toString contractName ]
                             ]
                         , viewTables
-                            { selectedTable = selectedTable
+                            { limit = limit
+                            , reverse = reverse
+                            , scope = scope
+                            , selectedTable = selectedTable
                             , tableData = tableData
                             , tableState = tableState
                             , tables = tables
@@ -214,13 +268,16 @@ viewError err =
 
 
 viewTables :
-    { selectedTable : Maybe Eos.Name.Name
+    { limit : String
+    , reverse : Bool
+    , scope : String
+    , selectedTable : Maybe Eos.Name.Name
     , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
     , tableState : Table.State
     , tables : List EosTable.Metadata
     }
     -> Html.Html Msg
-viewTables { selectedTable, tableData, tableState, tables } =
+viewTables { tables, selectedTable, scope, limit, reverse, tableState, tableData } =
     Html.details [ class "border border-zinc-200 bg-white w-full rounded mt-4 group open:pb-4" ]
         [ Html.summary [ class "p-4 marker-hidden flex justify-between items-center cursor-pointer" ]
             [ Html.h3 [ class "text-lg" ] [ Html.text "Tables" ]
@@ -246,9 +303,54 @@ viewTables { selectedTable, tableData, tableState, tables } =
                 )
                 tables
             )
+        , HtmlX.viewMaybe
+            (\_ ->
+                Html.form
+                    [ class "flex flex-col mt-4 px-4 gap-2"
+                    , Events.onSubmit RequestedTableData
+                    ]
+                    [ Html.div [ class "flex gap-2" ]
+                        [ Ui.Form.Input.view
+                            { label = Html.text "Scope"
+                            , labelAttrs = []
+                            , onInput = EnteredScope
+                            , placeholder = "eos.io"
+                            , value = scope
+                            }
+                            []
+                        , Ui.Form.Input.view
+                            { label = Html.text "Limit"
+                            , labelAttrs = []
+                            , onInput = EnteredLimit
+                            , placeholder = "100"
+                            , value = limit
+                            }
+                            []
+                        , Html.label [ class "flex items-center gap-2 mt-6 ml-4" ]
+                            [ Html.input
+                                [ Attr.type_ "checkbox"
+                                , Events.onCheck CheckedReverse
+                                , Attr.checked reverse
+                                ]
+                                []
+                            , Html.text "Reverse"
+                            ]
+                        ]
+                    , Html.button
+                        [ class "bg-slate-700 text-white font-bold py-2 px-4 mt-2 rounded-sm w-full hover:bg-slate-600 active:bg-slate-800"
+                        ]
+                        [ Html.text "Search" ]
+                    ]
+            )
+            selectedTable
         , case tableData of
             RemoteData.NotAsked ->
-                Html.p [ class "px-4 text-center text-gray-500 mt-8 mb-6" ] [ Html.text "No table selected" ]
+                case selectedTable of
+                    Just _ ->
+                        Html.p [ class "px-4 text-center text-gray-500 mt-8 mb-6" ] [ Html.text "Adjust the parameters and hit Search" ]
+
+                    Nothing ->
+                        Html.p [ class "px-4 text-center text-gray-500 mt-8 mb-6" ] [ Html.text "No table selected" ]
 
             RemoteData.Loading ->
                 Icons.arrowPath [ SvgAttr.class "animate-spin text-slate-400 w-6 h-6 mt-8 mb-6 mx-auto" ]
@@ -387,7 +489,7 @@ viewSelectedTable tableState tableData =
         allData =
             Tuple.first tableData.result :: Tuple.second tableData.result
     in
-    Html.div [ class "mx-4 flex overflow-x-scroll border rounded mt-8 mb-4" ]
+    Html.div [ class "mx-4 flex overflow-x-scroll border rounded mt-4 mb-4" ]
         [ Table.view tableConfig tableState allData
         ]
 
@@ -407,14 +509,7 @@ viewActions _ =
 type Model
     = InvalidContractName Eos.Name.Error
     | ContractNameDoesntExist Eos.Name.Name
-    | ValidContract
-        { contractName : Eos.Name.Name
-        , actions : List ()
-        , tables : List EosTable.Metadata
-        , selectedTable : Maybe Eos.Name.Name
-        , tableState : Table.State
-        , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
-        }
+    | ValidContract ValidContractInfo
 
 
 {-| This page's msgs
@@ -422,5 +517,22 @@ type Model
 type Msg
     = ClickedLogout
     | SelectedTable Eos.Name.Name
+    | EnteredScope String
+    | EnteredLimit String
+    | CheckedReverse Bool
+    | RequestedTableData
     | GotTableData (Result Http.Error (Eos.Query.Response EosTable.Table))
     | UpdatedTable Table.State
+
+
+type alias ValidContractInfo =
+    { contractName : Eos.Name.Name
+    , actions : List ()
+    , tables : List EosTable.Metadata
+    , selectedTable : Maybe Eos.Name.Name
+    , scope : String
+    , limit : String
+    , reverse : Bool
+    , tableState : Table.State
+    , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
+    }
