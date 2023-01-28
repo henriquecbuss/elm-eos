@@ -18,7 +18,7 @@ import Heroicons.Outline
 import Heroicons.Solid
 import Html
 import Html.Attributes as Attr exposing (class)
-import Html.Events as Events exposing (onClick)
+import Html.Events as Events
 import Html.Extra as HtmlX
 import Http
 import Icons
@@ -68,6 +68,7 @@ init shared req =
                         , reverse = False
                         , tableState = Table.initialSort ""
                         , tableData = RemoteData.NotAsked
+                        , moreTableData = RemoteData.NotAsked
                         }
                     , Effect.none
                     )
@@ -119,34 +120,43 @@ update msg model =
         RequestedTableData ->
             case model of
                 ValidContract info ->
-                    let
-                        maybeQuery : Maybe (Eos.Query.Query EosTable.Table)
-                        maybeQuery =
-                            Maybe.map2
-                                (\validTable validLimit ->
-                                    validTable.queryFunction { scope = info.scope }
-                                        |> Eos.Query.withLimit validLimit
-                                        |> Eos.Query.withReverse info.reverse
-                                )
-                                maybeValidTable
-                                maybeValidLimit
-
-                        maybeValidTable : Maybe EosTable.Metadata
-                        maybeValidTable =
-                            ListX.find (\t -> Just t.name == info.selectedTable) info.tables
-
-                        maybeValidLimit : Maybe Int
-                        maybeValidLimit =
-                            String.toInt info.limit
-                    in
-                    case maybeQuery of
+                    case queryFromValidContractInfo info of
                         Just query ->
-                            ( ValidContract { info | tableData = RemoteData.Loading }
+                            ( ValidContract
+                                { info
+                                    | tableData = RemoteData.Loading
+                                    , moreTableData = RemoteData.NotAsked
+                                }
                             , Eos.Query.send GotTableData query
                                 |> Effect.fromCmd
                             )
 
                         Nothing ->
+                            ( model, Effect.none )
+
+                _ ->
+                    ( model, Effect.none )
+
+        RequestedMoreTableData ->
+            case model of
+                ValidContract info ->
+                    case info.tableData of
+                        RemoteData.Success response ->
+                            case queryFromValidContractInfo info of
+                                Just query ->
+                                    ( ValidContract
+                                        { info
+                                            | moreTableData = RemoteData.Loading
+                                        }
+                                    , Eos.Query.withLowerBound response.nextCursor query
+                                        |> Eos.Query.send GotMoreTableData
+                                        |> Effect.fromCmd
+                                    )
+
+                                Nothing ->
+                                    ( model, Effect.none )
+
+                        _ ->
                             ( model, Effect.none )
 
                 _ ->
@@ -168,6 +178,32 @@ update msg model =
             , Effect.none
             )
 
+        GotMoreTableData (Ok response) ->
+            ( updateValidContractInfo
+                (\info ->
+                    case info.tableData of
+                        RemoteData.Success previousData ->
+                            { info
+                                | tableData =
+                                    RemoteData.Success
+                                        { response | result = previousData.result ++ response.result }
+                                , moreTableData = RemoteData.NotAsked
+                            }
+
+                        _ ->
+                            info
+                )
+                model
+            , Effect.none
+            )
+
+        GotMoreTableData (Err err) ->
+            ( updateValidContractInfo
+                (\info -> { info | moreTableData = RemoteData.Failure err })
+                model
+            , Effect.none
+            )
+
         UpdatedTable newState ->
             ( updateValidContractInfo (\info -> { info | tableState = newState }) model
             , Effect.none
@@ -182,6 +218,27 @@ updateValidContractInfo updateFn model =
 
         _ ->
             model
+
+
+queryFromValidContractInfo : ValidContractInfo -> Maybe (Eos.Query.Query EosTable.Table)
+queryFromValidContractInfo info =
+    let
+        maybeValidTable : Maybe EosTable.Metadata
+        maybeValidTable =
+            ListX.find (\t -> Just t.name == info.selectedTable) info.tables
+
+        maybeValidLimit : Maybe Int
+        maybeValidLimit =
+            String.toInt info.limit
+    in
+    Maybe.map2
+        (\validTable validLimit ->
+            validTable.queryFunction { scope = info.scope }
+                |> Eos.Query.withLimit validLimit
+                |> Eos.Query.withReverse info.reverse
+        )
+        maybeValidTable
+        maybeValidLimit
 
 
 
@@ -220,13 +277,14 @@ view req model =
                             ]
                         )
 
-                ValidContract { contractName, actions, tables, selectedTable, scope, limit, reverse, tableState, tableData } ->
+                ValidContract { contractName, actions, tables, selectedTable, scope, limit, reverse, tableState, tableData, moreTableData } ->
                     Html.div [ class "container mx-auto px-4" ]
                         [ Html.div [ class "flex items-center justify-between" ]
                             [ Html.h2 [ class "py-2 text-xl" ] [ Html.text <| Eos.Name.toString contractName ]
                             ]
                         , viewTables
                             { limit = limit
+                            , moreTableData = moreTableData
                             , reverse = reverse
                             , scope = scope
                             , selectedTable = selectedTable
@@ -267,8 +325,35 @@ viewError err =
 -- VIEW
 
 
+viewHttpError : Http.Error -> Html.Html msg_
+viewHttpError error =
+    case error of
+        Http.BadUrl givenUrl ->
+            Html.text ("The given URL was not valid. I tried using " ++ givenUrl ++ ". Check the command you used to generate the code to get the correct URL - that's the one I used!")
+
+        Http.Timeout ->
+            Html.text "The server timed out. Is the server online? Is your internet working?"
+
+        Http.NetworkError ->
+            Html.text "There was a network error. Are you connected to the internet?"
+
+        Http.BadStatus status ->
+            Html.text ("I got a failure response from the server. The status code was " ++ String.fromInt status ++ ". Is the server running correctly?")
+
+        Http.BadBody reason ->
+            Html.div []
+                [ Html.p [] [ Html.text "I couldn't decode the server's response! Here's the error I got:" ]
+                , Html.div [ class "border-l-4 border-red-500 rounded bg-red-100 p-2 my-2" ] [ Html.text reason ]
+                , Html.p []
+                    [ Html.text "This is probably a bug in the library! Please consider "
+                    , Html.a [ Attr.href "https://github.com/henriquecbuss/elm-eos", class "underline" ] [ Html.text "submitting a new issue." ]
+                    ]
+                ]
+
+
 viewTables :
     { limit : String
+    , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
     , reverse : Bool
     , scope : String
     , selectedTable : Maybe Eos.Name.Name
@@ -277,7 +362,7 @@ viewTables :
     , tables : List EosTable.Metadata
     }
     -> Html.Html Msg
-viewTables { tables, selectedTable, scope, limit, reverse, tableState, tableData } =
+viewTables { tables, selectedTable, scope, limit, reverse, tableState, tableData, moreTableData } =
     Html.details [ class "border border-zinc-200 bg-white w-full rounded mt-4 group open:pb-4" ]
         [ Html.summary [ class "p-4 marker-hidden flex justify-between items-center cursor-pointer" ]
             [ Html.h3 [ class "text-lg" ] [ Html.text "Tables" ]
@@ -297,7 +382,7 @@ viewTables { tables, selectedTable, scope, limit, reverse, tableState, tableData
                             [ ( "bg-slate-700 text-white", isSelected )
                             , ( "bg-slate-300 hover:bg-slate-400 active:bg-slate-500", not isSelected )
                             ]
-                        , onClick (SelectedTable table.name)
+                        , Events.onClick (SelectedTable table.name)
                         ]
                         [ Html.text (Eos.Name.toString table.name) ]
                 )
@@ -377,42 +462,18 @@ viewTables { tables, selectedTable, scope, limit, reverse, tableState, tableData
                     first :: rest ->
                         viewSelectedTable tableState
                             { hasMore = data.hasMore
+                            , moreTableData = moreTableData
                             , nextCursor = data.nextCursor
                             , result = ( first, rest )
                             }
         ]
 
 
-viewHttpError : Http.Error -> Html.Html msg_
-viewHttpError error =
-    case error of
-        Http.BadUrl givenUrl ->
-            Html.text ("The given URL was not valid. I tried using " ++ givenUrl ++ ". Check the command you used to generate the code to get the correct URL - that's the one I used!")
-
-        Http.Timeout ->
-            Html.text "The server timed out. Is the server online? Is your internet working?"
-
-        Http.NetworkError ->
-            Html.text "There was a network error. Are you connected to the internet?"
-
-        Http.BadStatus status ->
-            Html.text ("I got a failure response from the server. The status code was " ++ String.fromInt status ++ ". Is the server running correctly?")
-
-        Http.BadBody reason ->
-            Html.div []
-                [ Html.p [] [ Html.text "I couldn't decode the server's response! Here's the error I got:" ]
-                , Html.div [ class "border-l-4 border-red-500 rounded bg-red-100 p-2 my-2" ] [ Html.text reason ]
-                , Html.p []
-                    [ Html.text "This is probably a bug in the library! Please consider "
-                    , Html.a [ Attr.href "https://github.com/henriquecbuss/elm-eos", class "underline" ] [ Html.text "submitting a new issue." ]
-                    ]
-                ]
-
-
 viewSelectedTable :
     Table.State
     ->
         { hasMore : Bool
+        , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
         , nextCursor : Eos.Query.Cursor
         , result : ( EosTable.Table, List EosTable.Table )
         }
@@ -433,8 +494,8 @@ viewSelectedTable tableState tableData =
                             { attributes = [ class "border-b bg-slate-700 text-white" ]
                             , children =
                                 List.map
-                                    (\( name, status, onClick_ ) ->
-                                        viewTableHead name status onClick_
+                                    (\( name, status, onClick ) ->
+                                        viewTableHead name status onClick
                                     )
                                     details
                             }
@@ -447,7 +508,7 @@ viewSelectedTable tableState tableData =
                 }
 
         viewTableHead : String -> Table.Status -> Html.Attribute Msg -> Html.Html Msg
-        viewTableHead name status onClick_ =
+        viewTableHead name status onClick =
             let
                 content : List (Html.Html Msg)
                 content =
@@ -479,7 +540,7 @@ viewSelectedTable tableState tableData =
                             ]
             in
             Html.th
-                [ onClick_
+                [ onClick
                 , Attr.classList [ ( "cursor-pointer", status /= Table.Unsortable ) ]
                 , class "select-none text-left px-6 py-2 whitespace-nowrap capitalize"
                 ]
@@ -489,8 +550,33 @@ viewSelectedTable tableState tableData =
         allData =
             Tuple.first tableData.result :: Tuple.second tableData.result
     in
-    Html.div [ class "mx-4 flex overflow-x-scroll border rounded mt-4 mb-4" ]
-        [ Table.view tableConfig tableState allData
+    Html.div [ class "mx-4 mt-4" ]
+        [ Html.div [ class "flex overflow-x-scroll border rounded" ]
+            [ Table.view tableConfig tableState allData
+            ]
+        , HtmlX.viewIf tableData.hasMore
+            (case tableData.moreTableData of
+                RemoteData.Loading ->
+                    Icons.arrowPath [ SvgAttr.class "animate-spin text-slate-400 w-6 h-6 mt-8 mb-6 mx-auto" ]
+
+                RemoteData.Failure err ->
+                    Html.div [ class "px-4" ]
+                        [ Html.div [ class "border border-red-500 bg-red-200 text-black max-w-lg mt-8 mb-4 mx-auto p-4 rounded" ]
+                            [ Html.p [ class "text-red-700 flex items-center gap-2 font-bold mb-4" ]
+                                [ Heroicons.Outline.exclamationTriangle [ SvgAttr.class "w-6 h-6" ]
+                                , Html.text "Something went wrong"
+                                ]
+                            , viewHttpError err
+                            ]
+                        ]
+
+                _ ->
+                    Html.button
+                        [ class "bg-slate-700 text-white font-bold py-2 px-4 mt-4 rounded-sm w-full hover:bg-slate-600 active:bg-slate-800"
+                        , Events.onClick RequestedMoreTableData
+                        ]
+                        [ Html.text "Load more" ]
+            )
         ]
 
 
@@ -521,7 +607,9 @@ type Msg
     | EnteredLimit String
     | CheckedReverse Bool
     | RequestedTableData
+    | RequestedMoreTableData
     | GotTableData (Result Http.Error (Eos.Query.Response EosTable.Table))
+    | GotMoreTableData (Result Http.Error (Eos.Query.Response EosTable.Table))
     | UpdatedTable Table.State
 
 
@@ -535,4 +623,5 @@ type alias ValidContractInfo =
     , reverse : Bool
     , tableState : Table.State
     , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
+    , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
     }
