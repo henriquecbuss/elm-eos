@@ -250,7 +250,7 @@ view req model =
     { title = "Contract " ++ req.params.name
     , body =
         [ Ui.Header.view { logout = ClickedLogout }
-        , Html.main_ [ class "h-full bg-slate-100 pt-4" ]
+        , Html.main_ [ class "min-h-full bg-slate-100 pt-4 pb-20" ]
             [ case model of
                 InvalidContractName err ->
                     viewError
