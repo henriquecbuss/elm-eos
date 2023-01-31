@@ -114,7 +114,7 @@ generateDecoder =
     in
     describe "generateDecoder"
         [ generateDecoderTest EosType.EosBool "Json.Decode.bool"
-        , generateDecoderTest EosType.EosInt "Json.Decode.int"
+        , generateDecoderTest EosType.EosInt "intDecoder"
         , generateDecoderTest EosType.EosFloat "Json.Decode.float"
         , generateDecoderTest EosType.TimePoint "Eos.TimePoint.decoder"
         , generateDecoderTest EosType.TimePointSec "Eos.TimePointSec.decoder"

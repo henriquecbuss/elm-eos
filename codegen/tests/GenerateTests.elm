@@ -199,6 +199,27 @@ import Json.Decode
 import Json.Decode.Pipeline
 
 
+{-| Decoder for an integer, which deals with the case that an int may come as a string -}
+intDecoder : Json.Decode.Decoder Int
+intDecoder =
+    Json.Decode.oneOf
+        [ Json.Decode.int
+        , Json.Decode.andThen
+            (\\andThenUnpack ->
+                case String.toInt andThenUnpack of
+                    Nothing ->
+                        Json.Decode.fail
+                            ("I got a String that should represent an Int, but it didn't parse to an Int. It was: "
+                                ++ andThenUnpack
+                            )
+
+                    Just validInt_1_1_1_1_0 ->
+                        Json.Decode.succeed validInt_1_1_1_1_0
+            )
+            Json.Decode.string
+        ]
+
+
 {-| Decoder for the accounts table. -}
 accounts : Json.Decode.Decoder Contract.Ct.Table.Accounts
 accounts =

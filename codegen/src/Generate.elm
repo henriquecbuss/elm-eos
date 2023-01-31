@@ -117,14 +117,15 @@ apiFilesFromAbi base context abi =
                 )
                     :: makeDocs groupsAndMembers
         }
-        (List.map
-            (Generate.Table.Decoder.generate context
-                >> Elm.exposeWith
-                    { exposeConstructor = True
-                    , group = Just "Decoders"
-                    }
-            )
-            abi.tables
+        (Generate.Table.Decoder.generateIntDecoder
+            :: List.map
+                (Generate.Table.Decoder.generate context
+                    >> Elm.exposeWith
+                        { exposeConstructor = True
+                        , group = Just "Decoders"
+                        }
+                )
+                abi.tables
         )
     , prefixedFile [ "Table", "Query" ]
         { docs =

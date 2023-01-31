@@ -1,7 +1,8 @@
-module EosType exposing (EosType(..), decoder, generateDecoder, generateEncoder, toAnnotation)
+module EosType exposing (EosType(..), decoder, generateDecoder, generateEncoder, intDecoder, toAnnotation)
 
 import Elm
 import Elm.Annotation
+import Elm.Case
 import Elm.Op
 import Gen.Eos.Asset
 import Gen.Eos.Checksum
@@ -15,6 +16,7 @@ import Gen.Eos.TimePoint
 import Gen.Eos.TimePointSec
 import Gen.Json.Decode
 import Gen.Json.Encode
+import Gen.String
 import Gen.Time
 import Json.Decode as Decode
 
@@ -170,7 +172,7 @@ generateDecoder eosType =
             Gen.Json.Decode.values_.bool
 
         EosInt ->
-            Gen.Json.Decode.values_.int
+            Elm.val "intDecoder"
 
         EosFloat ->
             Gen.Json.Decode.values_.float
@@ -346,6 +348,26 @@ generateEncoder eosType =
 
         EosList innerType ->
             Elm.apply Gen.Json.Encode.values_.list [ generateEncoder innerType ]
+
+
+intDecoder : Elm.Expression
+intDecoder =
+    Gen.Json.Decode.oneOf
+        [ Gen.Json.Decode.int
+        , Gen.Json.Decode.string
+            |> Gen.Json.Decode.andThen
+                (\stringValue ->
+                    Elm.Case.maybe (Gen.String.call_.toInt stringValue)
+                        { just = ( "validInt", Gen.Json.Decode.succeed )
+                        , nothing =
+                            Gen.Json.Decode.call_.fail
+                                (Elm.Op.append
+                                    (Elm.string "I got a String that should represent an Int, but it didn't parse to an Int. It was: ")
+                                    stringValue
+                                )
+                        }
+                )
+        ]
 
 
 toAnnotation : EosType -> Elm.Annotation.Annotation

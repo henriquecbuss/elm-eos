@@ -1,4 +1,4 @@
-module Generate.Table.Decoder exposing (generate)
+module Generate.Table.Decoder exposing (generate, generateIntDecoder)
 
 import Abi
 import Context exposing (Context)
@@ -39,3 +39,9 @@ generate context table =
                 )
         )
         |> Elm.withDocumentation ("Decoder for the " ++ table.name ++ " table.")
+
+
+generateIntDecoder : Elm.Declaration
+generateIntDecoder =
+    Elm.declaration "intDecoder" EosType.intDecoder
+        |> Elm.withDocumentation "Decoder for an integer, which deals with the case that an int may come as a string"
