@@ -391,10 +391,10 @@ viewTables { tables, selectedTable, scope, limit, reverse, tableState, tableData
         , HtmlX.viewMaybe
             (\_ ->
                 Html.form
-                    [ class "flex flex-col mt-4 px-4 gap-2"
+                    [ class "flex flex-col mt-4 px-4 gap-4"
                     , Events.onSubmit RequestedTableData
                     ]
-                    [ Html.div [ class "flex gap-2" ]
+                    [ Html.div [ class "grid grid-cols-2 md:grid-cols-3 gap-x-2 gap-y-4" ]
                         [ Ui.Form.Input.view
                             { label = Html.text "Scope"
                             , labelAttrs = []
@@ -411,7 +411,7 @@ viewTables { tables, selectedTable, scope, limit, reverse, tableState, tableData
                             , value = limit
                             }
                             []
-                        , Html.label [ class "flex items-center gap-2 mt-6 ml-4" ]
+                        , Html.label [ class "flex items-center gap-2 md:mt-6 md:ml-4" ]
                             [ Html.input
                                 [ Attr.type_ "checkbox"
                                 , Events.onCheck CheckedReverse
