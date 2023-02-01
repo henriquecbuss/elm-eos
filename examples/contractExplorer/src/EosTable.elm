@@ -36,7 +36,6 @@ import Table
 type Table
     = CambiatusCmTable Cambiatus.Cm.Table.Metadata.Table
     | CambiatusTkTable Cambiatus.Tk.Table.Metadata.Table
-    | EosIoTable
 
 
 {-| Metadata about a table
@@ -105,9 +104,6 @@ toId genericTable =
                 Cambiatus.Tk.Table.Metadata.Stat stat ->
                     symbolToString stat.supply.symbol
 
-        EosIoTable ->
-            ""
-
 
 {-| Given an example table, generate the list of columns needed to display it
 -}
@@ -152,9 +148,6 @@ columns genericTable =
 
         CambiatusTkTable (Cambiatus.Tk.Table.Metadata.Stat table) ->
             cambiatusTkStatColumns table
-
-        EosIoTable ->
-            []
 
 
 customColumn : { name : String, sorter : Table.Sorter data, viewData : data -> String } -> Table.Column data msg_

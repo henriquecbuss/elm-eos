@@ -64,8 +64,7 @@ init _ flags =
         contracts : Dict.Dict Eos.Name.Name { actions : List (), tables : List EosTable.Metadata }
         contracts =
             ResultX.combine
-                [ eosIo
-                , cambiatusTk
+                [ cambiatusTk
                 , cambiatusCm
                 ]
                 |> Result.withDefault []
@@ -112,17 +111,6 @@ init _ flags =
                         , tables = Cambiatus.Tk.Table.Metadata.metadata
                         }
                         EosTable.CambiatusTkTable
-                    )
-
-        eosIo : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List EosTable.Metadata } )
-        eosIo =
-            Eos.Name.fromString "eos.io"
-                |> Result.map
-                    (makeContract
-                        { actions = List.repeat 4 ()
-                        , tables = []
-                        }
-                        (\_ -> EosTable.EosIoTable)
                     )
     in
     case flags.privateKey of
