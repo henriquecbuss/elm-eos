@@ -106,6 +106,10 @@ jobs:
         run: npm run generate-ts-interop
         working-directory: codegen
 
+      - name: Lint codegen/
+        run: npm run lint
+        working-directory: codegen
+
       - name: Build codegen/
         run: npm run build
         working-directory: codegen

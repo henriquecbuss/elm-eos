@@ -34,5 +34,8 @@
     "elm-review": "^2.7.3",
     "elm-tooling": "^1.8.0",
     "elm-verify-examples": "^5.2.0"
+  },
+  "dependencies": {
+    "ts-node": "^10.9.1"
   }
 }

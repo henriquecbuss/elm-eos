@@ -3,9 +3,10 @@
   "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
   "main": "bin/index.js",
   "scripts": {
-    "build": "eslint . && NODE_ENV=production tsc --noEmit && NODE_ENV=production ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts",
+    "build": "NODE_ENV=production ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts",
     "execute": "eslint . && tsc --noEmit && ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts && node dist/index.js",
-    "generate-ts-interop": "elm-ts-interop --output src/Main.elm.d.ts"
+    "generate-ts-interop": "elm-ts-interop --output src/Main.elm.d.ts",
+    "lint": "eslint . && NODE_ENV=production tsc --noEmit"
   },
   "keywords": [
     "elm",
