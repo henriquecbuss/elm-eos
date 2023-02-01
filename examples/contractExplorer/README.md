@@ -1,7 +1,7 @@
 # Contract Explorer
 
 This is a complete example of an application. It uses `eosjs` to submit actions
-to the blockchain.
+to the blockchain. You can see the deployed app here: https://elm-eos-demo.netlify.app/.
 
 ## Getting started
 
