@@ -14,11 +14,14 @@ const options: esbuild.BuildOptions = {
 };
 
 if (process.argv.includes("--watch")) {
-  esbuild.context(options).then((ctx) =>
-    ctx.watch().catch(() => {
-      ctx.dispose().then(() => process.exit(1));
-    })
-  );
+  esbuild
+    .context(options)
+    .then((ctx) =>
+      ctx.watch().catch(async () => {
+        await ctx.dispose();
+      })
+    )
+    .catch(() => process.exit(1));
 } else {
   esbuild.build(options).catch(() => process.exit(1));
 }
