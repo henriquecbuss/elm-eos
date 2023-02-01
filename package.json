@@ -12,7 +12,7 @@
   "scripts": {
     "test": "elm-verify-examples && elm-test-rs && cd codegen && elm-test-rs",
     "generate-helpers": "rm -rf codegen/src/Gen && elm-codegen install && mv codegen/Gen codegen/src/Gen",
-    "postinstall": "elm-tooling install",
+    "postinstall": "elm-tooling install && cd codegen && npm ci",
     "build": "cd codegen && npm run build"
   },
   "keywords": [
@@ -34,8 +34,5 @@
     "elm-review": "^2.7.3",
     "elm-tooling": "^1.8.0",
     "elm-verify-examples": "^5.2.0"
-  },
-  "dependencies": {
-    "ts-node": "^10.9.1"
   }
 }
