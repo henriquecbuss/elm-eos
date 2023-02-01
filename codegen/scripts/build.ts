@@ -5,13 +5,20 @@ type ElmPluginSignature = (config: { optimize: boolean }) => esbuild.Plugin;
 
 const ElmPlugin = ElmPluginImport as unknown as ElmPluginSignature;
 
-esbuild
-  .build({
-    platform: "node",
-    entryPoints: ["src/index.ts"],
-    bundle: true,
-    outdir: "dist",
-    watch: process.argv.includes("--watch"),
-    plugins: [ElmPlugin({ optimize: process.env.NODE_ENV === "production" })],
-  })
-  .catch(() => process.exit(1));
+const options: esbuild.BuildOptions = {
+  platform: "node",
+  entryPoints: ["src/index.ts"],
+  bundle: true,
+  outdir: "dist",
+  plugins: [ElmPlugin({ optimize: process.env.NODE_ENV === "production" })],
+};
+
+if (process.argv.includes("--watch")) {
+  esbuild.context(options).then((ctx) =>
+    ctx.watch().catch(() => {
+      ctx.dispose().then(() => process.exit(1));
+    })
+  );
+} else {
+  esbuild.build(options).catch(() => process.exit(1));
+}
