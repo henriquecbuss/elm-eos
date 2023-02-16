@@ -14,7 +14,8 @@ module Pages.Home_ exposing
 
 -}
 
-import AssocList as Dict
+import AssocList
+import Dict
 import Effect exposing (Effect)
 import Eos.EosType
 import Eos.Name
@@ -105,9 +106,9 @@ view shared model =
 
 
 viewContracts :
-    Dict.Dict
+    AssocList.Dict
         Eos.Name.Name
-        { actions : List { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType, name : Eos.Name.Name }
+        { actions : List { fields : Dict.Dict String Eos.EosType.EosType, name : Eos.Name.Name }
         , tables : List EosTable.Metadata
         }
     -> Model
@@ -130,7 +131,7 @@ viewContracts contractsDict model =
         , Ui.AutoAnimate.viewKeyed
             [ class "container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-4"
             ]
-            (Dict.toList contractsDict
+            (AssocList.toList contractsDict
                 |> Simple.Fuzzy.filter
                     (Tuple.first
                         >> Eos.Name.toString
@@ -151,7 +152,7 @@ viewContracts contractsDict model =
 
 
 viewContractCard :
-    { actions : List { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType, name : Eos.Name.Name }
+    { actions : List { fields : Dict.Dict String Eos.EosType.EosType, name : Eos.Name.Name }
     , name : Eos.Name.Name
     , tables : List EosTable.Metadata
     }

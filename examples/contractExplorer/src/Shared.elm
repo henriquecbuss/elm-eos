@@ -18,11 +18,12 @@ should live.
 
 -}
 
-import AssocList as Dict
+import AssocList
 import Cambiatus.Cm.Action.Metadata
 import Cambiatus.Cm.Table.Metadata
 import Cambiatus.Tk.Action.Metadata
 import Cambiatus.Tk.Table.Metadata
+import Dict
 import Eos.EosType
 import Eos.Name
 import Eos.Query
@@ -38,9 +39,9 @@ import Result.Extra as ResultX
 type alias Model =
     { user : Maybe { privateKey : String }
     , contracts :
-        Dict.Dict
+        AssocList.Dict
             Eos.Name.Name
-            { actions : List { name : Eos.Name.Name, fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType }
+            { actions : List { name : Eos.Name.Name, fields : Dict.Dict String Eos.EosType.EosType }
             , tables :
                 List
                     { name : Eos.Name.Name
@@ -65,11 +66,11 @@ init : Request -> InteropDefinitions.Flags -> ( Model, Cmd Msg )
 init _ flags =
     let
         contracts :
-            Dict.Dict
+            AssocList.Dict
                 Eos.Name.Name
                 { actions :
                     List
-                        { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                        { fields : Dict.Dict String Eos.EosType.EosType
                         , name : Eos.Name.Name
                         }
                 , tables : List EosTable.Metadata
@@ -80,12 +81,12 @@ init _ flags =
                 , cambiatusCm
                 ]
                 |> Result.withDefault []
-                |> Dict.fromList
+                |> AssocList.fromList
 
         makeContract :
             { actions :
                 List
-                    { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                    { fields : Dict.Dict String Eos.EosType.EosType
                     , name : Eos.Name.Name
                     }
             , tables :
@@ -100,7 +101,7 @@ init _ flags =
                 ( Eos.Name.Name
                 , { actions :
                         List
-                            { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            { fields : Dict.Dict String Eos.EosType.EosType
                             , name : Eos.Name.Name
                             }
                   , tables : List EosTable.Metadata
@@ -128,7 +129,7 @@ init _ flags =
                 ( Eos.Name.Name
                 , { actions :
                         List
-                            { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            { fields : Dict.Dict String Eos.EosType.EosType
                             , name : Eos.Name.Name
                             }
                   , tables : List EosTable.Metadata
@@ -150,7 +151,7 @@ init _ flags =
                 ( Eos.Name.Name
                 , { actions :
                         List
-                            { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            { fields : Dict.Dict String Eos.EosType.EosType
                             , name : Eos.Name.Name
                             }
                   , tables : List EosTable.Metadata

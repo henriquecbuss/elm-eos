@@ -7,7 +7,8 @@ contract comes from the url
 
 -}
 
-import AssocList as Dict
+import AssocList
+import Dict
 import Effect exposing (Effect)
 import Eos.EosType
 import Eos.Name
@@ -57,7 +58,7 @@ init : Shared.Model -> Request.With Params -> ( Model, Effect Msg )
 init shared req =
     case Eos.Name.fromString req.params.name of
         Ok validName ->
-            case Dict.get validName shared.contracts of
+            case AssocList.get validName shared.contracts of
                 Just { actions, tables } ->
                     ( ValidContract
                         { contractName = validName
@@ -70,6 +71,7 @@ init shared req =
                         , tableState = Table.initialSort ""
                         , tableData = RemoteData.NotAsked
                         , moreTableData = RemoteData.NotAsked
+                        , selectedAction = Nothing
                         }
                     , Effect.none
                     )
@@ -210,6 +212,15 @@ update msg model =
             , Effect.none
             )
 
+        SelectedAction actionName ->
+            ( updateValidContractInfo
+                (\info ->
+                    { info | selectedAction = Just actionName }
+                )
+                model
+            , Effect.none
+            )
+
 
 updateValidContractInfo : (ValidContractInfo -> ValidContractInfo) -> Model -> Model
 updateValidContractInfo updateFn model =
@@ -278,22 +289,25 @@ view req model =
                             ]
                         )
 
-                ValidContract { contractName, actions, tables, selectedTable, scope, limit, reverse, tableState, tableData, moreTableData } ->
+                ValidContract contract ->
                     Html.div [ class "container mx-auto px-4" ]
                         [ Html.div [ class "flex items-center justify-between" ]
-                            [ Html.h2 [ class "py-2 text-xl" ] [ Html.text <| Eos.Name.toString contractName ]
+                            [ Html.h2 [ class "py-2 text-xl" ] [ Html.text <| Eos.Name.toString contract.contractName ]
                             ]
                         , viewTables
-                            { limit = limit
-                            , moreTableData = moreTableData
-                            , reverse = reverse
-                            , scope = scope
-                            , selectedTable = selectedTable
-                            , tableData = tableData
-                            , tableState = tableState
-                            , tables = tables
+                            { limit = contract.limit
+                            , moreTableData = contract.moreTableData
+                            , reverse = contract.reverse
+                            , scope = contract.scope
+                            , selectedTable = contract.selectedTable
+                            , tableData = contract.tableData
+                            , tableState = contract.tableState
+                            , tables = contract.tables
                             }
-                        , viewActions actions
+                        , viewActions
+                            { actions = contract.actions
+                            , selectedAction = contract.selectedAction
+                            }
                         ]
             ]
         ]
@@ -324,6 +338,30 @@ viewError err =
 
 
 -- VIEW
+
+
+viewSelectionTag : { content : String, isSelected : Bool, onSelect : msg } -> Html.Html msg
+viewSelectionTag { content, isSelected, onSelect } =
+    Html.button
+        [ class "py-1 px-2 rounded-sm transition-colors"
+        , Attr.classList
+            [ ( "bg-slate-700 text-white", isSelected )
+            , ( "bg-slate-300 hover:bg-slate-400 active:bg-slate-500", not isSelected )
+            ]
+        , Events.onClick onSelect
+        ]
+        [ Html.text content ]
+
+
+viewAccordion : { title : String } -> List (Html.Html msg) -> Html.Html msg
+viewAccordion { title } content =
+    Html.details [ class "border border-zinc-200 bg-white w-full rounded mt-4 group open:pb-4" ]
+        (Html.summary [ class "p-4 marker-hidden flex justify-between items-center cursor-pointer" ]
+            [ Html.h3 [ class "text-lg" ] [ Html.text title ]
+            , Heroicons.Solid.chevronDown [ SvgAttr.class "w-5 h-5 ml-2 group-open:rotate-180 transition-transform" ]
+            ]
+            :: content
+        )
 
 
 viewHttpError : Http.Error -> Html.Html msg_
@@ -364,28 +402,15 @@ viewTables :
     }
     -> Html.Html Msg
 viewTables { tables, selectedTable, scope, limit, reverse, tableState, tableData, moreTableData } =
-    Html.details [ class "border border-zinc-200 bg-white w-full rounded mt-4 group open:pb-4" ]
-        [ Html.summary [ class "p-4 marker-hidden flex justify-between items-center cursor-pointer" ]
-            [ Html.h3 [ class "text-lg" ] [ Html.text "Tables" ]
-            , Heroicons.Solid.chevronDown [ SvgAttr.class "w-5 h-5 ml-2 group-open:rotate-180 transition-transform" ]
-            ]
-        , Html.div [ class "mt-4 px-4 grid gap-2 grid-col-auto-fit-150" ]
+    viewAccordion { title = "Tables" }
+        [ Html.div [ class "mt-4 px-4 grid gap-2 grid-col-auto-fit-150" ]
             (List.map
                 (\table ->
-                    let
-                        isSelected : Bool
-                        isSelected =
-                            selectedTable == Just table.name
-                    in
-                    Html.button
-                        [ class "py-1 px-2 rounded-sm transition-colors"
-                        , Attr.classList
-                            [ ( "bg-slate-700 text-white", isSelected )
-                            , ( "bg-slate-300 hover:bg-slate-400 active:bg-slate-500", not isSelected )
-                            ]
-                        , Events.onClick (SelectedTable table.name)
-                        ]
-                        [ Html.text (Eos.Name.toString table.name) ]
+                    viewSelectionTag
+                        { content = Eos.Name.toString table.name
+                        , isSelected = selectedTable == Just table.name
+                        , onSelect = SelectedTable table.name
+                        }
                 )
                 tables
             )
@@ -581,15 +606,41 @@ viewSelectedTable tableState tableData =
         ]
 
 
-viewActions : List ActionMetadata -> Html.Html msg_
-viewActions actions =
-    Html.details [ class "border border-zinc-200 bg-white w-full p-4 rounded mt-4 group" ]
-        [ Html.summary [ class "marker-hidden flex justify-between items-center cursor-pointer" ]
-            [ Html.h3 [ class "text-lg" ] [ Html.text "Actions" ]
-            , Heroicons.Solid.chevronDown [ SvgAttr.class "w-5 h-5 ml-2 group-open:rotate-180 transition-transform" ]
-            ]
-        , Html.ul [ class "mt-4" ]
-            (List.map (\action -> Html.li [] [ Html.text (Eos.Name.toString action.name) ]) actions)
+viewActions : { actions : List ActionMetadata, selectedAction : Maybe Eos.Name.Name } -> Html.Html Msg
+viewActions { actions, selectedAction } =
+    let
+        selectedActionMetadata : Maybe ActionMetadata
+        selectedActionMetadata =
+            ListX.find (\action -> selectedAction == Just action.name) actions
+    in
+    viewAccordion { title = "Actions" }
+        [ Html.div [ class "mt-4 px-4 grid gap-2 grid-col-auto-fit-150" ]
+            (List.map
+                (\action ->
+                    viewSelectionTag
+                        { content = Eos.Name.toString action.name
+                        , isSelected = selectedAction == Just action.name
+                        , onSelect = SelectedAction action.name
+                        }
+                )
+                actions
+            )
+        , HtmlX.viewMaybe viewSelectedAction selectedActionMetadata
+        ]
+
+
+viewSelectedAction : ActionMetadata -> Html.Html msg_
+viewSelectedAction action =
+    Dict.toList action.fields
+        |> List.map (\( name, type_ ) -> viewActionField name type_)
+        |> Html.form []
+
+
+viewActionField : String -> Eos.EosType.EosType -> Html.Html msg_
+viewActionField name _ =
+    Html.label []
+        [ Html.text name
+        , Html.input [] []
         ]
 
 
@@ -614,6 +665,7 @@ type Msg
     | GotTableData (Result Http.Error (Eos.Query.Response EosTable.Table))
     | GotMoreTableData (Result Http.Error (Eos.Query.Response EosTable.Table))
     | UpdatedTable Table.State
+    | SelectedAction Eos.Name.Name
 
 
 type alias ValidContractInfo =
@@ -627,10 +679,11 @@ type alias ValidContractInfo =
     , tableState : Table.State
     , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
     , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
+    , selectedAction : Maybe Eos.Name.Name
     }
 
 
 type alias ActionMetadata =
     { name : Eos.Name.Name
-    , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+    , fields : Dict.Dict String Eos.EosType.EosType
     }
