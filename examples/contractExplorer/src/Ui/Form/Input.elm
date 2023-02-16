@@ -19,7 +19,7 @@ view :
     }
     -> List (Html.Attribute msg)
     -> Html.Html msg
-view { label, placeholder, onInput, value, labelAttrs } attrs =
+view { label, labelAttrs, onInput, placeholder, value } attrs =
     Html.label (class "flex flex-col" :: labelAttrs)
         [ label
         , Html.input

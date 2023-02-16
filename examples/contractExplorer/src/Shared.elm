@@ -69,8 +69,8 @@ init _ flags =
                 Eos.Name.Name
                 { actions :
                     List
-                        { name : Eos.Name.Name
-                        , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                        { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                        , name : Eos.Name.Name
                         }
                 , tables : List EosTable.Metadata
                 }
@@ -85,8 +85,8 @@ init _ flags =
         makeContract :
             { actions :
                 List
-                    { name : Eos.Name.Name
-                    , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                    { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                    , name : Eos.Name.Name
                     }
             , tables :
                 List
@@ -100,8 +100,8 @@ init _ flags =
                 ( Eos.Name.Name
                 , { actions :
                         List
-                            { name : Eos.Name.Name
-                            , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            , name : Eos.Name.Name
                             }
                   , tables : List EosTable.Metadata
                   }
@@ -128,8 +128,8 @@ init _ flags =
                 ( Eos.Name.Name
                 , { actions :
                         List
-                            { name : Eos.Name.Name
-                            , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            , name : Eos.Name.Name
                             }
                   , tables : List EosTable.Metadata
                   }
@@ -150,8 +150,8 @@ init _ flags =
                 ( Eos.Name.Name
                 , { actions :
                         List
-                            { name : Eos.Name.Name
-                            , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            , name : Eos.Name.Name
                             }
                   , tables : List EosTable.Metadata
                   }

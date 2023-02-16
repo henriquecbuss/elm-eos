@@ -12,7 +12,6 @@ Typescript
 
 -}
 
-import Json.Encode as Encode
 import TsJson.Decode as TsDecode exposing (Decoder)
 import TsJson.Encode as TsEncode exposing (Encoder, required)
 
@@ -31,7 +30,6 @@ type FromElm
     | ScrollTo { querySelector : String }
     | Login { privateKey : String }
     | Logout
-    | PerformEosTransaction { encodedAction : Encode.Value }
 
 
 {-| Messages that we can send from Typescript to Elm
@@ -59,7 +57,7 @@ interop =
 fromElm : Encoder FromElm
 fromElm =
     TsEncode.union
-        (\vAlert vScrollTo vLogin vLogout vPerformEosTransaction value ->
+        (\vAlert vScrollTo vLogin vLogout _ value ->
             case value of
                 Alert string ->
                     vAlert string
@@ -72,9 +70,6 @@ fromElm =
 
                 Logout ->
                     vLogout {}
-
-                PerformEosTransaction encodedAction ->
-                    vPerformEosTransaction encodedAction
         )
         |> TsEncode.variantTagged "alert"
             (TsEncode.object [ required "message" identity TsEncode.string ])

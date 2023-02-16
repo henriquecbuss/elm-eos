@@ -107,7 +107,7 @@ view shared model =
 viewContracts :
     Dict.Dict
         Eos.Name.Name
-        { actions : List { name : Eos.Name.Name, fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType }
+        { actions : List { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType, name : Eos.Name.Name }
         , tables : List EosTable.Metadata
         }
     -> Model
@@ -151,7 +151,7 @@ viewContracts contractsDict model =
 
 
 viewContractCard :
-    { actions : List { name : Eos.Name.Name, fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType }
+    { actions : List { fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType, name : Eos.Name.Name }
     , name : Eos.Name.Name
     , tables : List EosTable.Metadata
     }
