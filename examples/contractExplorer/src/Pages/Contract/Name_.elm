@@ -9,6 +9,7 @@ contract comes from the url
 
 import AssocList as Dict
 import Effect exposing (Effect)
+import Eos.EosType
 import Eos.Name
 import Eos.Query
 import EosTable
@@ -580,13 +581,15 @@ viewSelectedTable tableState tableData =
         ]
 
 
-viewActions : List () -> Html.Html msg_
-viewActions _ =
+viewActions : List ActionMetadata -> Html.Html msg_
+viewActions actions =
     Html.details [ class "border border-zinc-200 bg-white w-full p-4 rounded mt-4 group" ]
         [ Html.summary [ class "marker-hidden flex justify-between items-center cursor-pointer" ]
             [ Html.h3 [ class "text-lg" ] [ Html.text "Actions" ]
             , Heroicons.Solid.chevronDown [ SvgAttr.class "w-5 h-5 ml-2 group-open:rotate-180 transition-transform" ]
             ]
+        , Html.ul [ class "mt-4" ]
+            (List.map (\action -> Html.li [] [ Html.text (Eos.Name.toString action.name) ]) actions)
         ]
 
 
@@ -615,7 +618,7 @@ type Msg
 
 type alias ValidContractInfo =
     { contractName : Eos.Name.Name
-    , actions : List ()
+    , actions : List ActionMetadata
     , tables : List EosTable.Metadata
     , selectedTable : Maybe Eos.Name.Name
     , scope : String
@@ -624,4 +627,10 @@ type alias ValidContractInfo =
     , tableState : Table.State
     , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
     , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
+    }
+
+
+type alias ActionMetadata =
+    { name : Eos.Name.Name
+    , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
     }

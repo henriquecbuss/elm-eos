@@ -19,8 +19,11 @@ should live.
 -}
 
 import AssocList as Dict
+import Cambiatus.Cm.Action.Metadata
 import Cambiatus.Cm.Table.Metadata
+import Cambiatus.Tk.Action.Metadata
 import Cambiatus.Tk.Table.Metadata
+import Eos.EosType
 import Eos.Name
 import Eos.Query
 import EosTable
@@ -37,7 +40,7 @@ type alias Model =
     , contracts :
         Dict.Dict
             Eos.Name.Name
-            { actions : List ()
+            { actions : List { name : Eos.Name.Name, fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType }
             , tables :
                 List
                     { name : Eos.Name.Name
@@ -61,7 +64,16 @@ type Msg
 init : Request -> InteropDefinitions.Flags -> ( Model, Cmd Msg )
 init _ flags =
     let
-        contracts : Dict.Dict Eos.Name.Name { actions : List (), tables : List EosTable.Metadata }
+        contracts :
+            Dict.Dict
+                Eos.Name.Name
+                { actions :
+                    List
+                        { name : Eos.Name.Name
+                        , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                        }
+                , tables : List EosTable.Metadata
+                }
         contracts =
             ResultX.combine
                 [ cambiatusTk
@@ -71,10 +83,29 @@ init _ flags =
                 |> Dict.fromList
 
         makeContract :
-            { actions : List (), tables : List { name : Eos.Name.Name, queryFunction : { scope : String } -> Eos.Query.Query response } }
+            { actions :
+                List
+                    { name : Eos.Name.Name
+                    , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                    }
+            , tables :
+                List
+                    { name : Eos.Name.Name
+                    , queryFunction : { scope : String } -> Eos.Query.Query response
+                    }
+            }
             -> (response -> EosTable.Table)
             -> Eos.Name.Name
-            -> ( Eos.Name.Name, { actions : List (), tables : List EosTable.Metadata } )
+            ->
+                ( Eos.Name.Name
+                , { actions :
+                        List
+                            { name : Eos.Name.Name
+                            , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            }
+                  , tables : List EosTable.Metadata
+                  }
+                )
         makeContract { actions, tables } toTable name =
             ( name
             , { actions = actions
@@ -91,23 +122,45 @@ init _ flags =
               }
             )
 
-        cambiatusCm : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List EosTable.Metadata } )
+        cambiatusCm :
+            Result
+                Eos.Name.Error
+                ( Eos.Name.Name
+                , { actions :
+                        List
+                            { name : Eos.Name.Name
+                            , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            }
+                  , tables : List EosTable.Metadata
+                  }
+                )
         cambiatusCm =
             Eos.Name.fromString "cambiatus.cm"
                 |> Result.map
                     (makeContract
-                        { actions = List.repeat 16 ()
+                        { actions = Cambiatus.Cm.Action.Metadata.metadata
                         , tables = Cambiatus.Cm.Table.Metadata.metadata
                         }
                         EosTable.CambiatusCmTable
                     )
 
-        cambiatusTk : Result Eos.Name.Error ( Eos.Name.Name, { actions : List (), tables : List EosTable.Metadata } )
+        cambiatusTk :
+            Result
+                Eos.Name.Error
+                ( Eos.Name.Name
+                , { actions :
+                        List
+                            { name : Eos.Name.Name
+                            , fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType
+                            }
+                  , tables : List EosTable.Metadata
+                  }
+                )
         cambiatusTk =
             Eos.Name.fromString "cambiatus.tk"
                 |> Result.map
                     (makeContract
-                        { actions = List.repeat 12 ()
+                        { actions = Cambiatus.Tk.Action.Metadata.metadata
                         , tables = Cambiatus.Tk.Table.Metadata.metadata
                         }
                         EosTable.CambiatusTkTable

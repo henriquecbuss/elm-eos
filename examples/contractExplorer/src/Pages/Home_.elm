@@ -16,6 +16,7 @@ module Pages.Home_ exposing
 
 import AssocList as Dict
 import Effect exposing (Effect)
+import Eos.EosType
 import Eos.Name
 import EosTable
 import Gen.Params.Home_ exposing (Params)
@@ -104,7 +105,11 @@ view shared model =
 
 
 viewContracts :
-    Dict.Dict Eos.Name.Name { actions : List (), tables : List EosTable.Metadata }
+    Dict.Dict
+        Eos.Name.Name
+        { actions : List { name : Eos.Name.Name, fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType }
+        , tables : List EosTable.Metadata
+        }
     -> Model
     -> Html.Html Msg
 viewContracts contractsDict model =
@@ -145,7 +150,12 @@ viewContracts contractsDict model =
         ]
 
 
-viewContractCard : { actions : List (), name : Eos.Name.Name, tables : List EosTable.Metadata } -> Html.Html msg_
+viewContractCard :
+    { actions : List { name : Eos.Name.Name, fields : Dict.Dict Eos.Name.Name Eos.EosType.EosType }
+    , name : Eos.Name.Name
+    , tables : List EosTable.Metadata
+    }
+    -> Html.Html msg_
 viewContractCard { actions, name, tables } =
     Html.a
         [ class "flex items-center justify-between bg-white rounded shadow py-4 px-6 hover:shadow-md transition-shadow"
