@@ -4,7 +4,7 @@ import Abi
 import Elm
 import Elm.Annotation
 import EosType
-import Gen.AssocList
+import Gen.Dict
 import Gen.Eos.EosType
 import Gen.Eos.Name
 import Gen.Result
@@ -21,8 +21,8 @@ allMetadata actions =
                 (Elm.Annotation.record
                     [ ( "name", Gen.Eos.Name.annotation_.name )
                     , ( "fields"
-                      , Gen.AssocList.annotation_.dict
-                            Gen.Eos.Name.annotation_.name
+                      , Gen.Dict.annotation_.dict
+                            Elm.Annotation.string
                             Gen.Eos.EosType.annotation_.eosType
                       )
                     ]
@@ -40,15 +40,9 @@ actionMetadata action =
                 Elm.record
                     [ ( "name", name )
                     , ( "fields"
-                      , List.map
-                            (\arg ->
-                                Gen.Eos.Name.fromString arg.name
-                                    |> Gen.Result.map (\nameValue -> Elm.tuple nameValue (EosType.toExpression arg.type_))
-                            )
+                      , List.map (\arg -> Elm.tuple (Elm.string arg.name) (EosType.toExpression arg.type_))
                             action.arguments
-                            |> Gen.Result.Extra.combine
-                            |> Gen.Result.withDefault (Elm.list [])
-                            |> Gen.AssocList.call_.fromList
+                            |> Gen.Dict.fromList
                       )
                     ]
             )

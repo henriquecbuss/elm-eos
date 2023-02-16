@@ -114,7 +114,7 @@ This file contains metadata about actions from the contract.ct contract. You sho
 -}
 
 
-import AssocList
+import Dict
 import Eos.EosType
 import Eos.Name
 import Result
@@ -123,9 +123,7 @@ import Result.Extra
 
 {-| All metadata for actions in this contract. You can use this to create auto generated apps, for example -}
 metadata :
-    List { name : Eos.Name.Name
-    , fields : AssocList.Dict Eos.Name.Name Eos.EosType.EosType
-    }
+    List { name : Eos.Name.Name, fields : Dict.Dict String Eos.EosType.EosType }
 metadata =
     Result.withDefault
         []
@@ -134,35 +132,12 @@ metadata =
                 (\\mapUnpack ->
                     { name = mapUnpack
                     , fields =
-                        AssocList.fromList
-                            (Result.withDefault
-                                []
-                                (Result.Extra.combine
-                                    [ Result.map
-                                        (\\mapUnpack0 ->
-                                            ( mapUnpack0, Eos.EosType.Name )
-                                        )
-                                        (Eos.Name.fromString "from")
-                                    , Result.map
-                                        (\\mapUnpack0 ->
-                                            ( mapUnpack0, Eos.EosType.Name )
-                                        )
-                                        (Eos.Name.fromString "to")
-                                    , Result.map
-                                        (\\mapUnpack0 ->
-                                            ( mapUnpack0, Eos.EosType.Asset )
-                                        )
-                                        (Eos.Name.fromString "quantity")
-                                    , Result.map
-                                        (\\mapUnpack0 ->
-                                            ( mapUnpack0
-                                            , Eos.EosType.EosString
-                                            )
-                                        )
-                                        (Eos.Name.fromString "memo")
-                                    ]
-                                )
-                            )
+                        Dict.fromList
+                            [ ( "from", Eos.EosType.Name )
+                            , ( "to", Eos.EosType.Name )
+                            , ( "quantity", Eos.EosType.Asset )
+                            , ( "memo", Eos.EosType.EosString )
+                            ]
                     }
                 )
                 (Eos.Name.fromString "transfer")

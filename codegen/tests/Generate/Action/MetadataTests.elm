@@ -24,26 +24,16 @@ generateAllMetadata =
                     |> Expect.all
                         [ .signature
                             >> Expect.equal """metadata :
-    List { name : Eos.Name.Name
-    , fields : AssocList.Dict Eos.Name.Name Eos.EosType.EosType
-    }"""
+    List { name : Eos.Name.Name, fields : Dict.Dict String Eos.EosType.EosType }"""
                         , .body
                             >> Expect.equal """metadata :
-    List { name : Eos.Name.Name
-    , fields : AssocList.Dict Eos.Name.Name Eos.EosType.EosType
-    }
+    List { name : Eos.Name.Name, fields : Dict.Dict String Eos.EosType.EosType }
 metadata =
     Result.withDefault
         []
         (Result.Extra.combine
             [ Result.map
-                (\\mapUnpack ->
-                    { name = mapUnpack
-                    , fields =
-                        AssocList.fromList
-                            (Result.withDefault [] (Result.Extra.combine []))
-                    }
-                )
+                (\\mapUnpack -> { name = mapUnpack, fields = Dict.fromList [] })
                 (Eos.Name.fromString "action1")
             ]
         )
@@ -58,14 +48,10 @@ metadata =
                     |> Expect.all
                         [ .signature
                             >> Expect.equal """metadata :
-    List { name : Eos.Name.Name
-    , fields : AssocList.Dict Eos.Name.Name Eos.EosType.EosType
-    }"""
+    List { name : Eos.Name.Name, fields : Dict.Dict String Eos.EosType.EosType }"""
                         , .body
                             >> Expect.equal """metadata :
-    List { name : Eos.Name.Name
-    , fields : AssocList.Dict Eos.Name.Name Eos.EosType.EosType
-    }
+    List { name : Eos.Name.Name, fields : Dict.Dict String Eos.EosType.EosType }
 metadata =
     Result.withDefault
         []
@@ -74,31 +60,11 @@ metadata =
                 (\\mapUnpack ->
                     { name = mapUnpack
                     , fields =
-                        AssocList.fromList
-                            (Result.withDefault
-                                []
-                                (Result.Extra.combine
-                                    [ Result.map
-                                        (\\mapUnpack0 ->
-                                            ( mapUnpack0, Eos.EosType.EosBool )
-                                        )
-                                        (Eos.Name.fromString "arg1")
-                                    , Result.map
-                                        (\\mapUnpack0 ->
-                                            ( mapUnpack0, Eos.EosType.EosInt )
-                                        )
-                                        (Eos.Name.fromString "arg2")
-                                    , Result.map
-                                        (\\mapUnpack0 ->
-                                            ( mapUnpack0
-                                            , Eos.EosType.EosList
-                                                Eos.EosType.EosInt
-                                            )
-                                        )
-                                        (Eos.Name.fromString "arg3")
-                                    ]
-                                )
-                            )
+                        Dict.fromList
+                            [ ( "arg1", Eos.EosType.EosBool )
+                            , ( "arg2", Eos.EosType.EosInt )
+                            , ( "arg3", Eos.EosType.EosList Eos.EosType.EosInt )
+                            ]
                     }
                 )
                 (Eos.Name.fromString "action2")
