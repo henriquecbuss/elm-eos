@@ -6,6 +6,7 @@ import Abi
 import Context
 import Elm
 import Generate.Action
+import Generate.Action.Metadata
 import Generate.Table
 import Generate.Table.Decoder
 import Generate.Table.Metadata
@@ -67,6 +68,18 @@ apiFilesFromAbi base context abi =
         , Generate.Action.encodeSingleAction abi.actions
             |> Elm.exposeWith { exposeConstructor = True, group = Just "Encoding" }
         , Generate.Action.getName abi.actions
+        ]
+    , prefixedFile [ "Action", "Metadata" ]
+        { docs =
+            \groupsAndMembers ->
+                ("This file contains metadata about actions from the "
+                    ++ context.contract
+                    ++ " contract. You should only need this if you're building something like a contract explorer or an auto generated app."
+                )
+                    :: makeDocs groupsAndMembers
+        }
+        [ Generate.Action.Metadata.allMetadata abi.actions
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "Metadata" }
         ]
     , prefixedFile [ "Table" ]
         { docs =

@@ -1,4 +1,4 @@
-module EosType exposing (EosType(..), decoder, generateDecoder, generateEncoder, intDecoder, toAnnotation)
+module EosType exposing (EosType(..), decoder, generateDecoder, generateEncoder, intDecoder, toAnnotation, toExpression)
 
 import Elm
 import Elm.Annotation
@@ -6,6 +6,7 @@ import Elm.Case
 import Elm.Op
 import Gen.Eos.Asset
 import Gen.Eos.Checksum
+import Gen.Eos.EosType
 import Gen.Eos.ExtendedAsset
 import Gen.Eos.Name
 import Gen.Eos.PublicKey
@@ -421,3 +422,58 @@ toAnnotation eosType =
 
         EosList innerType ->
             Elm.Annotation.list (toAnnotation innerType)
+
+
+{-| Turn a regular `EosType` into an `Elm.Expression`
+-}
+toExpression : EosType -> Elm.Expression
+toExpression eosType =
+    -- elm-review: IGNORE TCO
+    case eosType of
+        EosBool ->
+            Gen.Eos.EosType.make_.eosBool
+
+        EosInt ->
+            Gen.Eos.EosType.make_.eosInt
+
+        EosFloat ->
+            Gen.Eos.EosType.make_.eosFloat
+
+        TimePoint ->
+            Gen.Eos.EosType.make_.timePoint
+
+        TimePointSec ->
+            Gen.Eos.EosType.make_.timePointSec
+
+        BlockTimestampType ->
+            Gen.Eos.EosType.make_.blockTimestampType
+
+        Name ->
+            Gen.Eos.EosType.make_.name
+
+        EosString ->
+            Gen.Eos.EosType.make_.eosString
+
+        Checksum ->
+            Gen.Eos.EosType.make_.checksum
+
+        PublicKey ->
+            Gen.Eos.EosType.make_.publicKey
+
+        Signature ->
+            Gen.Eos.EosType.make_.signature
+
+        Symbol ->
+            Gen.Eos.EosType.make_.symbol
+
+        SymbolCode ->
+            Gen.Eos.EosType.make_.symbolCode
+
+        Asset ->
+            Gen.Eos.EosType.make_.asset
+
+        ExtendedAsset ->
+            Gen.Eos.EosType.make_.extendedAsset
+
+        EosList innerType ->
+            Gen.Eos.EosType.make_.eosList (toExpression innerType)
