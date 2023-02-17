@@ -72,6 +72,7 @@ init shared req =
                         , tableData = RemoteData.NotAsked
                         , moreTableData = RemoteData.NotAsked
                         , selectedAction = Nothing
+                        , actionInput = Dict.empty
                         }
                     , Effect.none
                     )
@@ -215,11 +216,35 @@ update msg model =
         SelectedAction actionName ->
             ( updateValidContractInfo
                 (\info ->
-                    { info | selectedAction = Just actionName }
+                    { info
+                        | selectedAction = Just actionName
+                        , actionInput =
+                            if info.selectedAction == Just actionName then
+                                info.actionInput
+
+                            else
+                                Dict.empty
+                    }
                 )
                 model
             , Effect.none
             )
+
+        EnteredActionInput { fieldName, newValue } ->
+            ( updateValidContractInfo
+                (\info ->
+                    { info
+                        | actionInput =
+                            Dict.insert fieldName newValue info.actionInput
+                    }
+                )
+                model
+            , Effect.none
+            )
+
+        SubmittedAction ->
+            -- TODO
+            ( model, Effect.none )
 
 
 updateValidContractInfo : (ValidContractInfo -> ValidContractInfo) -> Model -> Model
@@ -305,7 +330,8 @@ view req model =
                             , tables = contract.tables
                             }
                         , viewActions
-                            { actions = contract.actions
+                            { actionInput = contract.actionInput
+                            , actions = contract.actions
                             , selectedAction = contract.selectedAction
                             }
                         ]
@@ -606,8 +632,13 @@ viewSelectedTable tableState tableData =
         ]
 
 
-viewActions : { actions : List ActionMetadata, selectedAction : Maybe Eos.Name.Name } -> Html.Html Msg
-viewActions { actions, selectedAction } =
+viewActions :
+    { actionInput : Dict.Dict String String
+    , actions : List ActionMetadata
+    , selectedAction : Maybe Eos.Name.Name
+    }
+    -> Html.Html Msg
+viewActions { actions, selectedAction, actionInput } =
     let
         selectedActionMetadata : Maybe ActionMetadata
         selectedActionMetadata =
@@ -625,23 +656,50 @@ viewActions { actions, selectedAction } =
                 )
                 actions
             )
-        , HtmlX.viewMaybe viewSelectedAction selectedActionMetadata
+        , case selectedActionMetadata of
+            Just actionMetadata ->
+                viewSelectedActionForm actionMetadata actionInput
+
+            Nothing ->
+                Html.p [ class "px-4 text-center text-gray-500 mt-8 mb-6" ] [ Html.text "No action selected" ]
         ]
 
 
-viewSelectedAction : ActionMetadata -> Html.Html msg_
-viewSelectedAction action =
-    Dict.toList action.fields
-        |> List.map (\( name, type_ ) -> viewActionField name type_)
-        |> Html.form []
-
-
-viewActionField : String -> Eos.EosType.EosType -> Html.Html msg_
-viewActionField name _ =
-    Html.label []
-        [ Html.text name
-        , Html.input [] []
+viewSelectedActionForm : ActionMetadata -> Dict.Dict String String -> Html.Html Msg
+viewSelectedActionForm action actionInput =
+    let
+        inputs : List (Html.Html Msg)
+        inputs =
+            Dict.toList action.fields
+                |> List.map
+                    (\( name, type_ ) ->
+                        Ui.Form.Input.viewWithEosType
+                            { eosType = type_
+                            , label = Html.text name
+                            , labelAttrs = []
+                            , onInput =
+                                \newValue ->
+                                    EnteredActionInput
+                                        { fieldName = name
+                                        , newValue = newValue
+                                        }
+                            , placeholder = ""
+                            , value =
+                                Dict.get name actionInput
+                                    |> Maybe.withDefault ""
+                            }
+                            []
+                    )
+    in
+    Html.form
+        [ class "flex flex-col mx-4 mt-4 gap-4"
+        , Events.onSubmit SubmittedAction
         ]
+        (inputs
+            ++ [ Html.button [ class "bg-slate-700 text-white font-bold py-2 px-4 mt-2 rounded-sm w-full hover:bg-slate-600 active:bg-slate-800" ]
+                    [ Html.text "Submit" ]
+               ]
+        )
 
 
 {-| This page's model
@@ -666,6 +724,16 @@ type Msg
     | GotMoreTableData (Result Http.Error (Eos.Query.Response EosTable.Table))
     | UpdatedTable Table.State
     | SelectedAction Eos.Name.Name
+    | EnteredActionInput { fieldName : String, newValue : String }
+    | SubmittedAction
+
+
+viewActionField : String -> Eos.EosType.EosType -> Html.Html msg_
+viewActionField name _ =
+    Html.label []
+        [ Html.text name
+        , Html.input [] []
+        ]
 
 
 type alias ValidContractInfo =
@@ -680,6 +748,7 @@ type alias ValidContractInfo =
     , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
     , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
     , selectedAction : Maybe Eos.Name.Name
+    , actionInput : Dict.Dict String String
     }
 
 
