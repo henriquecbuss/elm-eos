@@ -1,19 +1,19 @@
 // Needed for eosjs
 window.global = globalThis;
 
-import { defineCustomElements } from "../../generated/customElements";
 import { initAccessContext } from "eos-transit";
 import scatter from "eos-transit-scatter-provider";
 import simpleos from "eos-transit-simpleos-provider";
+import { defineCustomElements } from "../../generated/customElements";
+import env from "./env";
 
 const accessContext = initAccessContext({
-  // TODO - Change details here
-  appName: "elm-eos example",
+  appName: env.appName,
   network: {
-    host: "api.pennstation.eosnewyork.io",
-    port: 7001,
-    protocol: "http",
-    chainId: "",
+    host: env.chain.host,
+    port: env.chain.port,
+    protocol: env.chain.protocol,
+    chainId: env.chain.id,
   },
   walletProviders: [simpleos(), scatter()],
 });
