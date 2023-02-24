@@ -9,6 +9,7 @@ contract comes from the url
 
 import AssocList
 import Dict
+import Dropdown
 import Effect exposing (Effect)
 import Eos.EosType
 import Eos.Name
@@ -36,6 +37,7 @@ import Table
 import Ui.Form.Input
 import Ui.Header
 import View exposing (View)
+import WalletProvider exposing (WalletProvider)
 
 
 {-| This page
@@ -45,7 +47,7 @@ page shared req =
     Page.advanced
         { init = init shared req
         , update = update
-        , view = view req
+        , view = view req shared
         , subscriptions = \_ -> Sub.none
         }
 
@@ -56,42 +58,56 @@ page shared req =
 
 init : Shared.Model -> Request.With Params -> ( Model, Effect Msg )
 init shared req =
-    case Eos.Name.fromString req.params.name of
-        Ok validName ->
-            case AssocList.get validName shared.contracts of
-                Just { actions, tables } ->
-                    ( ValidContract
-                        { contractName = validName
-                        , actions = actions
-                        , tables = tables
-                        , selectedTable = Nothing
-                        , scope = Eos.Name.toString validName
-                        , limit = "100"
-                        , reverse = False
-                        , tableState = Table.initialSort ""
-                        , tableData = RemoteData.NotAsked
-                        , moreTableData = RemoteData.NotAsked
-                        , selectedAction = Nothing
-                        , actionInput = Dict.empty
-                        }
-                    , Effect.none
-                    )
+    let
+        contractStatus : ContractStatus
+        contractStatus =
+            case Eos.Name.fromString req.params.name of
+                Ok validName ->
+                    case AssocList.get validName shared.contracts of
+                        Just { actions, tables } ->
+                            ValidContract
+                                { contractName = validName
+                                , actions = actions
+                                , tables = tables
+                                , selectedTable = Nothing
+                                , scope = Eos.Name.toString validName
+                                , limit = "100"
+                                , reverse = False
+                                , tableState = Table.initialSort ""
+                                , tableData = RemoteData.NotAsked
+                                , moreTableData = RemoteData.NotAsked
+                                , selectedAction = Nothing
+                                , actionInput = Dict.empty
+                                }
 
-                Nothing ->
-                    ( ContractNameDoesntExist validName, Effect.none )
+                        Nothing ->
+                            ContractNameDoesntExist validName
 
-        Err err ->
-            ( InvalidContractName err, Effect.none )
+                Err err ->
+                    InvalidContractName err
+    in
+    ( { contractStatus = contractStatus
+      , connectWalletDropdownState = False
+      }
+    , Effect.none
+    )
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        ClickedLogout ->
+        ClickedDisconnectWallet ->
             ( model
-            , InteropPorts.fromElm InteropDefinitions.Logout
+            , InteropPorts.fromElm InteropDefinitions.DisconnectWallet
                 |> Effect.fromCmd
             )
+
+        UpdatedConnectWalletDropdown dropdownState ->
+            ( { model | connectWalletDropdownState = dropdownState }, Effect.none )
+
+        ClickedConnectWallet provider ->
+            -- TODO
+            ( model, Effect.none )
 
         SelectedTable tableName ->
             ( updateValidContractInfo
@@ -122,15 +138,18 @@ update msg model =
             )
 
         RequestedTableData ->
-            case model of
+            case model.contractStatus of
                 ValidContract info ->
                     case queryFromValidContractInfo info of
                         Just query ->
-                            ( ValidContract
-                                { info
-                                    | tableData = RemoteData.Loading
-                                    , moreTableData = RemoteData.NotAsked
-                                }
+                            ( { model
+                                | contractStatus =
+                                    ValidContract
+                                        { info
+                                            | tableData = RemoteData.Loading
+                                            , moreTableData = RemoteData.NotAsked
+                                        }
+                              }
                             , Eos.Query.send GotTableData query
                                 |> Effect.fromCmd
                             )
@@ -142,16 +161,19 @@ update msg model =
                     ( model, Effect.none )
 
         RequestedMoreTableData ->
-            case model of
+            case model.contractStatus of
                 ValidContract info ->
                     case info.tableData of
                         RemoteData.Success response ->
                             case queryFromValidContractInfo info of
                                 Just query ->
-                                    ( ValidContract
-                                        { info
-                                            | moreTableData = RemoteData.Loading
-                                        }
+                                    ( { model
+                                        | contractStatus =
+                                            ValidContract
+                                                { info
+                                                    | moreTableData = RemoteData.Loading
+                                                }
+                                      }
                                     , Eos.Query.withLowerBound response.nextCursor query
                                         |> Eos.Query.send GotMoreTableData
                                         |> Effect.fromCmd
@@ -249,9 +271,9 @@ update msg model =
 
 updateValidContractInfo : (ValidContractInfo -> ValidContractInfo) -> Model -> Model
 updateValidContractInfo updateFn model =
-    case model of
+    case model.contractStatus of
         ValidContract info ->
-            ValidContract (updateFn info)
+            { model | contractStatus = ValidContract (updateFn info) }
 
         _ ->
             model
@@ -282,13 +304,20 @@ queryFromValidContractInfo info =
 -- UPDATE
 
 
-view : Request.With Params -> Model -> View Msg
-view req model =
+view : Request.With Params -> Shared.Model -> Model -> View Msg
+view req shared model =
     { title = "Contract " ++ req.params.name
     , body =
-        [ Ui.Header.view { logout = ClickedLogout }
+        [ Ui.Header.view
+            { disconnectWallet = ClickedDisconnectWallet
+            , connectWallet = ClickedConnectWallet
+            , user = shared.user
+            , updateDropdown = UpdatedConnectWalletDropdown
+            , dropdownState = model.connectWalletDropdownState
+            , walletProviders = shared.walletProviders
+            }
         , Html.main_ [ class "min-h-full bg-slate-100 pt-4 pb-20" ]
-            [ case model of
+            [ case model.contractStatus of
                 InvalidContractName err ->
                     viewError
                         (Html.div []
@@ -704,16 +733,24 @@ viewSelectedActionForm action actionInput =
 
 {-| This page's model
 -}
-type Model
+type ContractStatus
     = InvalidContractName Eos.Name.Error
     | ContractNameDoesntExist Eos.Name.Name
     | ValidContract ValidContractInfo
 
 
+type alias Model =
+    { contractStatus : ContractStatus
+    , connectWalletDropdownState : Dropdown.State
+    }
+
+
 {-| This page's msgs
 -}
 type Msg
-    = ClickedLogout
+    = ClickedDisconnectWallet
+    | UpdatedConnectWalletDropdown Dropdown.State
+    | ClickedConnectWallet WalletProvider
     | SelectedTable Eos.Name.Name
     | EnteredScope String
     | EnteredLimit String

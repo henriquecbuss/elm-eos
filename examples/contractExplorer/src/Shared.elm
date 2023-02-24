@@ -32,12 +32,14 @@ import Gen.Route
 import InteropDefinitions
 import Request exposing (Request)
 import Result.Extra as ResultX
+import User exposing (User)
+import WalletProvider exposing (WalletProvider)
 
 
 {-| The shared model. Pages have access to this.
 -}
 type alias Model =
-    { user : Maybe { privateKey : String }
+    { user : Maybe User
     , contracts :
         AssocList.Dict
             Eos.Name.Name
@@ -48,6 +50,7 @@ type alias Model =
                     , queryFunction : { scope : String } -> Eos.Query.Query EosTable.Table
                     }
             }
+    , walletProviders : List WalletProvider
     }
 
 
@@ -167,20 +170,12 @@ init _ flags =
                         EosTable.CambiatusTkTable
                     )
     in
-    case flags.privateKey of
-        Just privateKey ->
-            ( { user = Just { privateKey = privateKey }
-              , contracts = contracts
-              }
-            , Cmd.none
-            )
-
-        Nothing ->
-            ( { user = Nothing
-              , contracts = contracts
-              }
-            , Cmd.none
-            )
+    ( { user = Nothing
+      , contracts = contracts
+      , walletProviders = flags.walletProviders
+      }
+    , Cmd.none
+    )
 
 
 {-| Update the shared module
@@ -189,7 +184,7 @@ update : Request -> Msg -> Model -> ( Model, Cmd Msg )
 update req msg model =
     case msg of
         LoggedIn { privateKey } ->
-            ( { model | user = Just { privateKey = privateKey } }
+            ( { model | user = Just (User.fromPrivateKey privateKey) }
             , Request.pushRoute Gen.Route.Home_ req
             )
 

@@ -16,6 +16,7 @@ module Pages.Home_ exposing
 
 import AssocList
 import Dict
+import Dropdown
 import Effect exposing (Effect)
 import Eos.EosType
 import Eos.Name
@@ -36,18 +37,23 @@ import Svg.Attributes as SvgAttr
 import Ui.AutoAnimate
 import Ui.Header
 import View exposing (View)
+import WalletProvider exposing (WalletProvider)
 
 
 {-| The model for this page
 -}
 type alias Model =
-    { searchString : String }
+    { searchString : String
+    , connectWalletDropdownState : Dropdown.State
+    }
 
 
 {-| Everything this page can do
 -}
 type Msg
-    = ClickedLogout
+    = ClickedDisconnectWallet
+    | UpdatedConnectWalletDropdown Dropdown.State
+    | ClickedConnectWallet WalletProvider
     | EnteredSearchString String
 
 
@@ -69,7 +75,9 @@ page shared _ =
 
 init : ( Model, Effect Msg )
 init =
-    ( { searchString = "" }
+    ( { searchString = ""
+      , connectWalletDropdownState = False
+      }
     , Effect.none
     )
 
@@ -81,11 +89,18 @@ init =
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        ClickedLogout ->
+        ClickedDisconnectWallet ->
             ( model
-            , InteropPorts.fromElm InteropDefinitions.Logout
+            , InteropPorts.fromElm InteropDefinitions.DisconnectWallet
                 |> Effect.fromCmd
             )
+
+        UpdatedConnectWalletDropdown dropdownState ->
+            ( { model | connectWalletDropdownState = dropdownState }, Effect.none )
+
+        ClickedConnectWallet provider ->
+            -- TODO
+            ( model, Effect.none )
 
         EnteredSearchString searchString ->
             ( { model | searchString = searchString }, Effect.none )
@@ -99,7 +114,14 @@ view : Shared.Model -> Model -> View Msg
 view shared model =
     { title = "elm-eos"
     , body =
-        [ Ui.Header.view { logout = ClickedLogout }
+        [ Ui.Header.view
+            { disconnectWallet = ClickedDisconnectWallet
+            , connectWallet = ClickedConnectWallet
+            , user = shared.user
+            , updateDropdown = UpdatedConnectWalletDropdown
+            , dropdownState = model.connectWalletDropdownState
+            , walletProviders = shared.walletProviders
+            }
         , viewContracts shared.contracts model
         ]
     }

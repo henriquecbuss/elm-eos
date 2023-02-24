@@ -14,12 +14,13 @@ import ElmSpa.Page as ElmSpa
 import Gen.Route exposing (Route)
 import Request exposing (Request)
 import Shared
+import User
 
 
 {-| Replace the "()" with your actual User type
 -}
 type alias User =
-    { privateKey : String }
+    User.User
 
 
 {-| This function will run before any `protected` pages.
