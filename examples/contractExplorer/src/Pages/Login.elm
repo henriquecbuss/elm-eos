@@ -23,6 +23,7 @@ import InteropPorts
 import Page
 import Request
 import Shared
+import User
 import View exposing (View)
 
 
@@ -62,12 +63,12 @@ init shared req =
     ( { privateKey = ""
       , privateKeyError = Nothing
       }
-    , case shared.user of
-        Just _ ->
+    , case shared.userState of
+        User.Connected _ ->
             Request.pushRoute Gen.Route.Home_ req
                 |> Effect.fromCmd
 
-        Nothing ->
+        _ ->
             Effect.none
     )
 
@@ -97,9 +98,10 @@ update msg model =
                 ( model
                   -- Shared listens for the `LoggedIn` event and will redirect to
                   --  / when it happens
-                , InteropDefinitions.Login { privateKey = model.privateKey }
-                    |> InteropPorts.fromElm
-                    |> Effect.fromCmd
+                  -- , InteropDefinitions.ConnectWallet { privateKey = model.privateKey }
+                  --     |> InteropPorts.fromElm
+                  --     |> Effect.fromCmd
+                , Effect.none
                 )
 
 

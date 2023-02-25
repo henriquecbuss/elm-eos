@@ -1,14 +1,23 @@
-module User exposing (User, fromPrivateKey)
+module User exposing (State(..), User, init)
+
+import Eos.Name
+import WalletProvider exposing (WalletProvider)
+
+
+type State
+    = NotConnected
+    | Connecting WalletProvider
+    | WithError WalletProvider
+    | Connected User
 
 
 type User
     = User
-        { privateKey : String
+        { provider : WalletProvider
+        , accountName : Eos.Name.Name
         }
 
 
-fromPrivateKey : String -> User
-fromPrivateKey privateKey =
-    User
-        { privateKey = privateKey
-        }
+init : { provider : WalletProvider, accountName : Eos.Name.Name } -> User
+init data =
+    User data

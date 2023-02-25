@@ -99,8 +99,10 @@ update msg model =
             ( { model | connectWalletDropdownState = dropdownState }, Effect.none )
 
         ClickedConnectWallet provider ->
-            -- TODO
-            ( model, Effect.none )
+            ( model
+            , InteropPorts.fromElm (InteropDefinitions.ConnectWallet provider)
+                |> Effect.fromCmd
+            )
 
         EnteredSearchString searchString ->
             ( { model | searchString = searchString }, Effect.none )
@@ -117,7 +119,7 @@ view shared model =
         [ Ui.Header.view
             { disconnectWallet = ClickedDisconnectWallet
             , connectWallet = ClickedConnectWallet
-            , user = shared.user
+            , userState = shared.userState
             , updateDropdown = UpdatedConnectWalletDropdown
             , dropdownState = model.connectWalletDropdownState
             , walletProviders = shared.walletProviders

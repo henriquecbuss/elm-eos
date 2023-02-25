@@ -107,7 +107,10 @@ update msg model =
 
         ClickedConnectWallet provider ->
             -- TODO
-            ( model, Effect.none )
+            ( model
+            , InteropPorts.fromElm (InteropDefinitions.ConnectWallet provider)
+                |> Effect.fromCmd
+            )
 
         SelectedTable tableName ->
             ( updateValidContractInfo
@@ -311,7 +314,7 @@ view req shared model =
         [ Ui.Header.view
             { disconnectWallet = ClickedDisconnectWallet
             , connectWallet = ClickedConnectWallet
-            , user = shared.user
+            , userState = shared.userState
             , updateDropdown = UpdatedConnectWalletDropdown
             , dropdownState = model.connectWalletDropdownState
             , walletProviders = shared.walletProviders

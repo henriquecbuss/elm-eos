@@ -19,7 +19,7 @@ import WalletProvider exposing (WalletProvider)
 
 -}
 view :
-    { user : Maybe User
+    { userState : User.State
     , disconnectWallet : msg
     , connectWallet : WalletProvider -> msg
     , updateDropdown : Dropdown.State -> msg
@@ -27,28 +27,28 @@ view :
     , walletProviders : List WalletProvider
     }
     -> Html.Html msg
-view { user, connectWallet, disconnectWallet, updateDropdown, dropdownState, walletProviders } =
+view { userState, connectWallet, disconnectWallet, updateDropdown, dropdownState, walletProviders } =
     Html.header [ class "w-full py-2 bg-slate-700 text-white" ]
         [ Html.div [ class "container mx-auto px-4 flex items-center" ]
             [ Html.a [ Attr.href (Gen.Route.toHref Gen.Route.Home_) ]
                 [ Html.h1 [ class "text-4xl font-bold" ] [ Html.text "elm-eos" ]
                 ]
-            , case user of
-                Nothing ->
-                    walletProvidersDropdown
-                        { onToggle = updateDropdown
-                        , state = dropdownState
-                        , walletProviders = walletProviders
-                        , onConnect = connectWallet
-                        }
-
-                Just _ ->
+            , case userState of
+                User.Connected _ ->
                     Html.button
                         [ walletButtonClass
                         , class "ml-auto"
                         , Html.Events.onClick disconnectWallet
                         ]
                         [ Html.text "Disconnect wallet" ]
+
+                _ ->
+                    walletProvidersDropdown
+                        { onToggle = updateDropdown
+                        , state = dropdownState
+                        , walletProviders = walletProviders
+                        , onConnect = connectWallet
+                        }
             ]
         ]
 

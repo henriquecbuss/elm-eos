@@ -37,9 +37,9 @@ Here, you can provide logic on where to redirect if a user is not signed in. Her
 -}
 beforeProtectedInit : Shared.Model -> Request -> ElmSpa.Protected User Route
 beforeProtectedInit shared _ =
-    case shared.user of
-        Just user ->
+    case shared.userState of
+        User.Connected user ->
             ElmSpa.Provide user
 
-        Nothing ->
+        _ ->
             ElmSpa.RedirectTo Gen.Route.Login

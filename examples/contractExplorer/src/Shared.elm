@@ -30,8 +30,10 @@ import Eos.Query
 import EosTable
 import Gen.Route
 import InteropDefinitions
+import Process
 import Request exposing (Request)
 import Result.Extra as ResultX
+import Task
 import User exposing (User)
 import WalletProvider exposing (WalletProvider)
 
@@ -39,7 +41,7 @@ import WalletProvider exposing (WalletProvider)
 {-| The shared model. Pages have access to this.
 -}
 type alias Model =
-    { user : Maybe User
+    { userState : User.State
     , contracts :
         AssocList.Dict
             Eos.Name.Name
@@ -59,8 +61,11 @@ You should expose functions to construct Msgs if you want to use them in other
 modules.
 -}
 type Msg
-    = LoggedIn { privateKey : String }
-    | LoggedOut
+    = StartedConnectingToWallet WalletProvider
+    | ErrorConnectingToWallet WalletProvider
+    | RemovedErrorFromWallet WalletProvider
+    | ConnectedToWallet WalletProvider Eos.Name.Name
+    | DisconnectedFromWallet WalletProvider
 
 
 {-| Initialize the shared module
@@ -170,7 +175,7 @@ init _ flags =
                         EosTable.CambiatusTkTable
                     )
     in
-    ( { user = Nothing
+    ( { userState = User.NotConnected
       , contracts = contracts
       , walletProviders = flags.walletProviders
       }
@@ -183,15 +188,42 @@ init _ flags =
 update : Request -> Msg -> Model -> ( Model, Cmd Msg )
 update req msg model =
     case msg of
-        LoggedIn { privateKey } ->
-            ( { model | user = Just (User.fromPrivateKey privateKey) }
-            , Request.pushRoute Gen.Route.Home_ req
+        StartedConnectingToWallet provider ->
+            ( { model | userState = User.Connecting provider }, Cmd.none )
+
+        ErrorConnectingToWallet provider ->
+            ( { model | userState = User.WithError provider }
+            , Process.sleep 1000
+                |> Task.perform (\_ -> RemovedErrorFromWallet provider)
             )
 
-        LoggedOut ->
-            ( { model | user = Nothing }
-            , Request.pushRoute Gen.Route.Login req
+        RemovedErrorFromWallet provider ->
+            case model.userState of
+                User.WithError errorProvider ->
+                    if provider == errorProvider then
+                        ( { model | userState = User.NotConnected }, Cmd.none )
+
+                    else
+                        ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        ConnectedToWallet provider accountName ->
+            ( { model
+                | userState =
+                    User.Connected
+                        (User.init
+                            { provider = provider
+                            , accountName = accountName
+                            }
+                        )
+              }
+            , Cmd.none
             )
+
+        DisconnectedFromWallet provider ->
+            ( { model | userState = User.NotConnected }, Cmd.none )
 
 
 {-| Receive values from Typescript
@@ -199,11 +231,17 @@ update req msg model =
 toElmSubscriptions : InteropDefinitions.ToElm -> Maybe Msg
 toElmSubscriptions toElm =
     case toElm of
-        InteropDefinitions.LoggedIn privateKey ->
-            Just (LoggedIn privateKey)
+        InteropDefinitions.StartedConnectingToWallet walletProvider ->
+            Just (StartedConnectingToWallet walletProvider)
 
-        InteropDefinitions.LoggedOut ->
-            Just LoggedOut
+        InteropDefinitions.ErrorConnectingToWallet walletProvider ->
+            Just (ErrorConnectingToWallet walletProvider)
+
+        InteropDefinitions.ConnectedToWallet walletProvider accountName ->
+            Just (ConnectedToWallet walletProvider accountName)
+
+        InteropDefinitions.DisconnectedFromWallet walletProvider ->
+            Just (DisconnectedFromWallet walletProvider)
 
         _ ->
             Nothing
