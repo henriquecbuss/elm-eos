@@ -8,6 +8,9 @@ import Gen.Route
 import Html
 import Html.Attributes as Attr exposing (class)
 import Html.Events
+import Html.Extra as HtmlX
+import Json.Decode as Decode
+import Ui.RiveComponent
 import User exposing (User)
 import WalletProvider exposing (WalletProvider)
 
@@ -42,11 +45,47 @@ view { userState, connectWallet, disconnectWallet, updateDropdown, dropdownState
                         ]
                         [ Html.text "Disconnect wallet" ]
 
-                _ ->
+                User.Connecting connectingProvider ->
                     walletProvidersDropdown
                         { onToggle = updateDropdown
                         , state = dropdownState
-                        , walletProviders = walletProviders
+                        , walletProviders =
+                            walletProviders
+                                |> List.map
+                                    (\provider ->
+                                        if provider == connectingProvider then
+                                            ( provider, Connecting )
+
+                                        else
+                                            ( provider, NotConnected )
+                                    )
+                        , onConnect = connectWallet
+                        }
+
+                User.NotConnected ->
+                    walletProvidersDropdown
+                        { onToggle = updateDropdown
+                        , state = dropdownState
+                        , walletProviders =
+                            walletProviders
+                                |> List.map (\provider -> ( provider, NotConnected ))
+                        , onConnect = connectWallet
+                        }
+
+                User.WithError errorProvider ->
+                    walletProvidersDropdown
+                        { onToggle = updateDropdown
+                        , state = dropdownState
+                        , walletProviders =
+                            walletProviders
+                                |> List.map
+                                    (\provider ->
+                                        if provider == errorProvider then
+                                            ( provider, WithError )
+
+                                        else
+                                            ( provider, NotConnected )
+                                    )
                         , onConnect = connectWallet
                         }
             ]
@@ -58,10 +97,17 @@ walletButtonClass =
     class "hover:bg-slate-100 hover:text-black transition-colors rounded px-4 py-1"
 
 
+type ProviderStatus
+    = NotConnected
+    | Connecting
+    | WithError
+    | Connected
+
+
 walletProvidersDropdown :
     { onToggle : Dropdown.State -> msg
     , state : Dropdown.State
-    , walletProviders : List WalletProvider
+    , walletProviders : List ( WalletProvider, ProviderStatus )
     , onConnect : WalletProvider -> msg
     }
     -> Html.Html msg
@@ -83,10 +129,11 @@ walletProvidersDropdown { onToggle, state, walletProviders, onConnect } =
                     , toDrawer Html.div
                         [ class "bg-slate-700 text-white rounded-sm p-1 mt-1 border border-slate-600 shadow-lg opacity-0 -translate-y-4 transition-transform -z-10" ]
                         (List.map
-                            (\provider ->
+                            (\( provider, status ) ->
                                 walletProviderDropdownItem
                                     { onClick = onConnect provider
                                     , provider = provider
+                                    , status = status
                                     }
                             )
                             walletProviders
@@ -96,10 +143,50 @@ walletProvidersDropdown { onToggle, state, walletProviders, onConnect } =
         }
 
 
-walletProviderDropdownItem : { onClick : msg, provider : WalletProvider } -> Html.Html msg
-walletProviderDropdownItem { onClick, provider } =
+walletProviderDropdownItem : { onClick : msg, provider : WalletProvider, status : ProviderStatus } -> Html.Html msg
+walletProviderDropdownItem { onClick, provider, status } =
     Html.button
-        [ class "px-4 py-2 hover:bg-slate-100 hover:text-black transition-colors w-full text-left rounded-sm"
-        , Html.Events.onClick onClick
+        [ class "pl-4 pr-2 transition-colors w-full text-left rounded-sm flex items-center"
+        , Attr.classList [ ( "hover:bg-slate-100 hover:text-black", status /= Connecting ) ]
+        , Html.Events.custom "click"
+            (Decode.succeed
+                { stopPropagation = True
+                , preventDefault = True
+                , message = onClick
+                }
+            )
+        , Attr.disabled (status == Connecting)
         ]
-        [ Html.text (WalletProvider.name provider) ]
+        [ Html.span
+            [ class "py-2"
+            , Attr.classList
+                [ ( "pr-4", status /= NotConnected )
+                , ( "pr-12", status == NotConnected )
+                ]
+            ]
+            [ Html.text (WalletProvider.name provider) ]
+        , case status of
+            NotConnected ->
+                HtmlX.nothing
+
+            Connecting ->
+                viewLoadingRiveAnimation { stateMachineState = 2 }
+
+            WithError ->
+                viewLoadingRiveAnimation { stateMachineState = 1 }
+
+            Connected ->
+                viewLoadingRiveAnimation { stateMachineState = 0 }
+        ]
+
+
+viewLoadingRiveAnimation : { stateMachineState : Int } -> Html.Html msg
+viewLoadingRiveAnimation { stateMachineState } =
+    Ui.RiveComponent.view
+        [ Attr.attribute "src" "/assets/check_loading_animation.riv"
+        , Attr.attribute "autoplay" "true"
+        , Attr.attribute "stateMachine" "State Machine 1"
+        , Attr.attribute "stateMachineState" (String.fromInt stateMachineState)
+        , Attr.class "w-8 h-8 ml-auto"
+        ]
+        []

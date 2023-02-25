@@ -193,7 +193,7 @@ update req msg model =
 
         ErrorConnectingToWallet provider ->
             ( { model | userState = User.WithError provider }
-            , Process.sleep 1000
+            , Process.sleep 3000
                 |> Task.perform (\_ -> RemovedErrorFromWallet provider)
             )
 

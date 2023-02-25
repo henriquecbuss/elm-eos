@@ -27,7 +27,7 @@ const clearAndUpper = (text: string): string => {
 const generateElmModuleString = (name: string) =>
   `module Ui.${toPascalCase(name)} exposing (view, viewKeyed)
 
-{-| AutoAnimate
+{-| Ui.${toPascalCase(name)}
 
 @docs view, viewKeyed
 
@@ -86,6 +86,8 @@ const run = async () => {
         `Could not find name in export default in file: ${fullFilePath}`
       );
     }
+
+    console.log(match[1]);
 
     const name = match[1];
     modules.push(name);

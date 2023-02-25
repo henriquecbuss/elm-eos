@@ -136,7 +136,14 @@ const run = () => {
             // we handle new states in wallet.subscribe above
             await wallet.connect();
             await wallet.login();
-          } catch (err) {}
+          } catch (err) {
+            app.ports.interopToElm.send({
+              tag: "errorConnectingToWallet",
+              data: {
+                providerId: walletProviderId,
+              },
+            });
+          }
         })();
 
         break;
