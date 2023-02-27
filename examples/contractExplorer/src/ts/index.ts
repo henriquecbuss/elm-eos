@@ -1,12 +1,18 @@
 // Needed for eosjs
 window.global = globalThis;
 
-import { initAccessContext, Wallet, WalletState } from "eos-transit";
+import {
+  initAccessContext,
+  StateUnsubscribeFn,
+  Wallet,
+  WalletState,
+} from "eos-transit";
 import scatter from "eos-transit-scatter-provider";
 import simpleos from "eos-transit-simpleos-provider";
 import { ElmApp } from "generated/Main";
 import { defineCustomElements } from "../../generated/customElements";
 import env from "./env";
+import { eos } from "./eos";
 
 const handleNewWalletState = (
   newWalletState: WalletState | undefined,
@@ -14,7 +20,6 @@ const handleNewWalletState = (
   wallet: Wallet,
   app: ElmApp
 ): WalletState | null => {
-  console.log(newWalletState);
   if (newWalletState === undefined) {
     return null;
   }
@@ -94,6 +99,7 @@ const run = () => {
   });
 
   let wallet: Wallet | null = null;
+  let walletUnsubscribe: StateUnsubscribeFn | null = null;
   let previousWalletState: WalletState | null = null;
 
   app.ports.interopFromElm.subscribe(({ tag, data }) => {
@@ -116,27 +122,23 @@ const run = () => {
       case "connectWallet": {
         const { walletProviderId } = data;
 
-        void (async () => {
-          wallet = accessContext.initWallet(walletProviderId);
+        wallet = accessContext.initWallet(walletProviderId);
 
-          wallet.subscribe((walletState) => {
-            if (wallet === null) {
-              return;
-            }
+        walletUnsubscribe = wallet.subscribe((walletState) => {
+          if (wallet === null) {
+            return;
+          }
 
-            previousWalletState = handleNewWalletState(
-              walletState,
-              previousWalletState,
-              wallet,
-              app
-            );
-          });
+          previousWalletState = handleNewWalletState(
+            walletState,
+            previousWalletState,
+            wallet,
+            app
+          );
+        });
 
-          try {
-            // we handle new states in wallet.subscribe above
-            await wallet.connect();
-            await wallet.login();
-          } catch (err) {
+        eos.wallet.connect(wallet).then((success) => {
+          if (!success) {
             app.ports.interopToElm.send({
               tag: "errorConnectingToWallet",
               data: {
@@ -144,21 +146,21 @@ const run = () => {
               },
             });
           }
-        })();
+        });
 
         break;
       }
 
       case "disconnectWallet": {
-        void (async () => {
-          if (wallet !== null) {
-            await wallet.disconnect();
-            await wallet.logout();
+        if (wallet === null) {
+          return;
+        }
 
-            previousWalletState = null;
-            wallet = null;
-          }
-        })();
+        eos.wallet.disconnect(wallet, walletUnsubscribe).then(() => {
+          previousWalletState = null;
+          wallet = null;
+          walletUnsubscribe = null;
+        });
 
         break;
       }
