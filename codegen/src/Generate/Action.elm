@@ -291,7 +291,7 @@ actionFromDict argsDict action =
 
         getFromDict : Abi.Field -> Elm.Expression
         getFromDict arg =
-            Gen.Dict.get (Elm.string (String.Extra.camelize arg.name)) argsDict
+            Gen.Dict.get (Elm.string arg.name) argsDict
                 |> Elm.Op.pipe (Elm.apply Gen.Maybe.values_.andThen [ parseFromStringFunction arg.type_ ])
     in
     Elm.Case.branch0 ("\"" ++ action.name ++ "\"")
