@@ -18,10 +18,10 @@ encode : Action -> Encode.Value
 encode genericAction =
     case genericAction of
         CambiatusCmAction action ->
-            Cambiatus.Cm.Action.encodeSingleAction action
+            Cambiatus.Cm.Action.encode [] action
 
         CambiatusTkAction action ->
-            Cambiatus.Tk.Action.encodeSingleAction action
+            Cambiatus.Tk.Action.encode [] action
 
 
 fromDict : Eos.Name.Name -> Dict.Dict String String -> Maybe Action
