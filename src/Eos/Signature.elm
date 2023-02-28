@@ -1,6 +1,7 @@
 module Eos.Signature exposing
     ( Signature
     , encode, decoder
+    , fromString
     )
 
 {-|
@@ -8,6 +9,8 @@ module Eos.Signature exposing
 @docs Signature
 
 @docs encode, decoder
+
+@docs fromString
 
 -}
 
@@ -33,3 +36,10 @@ encode (Signature signature) =
 decoder : Json.Decode.Decoder Signature
 decoder =
     Json.Decode.map Signature Json.Decode.string
+
+
+{-| Turn a String into a Signature
+-}
+fromString : String -> Signature
+fromString =
+    Signature

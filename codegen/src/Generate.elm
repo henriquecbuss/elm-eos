@@ -68,6 +68,24 @@ apiFilesFromAbi base context abi =
         , Generate.Action.encodeSingleAction abi.actions
             |> Elm.exposeWith { exposeConstructor = True, group = Just "Encoding" }
         , Generate.Action.getName abi.actions
+        , Generate.Action.fromDict abi.actions
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "Forms" }
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.boolFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.intFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.floatFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.timePointFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.timePointSecFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.blockTimestampFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.nameFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.stringFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.checksumFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.publicKeyFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.signatureFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.symbolFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.symbolCodeFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.assetFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.extendedAssetFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.listFromString
         ]
     , prefixedFile [ "Action", "Metadata" ]
         { docs =
