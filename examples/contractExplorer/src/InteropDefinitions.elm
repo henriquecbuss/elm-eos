@@ -13,6 +13,8 @@ Typescript
 -}
 
 import Eos.Name
+import EosAction
+import Json.Encode as Encode
 import TsJson.Decode as TsDecode exposing (Decoder)
 import TsJson.Encode as TsEncode exposing (Encoder, required)
 import WalletProvider exposing (WalletProvider)
@@ -31,6 +33,7 @@ type FromElm
     | ScrollTo { querySelector : String }
     | ConnectWallet WalletProvider
     | DisconnectWallet
+    | PerformEosTransaction EosAction.Action
 
 
 {-| Messages that we can send from Typescript to Elm
@@ -41,6 +44,8 @@ type ToElm
     | ErrorConnectingToWallet WalletProvider
     | ConnectedToWallet WalletProvider Eos.Name.Name
     | DisconnectedFromWallet WalletProvider
+    | SubmittedTransaction Eos.Name.Name
+    | ErrorSubmittingTransaction Eos.Name.Name
 
 
 {-| This is what elm-ts-interop uses to figure out what to do with our app
@@ -60,7 +65,7 @@ interop =
 fromElm : Encoder FromElm
 fromElm =
     TsEncode.union
-        (\vAlert vScrollTo vConnectWallet vDisconnectWallet _ value ->
+        (\vAlert vScrollTo vConnectWallet vDisconnectWallet vPerformEosTransaction value ->
             case value of
                 Alert string ->
                     vAlert string
@@ -73,6 +78,9 @@ fromElm =
 
                 DisconnectWallet ->
                     vDisconnectWallet {}
+
+                PerformEosTransaction action ->
+                    vPerformEosTransaction { action = EosAction.encode action }
         )
         |> TsEncode.variantTagged "alert"
             (TsEncode.object [ required "message" identity TsEncode.string ])
@@ -82,7 +90,7 @@ fromElm =
             (TsEncode.object [ required "walletProviderId" WalletProvider.id TsEncode.string ])
         |> TsEncode.variantTagged "disconnectWallet" (TsEncode.object [])
         |> TsEncode.variantTagged "performEosTransaction"
-            (TsEncode.object [ required "actions" .encodedAction TsEncode.value ])
+            (TsEncode.object [ required "actions" .action TsEncode.value ])
         |> TsEncode.buildUnion
 
 
@@ -103,29 +111,36 @@ toElm =
         , ( "connectedToWallet"
           , TsDecode.succeed (\walletProvider accountName -> ConnectedToWallet walletProvider accountName)
                 |> TsDecode.andMap (TsDecode.at [ "data", "providerId" ] WalletProvider.decodeFromId)
-                |> TsDecode.andMap
-                    (TsDecode.at [ "data", "accountName" ]
-                        (TsDecode.string
-                            |> TsDecode.andThen
-                                (TsDecode.andThenInit
-                                    (\failDecoder nameString ->
-                                        case Eos.Name.fromString nameString of
-                                            Ok validName ->
-                                                TsDecode.succeed validName
-
-                                            Err error ->
-                                                TsDecode.fail (Eos.Name.errorToString error)
-                                    )
-                                    |> TsDecode.andThenDecoder (TsDecode.succeed Nothing)
-                                )
-                        )
-                    )
+                |> TsDecode.andMap (TsDecode.at [ "data", "accountName" ] nameTsDecoder)
           )
         , ( "disconnectedFromWallet"
           , TsDecode.at [ "data", "providerId" ] WalletProvider.decodeFromId
                 |> TsDecode.map DisconnectedFromWallet
           )
+        , ( "submittedTransaction"
+          , TsDecode.map SubmittedTransaction (TsDecode.at [ "data", "actionName" ] nameTsDecoder)
+          )
+        , ( "errorSubmittingTransaction"
+          , TsDecode.map ErrorSubmittingTransaction (TsDecode.at [ "data", "actionName" ] nameTsDecoder)
+          )
         ]
+
+
+nameTsDecoder : TsDecode.Decoder Eos.Name.Name
+nameTsDecoder =
+    TsDecode.string
+        |> TsDecode.andThen
+            (TsDecode.andThenInit
+                (\failDecoder nameString ->
+                    case Eos.Name.fromString nameString of
+                        Ok validName ->
+                            TsDecode.succeed validName
+
+                        Err error ->
+                            TsDecode.fail (Eos.Name.errorToString error)
+                )
+                |> TsDecode.andThenDecoder (TsDecode.succeed Nothing)
+            )
 
 
 flags : Decoder Flags

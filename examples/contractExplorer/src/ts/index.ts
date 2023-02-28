@@ -166,22 +166,29 @@ const run = () => {
       }
 
       case "performEosTransaction": {
-        void (async () => {
-          try {
-            // const result = await eos.transact(
-            //   { actions: [data.actions] },
-            //   {
-            //     blocksBehind: 3,
-            //     expireSeconds: 30,
-            //   }
-            // );
-            const result = "";
+        if (!wallet) {
+          return;
+        }
 
-            console.log(result);
-          } catch (err) {
-            console.error(err);
-          }
-        })();
+        const { actions } = data;
+
+        eos.transaction
+          .perform(wallet, actions)
+          .then(({ success, actionName }) => {
+            if (success) {
+              app.ports.interopToElm.send({
+                tag: "submittedTransaction",
+                data: { actionName },
+              });
+            } else {
+              app.ports.interopToElm.send({
+                tag: "errorSubmittingTransaction",
+                data: { actionName },
+              });
+            }
+          });
+
+        break;
       }
     }
   });
