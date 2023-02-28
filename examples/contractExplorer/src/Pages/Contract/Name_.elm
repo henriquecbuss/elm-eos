@@ -14,6 +14,7 @@ import Effect exposing (Effect)
 import Eos.EosType
 import Eos.Name
 import Eos.Query
+import EosAction
 import EosTable
 import Gen.Params.Contract.Name_ exposing (Params)
 import Gen.Route
@@ -268,8 +269,21 @@ update msg model =
             )
 
         SubmittedAction ->
-            -- TODO
-            ( model, Effect.none )
+            case model.contractStatus of
+                ValidContract info ->
+                    case info.selectedAction of
+                        Nothing ->
+                            ( model, Effect.none )
+
+                        Just selectedAction ->
+                            let
+                                _ =
+                                    Debug.log "FROM DICT" (EosAction.fromDict selectedAction info.actionInput)
+                            in
+                            ( model, Effect.none )
+
+                _ ->
+                    ( model, Effect.none )
 
 
 updateValidContractInfo : (ValidContractInfo -> ValidContractInfo) -> Model -> Model
