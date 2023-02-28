@@ -47,6 +47,7 @@
   "dependencies": {
     "@formkit/auto-animate": "^1.0.0-beta.3",
     "@rive-app/canvas": "^1.0.100",
+    "buffer": "^6.0.3",
     "eos-transit": "^4.0.7",
     "eos-transit-scatter-provider": "^4.0.7",
     "eos-transit-simpleos-provider": "^4.0.7",
