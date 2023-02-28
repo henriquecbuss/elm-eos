@@ -1,9 +1,14 @@
-module Pages.Contract.Name_ exposing (page, Model, Msg)
+module Pages.Contract.Name_ exposing
+    ( page, Model, Msg
+    , toElmSubscription
+    )
 
 {-| A page that shows information about a particular contract. The name of the
 contract comes from the url
 
 @docs page, Model, Msg
+
+@docs toElmSubscription
 
 -}
 
@@ -30,13 +35,17 @@ import InteropDefinitions
 import InteropPorts
 import List.Extra as ListX
 import Page
+import Process
 import RemoteData
 import Request
 import Shared
 import Svg.Attributes as SvgAttr
 import Table
+import Task
 import Ui.Form.Input
 import Ui.Header
+import Ui.Rive
+import User
 import View exposing (View)
 import WalletProvider exposing (WalletProvider)
 
@@ -47,7 +56,7 @@ page : Shared.Model -> Request.With Params -> Page.With Model Msg
 page shared req =
     Page.advanced
         { init = init shared req
-        , update = update
+        , update = update shared
         , view = view req shared
         , subscriptions = \_ -> Sub.none
         }
@@ -79,6 +88,7 @@ init shared req =
                                 , moreTableData = RemoteData.NotAsked
                                 , selectedAction = Nothing
                                 , actionInput = Dict.empty
+                                , actionSubmitionStatus = NotSubmitting
                                 }
 
                         Nothing ->
@@ -94,8 +104,8 @@ init shared req =
     )
 
 
-update : Msg -> Model -> ( Model, Effect Msg )
-update msg model =
+update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
+update shared msg model =
     case msg of
         ClickedDisconnectWallet ->
             ( model
@@ -107,7 +117,6 @@ update msg model =
             ( { model | connectWalletDropdownState = dropdownState }, Effect.none )
 
         ClickedConnectWallet provider ->
-            -- TODO
             ( model
             , InteropPorts.fromElm (InteropDefinitions.ConnectWallet provider)
                 |> Effect.fromCmd
@@ -275,15 +284,85 @@ update msg model =
                         Nothing ->
                             ( model, Effect.none )
 
-                        Just selectedAction ->
-                            let
-                                _ =
-                                    Debug.log "FROM DICT" (EosAction.fromDict selectedAction info.actionInput)
-                            in
-                            ( model, Effect.none )
+                        Just actionName ->
+                            case EosAction.fromDict actionName info.actionInput of
+                                Nothing ->
+                                    ( model, Effect.none )
+
+                                Just action ->
+                                    if User.isConnected shared.userState then
+                                        ( { model
+                                            | contractStatus =
+                                                ValidContract
+                                                    { info | actionSubmitionStatus = Submitting actionName }
+                                          }
+                                        , InteropDefinitions.PerformEosTransaction action
+                                            |> InteropPorts.fromElm
+                                            |> Effect.fromCmd
+                                        )
+
+                                    else
+                                        ( model, Effect.none )
 
                 _ ->
                     ( model, Effect.none )
+
+        FinishedSubmittingAction actionName ->
+            ( updateValidContractInfo
+                (\info ->
+                    { info | actionSubmitionStatus = FinishedSubmitting actionName }
+                )
+                model
+            , Process.sleep 3000
+                |> Task.perform (\_ -> RemovedActionSubmitionStatus actionName)
+                |> Effect.fromCmd
+            )
+
+        GotErrorSubmittingAction actionName ->
+            ( updateValidContractInfo
+                (\info ->
+                    { info | actionSubmitionStatus = GotErrorSubmitting actionName }
+                )
+                model
+            , Process.sleep 3000
+                |> Task.perform (\_ -> RemovedActionSubmitionStatus actionName)
+                |> Effect.fromCmd
+            )
+
+        RemovedActionSubmitionStatus actionName ->
+            ( updateValidContractInfo
+                (\info ->
+                    { info
+                        | actionSubmitionStatus =
+                            case info.actionSubmitionStatus of
+                                NotSubmitting ->
+                                    NotSubmitting
+
+                                Submitting currentActionName ->
+                                    if currentActionName == actionName then
+                                        NotSubmitting
+
+                                    else
+                                        info.actionSubmitionStatus
+
+                                GotErrorSubmitting currentActionName ->
+                                    if currentActionName == actionName then
+                                        NotSubmitting
+
+                                    else
+                                        info.actionSubmitionStatus
+
+                                FinishedSubmitting currentActionName ->
+                                    if currentActionName == actionName then
+                                        NotSubmitting
+
+                                    else
+                                        info.actionSubmitionStatus
+                    }
+                )
+                model
+            , Effect.none
+            )
 
 
 updateValidContractInfo : (ValidContractInfo -> ValidContractInfo) -> Model -> Model
@@ -379,6 +458,8 @@ view req shared model =
                             { actionInput = contract.actionInput
                             , actions = contract.actions
                             , selectedAction = contract.selectedAction
+                            , actionSubmitionStatus = contract.actionSubmitionStatus
+                            , userState = shared.userState
                             }
                         ]
             ]
@@ -679,12 +760,14 @@ viewSelectedTable tableState tableData =
 
 
 viewActions :
-    { actionInput : Dict.Dict String String
+    { userState : User.State
+    , actionInput : Dict.Dict String String
     , actions : List ActionMetadata
     , selectedAction : Maybe Eos.Name.Name
+    , actionSubmitionStatus : ActionSubmitionStatus
     }
     -> Html.Html Msg
-viewActions { actions, selectedAction, actionInput } =
+viewActions { userState, actions, selectedAction, actionInput, actionSubmitionStatus } =
     let
         selectedActionMetadata : Maybe ActionMetadata
         selectedActionMetadata =
@@ -704,15 +787,15 @@ viewActions { actions, selectedAction, actionInput } =
             )
         , case selectedActionMetadata of
             Just actionMetadata ->
-                viewSelectedActionForm actionMetadata actionInput
+                viewSelectedActionForm userState actionMetadata actionInput actionSubmitionStatus
 
             Nothing ->
                 Html.p [ class "px-4 text-center text-gray-500 mt-8 mb-6" ] [ Html.text "No action selected" ]
         ]
 
 
-viewSelectedActionForm : ActionMetadata -> Dict.Dict String String -> Html.Html Msg
-viewSelectedActionForm action actionInput =
+viewSelectedActionForm : User.State -> ActionMetadata -> Dict.Dict String String -> ActionSubmitionStatus -> Html.Html Msg
+viewSelectedActionForm userState action actionInput actionSubmitionStatus =
     let
         inputs : List (Html.Html Msg)
         inputs =
@@ -736,14 +819,65 @@ viewSelectedActionForm action actionInput =
                             }
                             []
                     )
+
+        submitButtonClass : Html.Attribute Msg
+        submitButtonClass =
+            class "flex items-center justify-center bg-slate-700 text-white font-bold py-2 px-4 mt-2 rounded-sm w-full disabled:hover:bg-slate-700 disabled:active:bg-slate-700 hover:bg-slate-600 active:bg-slate-800 disabled:cursor-wait"
     in
     Html.form
         [ class "flex flex-col mx-4 mt-4 gap-4"
         , Events.onSubmit SubmittedAction
         ]
         (inputs
-            ++ [ Html.button [ class "bg-slate-700 text-white font-bold py-2 px-4 mt-2 rounded-sm w-full hover:bg-slate-600 active:bg-slate-800" ]
-                    [ Html.text "Submit" ]
+            ++ [ case actionSubmitionStatus of
+                    NotSubmitting ->
+                        if User.isConnected userState then
+                            Html.button [ submitButtonClass ]
+                                [ Html.text "Submit" ]
+
+                        else
+                            Html.p [ class "text-center mt-4 px-4 mb-2 text-gray-500" ]
+                                [ Html.text "Please connect your wallet to submit actions"
+                                ]
+
+                    Submitting actionSubmitionName ->
+                        if action.name == actionSubmitionName then
+                            Html.button [ submitButtonClass, Attr.disabled True ]
+                                [ Ui.Rive.viewLoadingAnimation [ class "w-6 h-6 -ml-10 mr-4" ]
+                                    Ui.Rive.Loading
+                                , Html.text "Submit"
+                                ]
+
+                        else
+                            Html.button
+                                [ submitButtonClass
+                                , Attr.disabled True
+                                , Attr.title "Another action is being submitted"
+                                , class "!cursor-not-allowed !bg-slate-500"
+                                ]
+                                [ Html.text "Submit" ]
+
+                    GotErrorSubmitting actionSubmitionName ->
+                        if action.name == actionSubmitionName then
+                            Html.button [ submitButtonClass ]
+                                [ Ui.Rive.viewLoadingAnimation [ class "w-6 h-6 -ml-10 mr-4" ]
+                                    Ui.Rive.Failure
+                                , Html.text "Submit"
+                                ]
+
+                        else
+                            Html.button [ submitButtonClass ] [ Html.text "Submit" ]
+
+                    FinishedSubmitting actionSubmitionName ->
+                        if action.name == actionSubmitionName then
+                            Html.button [ submitButtonClass ]
+                                [ Ui.Rive.viewLoadingAnimation [ class "w-6 h-6 -ml-10 mr-4" ]
+                                    Ui.Rive.Success
+                                , Html.text "Submit"
+                                ]
+
+                        else
+                            Html.button [ submitButtonClass ] [ Html.text "Submit" ]
                ]
         )
 
@@ -780,6 +914,9 @@ type Msg
     | SelectedAction Eos.Name.Name
     | EnteredActionInput { fieldName : String, newValue : String }
     | SubmittedAction
+    | FinishedSubmittingAction Eos.Name.Name
+    | GotErrorSubmittingAction Eos.Name.Name
+    | RemovedActionSubmitionStatus Eos.Name.Name
 
 
 viewActionField : String -> Eos.EosType.EosType -> Html.Html msg_
@@ -803,10 +940,37 @@ type alias ValidContractInfo =
     , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response EosTable.Table)
     , selectedAction : Maybe Eos.Name.Name
     , actionInput : Dict.Dict String String
+    , actionSubmitionStatus : ActionSubmitionStatus
     }
+
+
+type ActionSubmitionStatus
+    = NotSubmitting
+    | Submitting Eos.Name.Name
+    | GotErrorSubmitting Eos.Name.Name
+    | FinishedSubmitting Eos.Name.Name
 
 
 type alias ActionMetadata =
     { name : Eos.Name.Name
     , fields : Dict.Dict String Eos.EosType.EosType
     }
+
+
+
+-- PORT SUBSCRIPTION
+
+
+{-| Subscribe to messages from Typescript
+-}
+toElmSubscription : InteropDefinitions.ToElm -> Maybe Msg
+toElmSubscription toElm =
+    case toElm of
+        InteropDefinitions.SubmittedTransaction actionName ->
+            Just (FinishedSubmittingAction actionName)
+
+        InteropDefinitions.ErrorSubmittingTransaction actionName ->
+            Just (GotErrorSubmittingAction actionName)
+
+        _ ->
+            Nothing

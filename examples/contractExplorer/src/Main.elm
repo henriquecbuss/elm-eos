@@ -18,6 +18,7 @@ import Html
 import InteropDefinitions
 import InteropPorts
 import Json.Decode as Decode
+import Pages.Contract.Name_
 import Pages.Home_
 import Request
 import Shared
@@ -234,7 +235,8 @@ toElmSubscription page toElm =
                 |> Maybe.map Gen.Msg.Home_
 
         Gen.Model.Contract__Name_ _ _ ->
-            Nothing
+            Pages.Contract.Name_.toElmSubscription toElm
+                |> Maybe.map Gen.Msg.Contract__Name_
 
         Gen.Model.NotFound _ ->
             Nothing
