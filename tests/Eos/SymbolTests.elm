@@ -4,7 +4,7 @@ import Eos.Symbol
 import Eos.SymbolCode
 import Expect
 import Fuzz
-import Json.Decode
+import Json.Decode as Decode
 import Test exposing (Test, describe, fuzz2, test)
 
 
@@ -23,7 +23,7 @@ jsonRoundTrip =
                 case Eos.Symbol.fromPrecisionAndCodeString 1 "EOS" of
                     Ok symbol ->
                         Eos.Symbol.encode symbol
-                            |> Json.Decode.decodeValue Eos.Symbol.decoder
+                            |> Decode.decodeValue Eos.Symbol.decoder
                             |> Expect.all
                                 [ Expect.equal (Ok symbol)
                                 , Result.map Eos.Symbol.precision
@@ -42,7 +42,7 @@ jsonRoundTrip =
                 case Eos.Symbol.fromPrecisionAndCodeString fuzzedPrecision fuzzedCode of
                     Ok symbol ->
                         Eos.Symbol.encode symbol
-                            |> Json.Decode.decodeValue Eos.Symbol.decoder
+                            |> Decode.decodeValue Eos.Symbol.decoder
                             |> Expect.all
                                 [ Expect.equal (Ok symbol)
                                 , Result.map Eos.Symbol.precision

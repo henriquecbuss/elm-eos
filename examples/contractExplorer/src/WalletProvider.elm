@@ -1,6 +1,5 @@
 module WalletProvider exposing (WalletProvider, decodeFromId, fromId, id, name)
 
-import Json.Decode
 import TsJson.Decode as TsDecode
 
 
@@ -9,14 +8,31 @@ type WalletProvider
     | Scatter
 
 
+decodeFromId : TsDecode.Decoder WalletProvider
+decodeFromId =
+    TsDecode.string
+        |> TsDecode.andThen
+            (TsDecode.andThenInit
+                (\failDecoder idString ->
+                    case fromId idString of
+                        Just provider ->
+                            TsDecode.succeed provider
+
+                        Nothing ->
+                            failDecoder
+                )
+                |> TsDecode.andThenDecoder (TsDecode.fail "Invalid provider id.")
+            )
+
+
 fromId : String -> Maybe WalletProvider
 fromId providerId =
     case providerId of
-        "simpleos" ->
-            Just Simpleos
-
         "scatter" ->
             Just Scatter
+
+        "simpleos" ->
+            Just Simpleos
 
         _ ->
             Nothing
@@ -30,23 +46,6 @@ id provider =
 
         Scatter ->
             "scatter"
-
-
-decodeFromId : TsDecode.Decoder WalletProvider
-decodeFromId =
-    TsDecode.string
-        |> TsDecode.andThen
-            (TsDecode.andThenInit
-                (\failDecoder idString ->
-                    case fromId idString of
-                        Nothing ->
-                            failDecoder
-
-                        Just provider ->
-                            TsDecode.succeed provider
-                )
-                |> TsDecode.andThenDecoder (TsDecode.fail "Invalid provider id.")
-            )
 
 
 name : WalletProvider -> String

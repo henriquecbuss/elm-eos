@@ -5,8 +5,7 @@ import Cambiatus.Tk.Action
 import Dict
 import Eos.Name
 import Json.Encode as Encode
-import Maybe.Extra
-import TsJson.Encode as TsEncode
+import Maybe.Extra as MaybeX
 
 
 type Action
@@ -26,7 +25,7 @@ encode genericAction =
 
 fromDict : Eos.Name.Name -> Dict.Dict String String -> Maybe Action
 fromDict contractName inputDict =
-    Maybe.Extra.oneOf
+    MaybeX.oneOf
         [ Cambiatus.Cm.Action.fromDict contractName
             >> Maybe.map CambiatusCmAction
         , Cambiatus.Tk.Action.fromDict contractName

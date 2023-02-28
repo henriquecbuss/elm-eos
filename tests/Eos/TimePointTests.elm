@@ -3,7 +3,7 @@ module Eos.TimePointTests exposing (suite)
 import Eos.TimePoint
 import Expect
 import Fuzz
-import Json.Decode
+import Json.Decode as Decode
 import Test exposing (Test, describe, fuzz, test)
 import Time
 
@@ -75,7 +75,7 @@ jsonRoundtrip =
             \() ->
                 Eos.TimePoint.fromMicroseconds 1000
                     |> Eos.TimePoint.encode
-                    |> Json.Decode.decodeValue Eos.TimePoint.decoder
+                    |> Decode.decodeValue Eos.TimePoint.decoder
                     |> Expect.all
                         [ Eos.TimePoint.fromMicroseconds 1000
                             |> Ok
@@ -87,7 +87,7 @@ jsonRoundtrip =
             \microseconds ->
                 Eos.TimePoint.fromMicroseconds microseconds
                     |> Eos.TimePoint.encode
-                    |> Json.Decode.decodeValue Eos.TimePoint.decoder
+                    |> Decode.decodeValue Eos.TimePoint.decoder
                     |> Expect.all
                         [ Eos.TimePoint.fromMicroseconds microseconds
                             |> Ok

@@ -1,4 +1,4 @@
-module User exposing (State(..), User, init, isConnected)
+module User exposing (State(..), User, init, isConnected, provider)
 
 import Eos.Name
 import WalletProvider exposing (WalletProvider)
@@ -18,7 +18,7 @@ type User
         }
 
 
-init : { provider : WalletProvider, accountName : Eos.Name.Name } -> User
+init : { accountName : Eos.Name.Name, provider : WalletProvider } -> User
 init data =
     User data
 
@@ -31,3 +31,8 @@ isConnected state =
 
         _ ->
             False
+
+
+provider : User -> WalletProvider
+provider (User user) =
+    user.provider

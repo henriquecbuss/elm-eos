@@ -11,8 +11,13 @@ import Html.Events
 import Html.Extra as HtmlX
 import Json.Decode as Decode
 import Ui.Rive
-import User exposing (User)
+import User
 import WalletProvider exposing (WalletProvider)
+
+
+walletButtonClass : Html.Attribute msg_
+walletButtonClass =
+    class "hover:bg-slate-100 hover:text-black transition-colors rounded px-4 py-1"
 
 
 {-| View the header. You need to handle logging out yourself, by calling
@@ -22,21 +27,64 @@ import WalletProvider exposing (WalletProvider)
 
 -}
 view :
-    { userState : User.State
+    { connectWallet : WalletProvider -> msg
     , disconnectWallet : msg
-    , connectWallet : WalletProvider -> msg
-    , updateDropdown : Dropdown.State -> msg
     , dropdownState : Dropdown.State
+    , updateDropdown : Dropdown.State -> msg
+    , userState : User.State
     , walletProviders : List WalletProvider
     }
     -> Html.Html msg
-view { userState, connectWallet, disconnectWallet, updateDropdown, dropdownState, walletProviders } =
+view { connectWallet, disconnectWallet, dropdownState, updateDropdown, userState, walletProviders } =
     Html.header [ class "w-full py-2 bg-slate-700 text-white" ]
         [ Html.div [ class "container mx-auto px-4 flex items-center" ]
             [ Html.a [ Attr.href (Gen.Route.toHref Gen.Route.Home_) ]
                 [ Html.h1 [ class "text-4xl font-bold" ] [ Html.text "elm-eos" ]
                 ]
             , case userState of
+                User.NotConnected ->
+                    walletProvidersDropdown
+                        { onConnect = connectWallet
+                        , onToggle = updateDropdown
+                        , state = dropdownState
+                        , walletProviders =
+                            List.map (\provider -> ( provider, NotConnected )) walletProviders
+                        }
+
+                User.Connecting connectingProvider ->
+                    walletProvidersDropdown
+                        { onConnect = connectWallet
+                        , onToggle = updateDropdown
+                        , state = dropdownState
+                        , walletProviders =
+                            List.map
+                                (\provider ->
+                                    if provider == connectingProvider then
+                                        ( provider, Connecting )
+
+                                    else
+                                        ( provider, NotConnected )
+                                )
+                                walletProviders
+                        }
+
+                User.WithError errorProvider ->
+                    walletProvidersDropdown
+                        { onConnect = connectWallet
+                        , onToggle = updateDropdown
+                        , state = dropdownState
+                        , walletProviders =
+                            List.map
+                                (\provider ->
+                                    if provider == errorProvider then
+                                        ( provider, WithError )
+
+                                    else
+                                        ( provider, NotConnected )
+                                )
+                                walletProviders
+                        }
+
                 User.Connected _ ->
                     Html.button
                         [ walletButtonClass
@@ -44,81 +92,25 @@ view { userState, connectWallet, disconnectWallet, updateDropdown, dropdownState
                         , Html.Events.onClick disconnectWallet
                         ]
                         [ Html.text "Disconnect wallet" ]
-
-                User.Connecting connectingProvider ->
-                    walletProvidersDropdown
-                        { onToggle = updateDropdown
-                        , state = dropdownState
-                        , walletProviders =
-                            walletProviders
-                                |> List.map
-                                    (\provider ->
-                                        if provider == connectingProvider then
-                                            ( provider, Connecting )
-
-                                        else
-                                            ( provider, NotConnected )
-                                    )
-                        , onConnect = connectWallet
-                        }
-
-                User.NotConnected ->
-                    walletProvidersDropdown
-                        { onToggle = updateDropdown
-                        , state = dropdownState
-                        , walletProviders =
-                            walletProviders
-                                |> List.map (\provider -> ( provider, NotConnected ))
-                        , onConnect = connectWallet
-                        }
-
-                User.WithError errorProvider ->
-                    walletProvidersDropdown
-                        { onToggle = updateDropdown
-                        , state = dropdownState
-                        , walletProviders =
-                            walletProviders
-                                |> List.map
-                                    (\provider ->
-                                        if provider == errorProvider then
-                                            ( provider, WithError )
-
-                                        else
-                                            ( provider, NotConnected )
-                                    )
-                        , onConnect = connectWallet
-                        }
             ]
         ]
 
 
-walletButtonClass : Html.Attribute msg_
-walletButtonClass =
-    class "hover:bg-slate-100 hover:text-black transition-colors rounded px-4 py-1"
-
-
-type ProviderStatus
-    = NotConnected
-    | Connecting
-    | WithError
-    | Connected
-
-
 walletProvidersDropdown :
-    { onToggle : Dropdown.State -> msg
+    { onConnect : WalletProvider -> msg
+    , onToggle : Dropdown.State -> msg
     , state : Dropdown.State
     , walletProviders : List ( WalletProvider, ProviderStatus )
-    , onConnect : WalletProvider -> msg
     }
     -> Html.Html msg
-walletProvidersDropdown { onToggle, state, walletProviders, onConnect } =
+walletProvidersDropdown { onConnect, onToggle, state, walletProviders } =
     Dropdown.dropdown
         { identifier = "wallet-providers-dropdown"
         , toggleEvent = Dropdown.OnClick
         , drawerVisibleAttribute = class "visible opacity-100 !translate-y-0 transition-all"
         , onToggle = onToggle
         , layout =
-            \{ toDropdown, toToggle, toDrawer } ->
+            \{ toDrawer, toDropdown, toToggle } ->
                 toDropdown Html.div
                     [ class "ml-auto isolate z-10" ]
                     [ toToggle Html.button
@@ -150,9 +142,9 @@ walletProviderDropdownItem { onClick, provider, status } =
         , Attr.classList [ ( "hover:bg-slate-100 hover:text-black", status /= Connecting ) ]
         , Html.Events.custom "click"
             (Decode.succeed
-                { stopPropagation = True
+                { message = onClick
                 , preventDefault = True
-                , message = onClick
+                , stopPropagation = True
                 }
             )
         , Attr.disabled (status == Connecting)
@@ -170,14 +162,16 @@ walletProviderDropdownItem { onClick, provider, status } =
                 HtmlX.nothing
 
             Connecting ->
-                Ui.Rive.viewLoadingAnimation [ Attr.class "w-8 h-8 ml-auto" ]
+                Ui.Rive.viewLoadingAnimation [ class "w-8 h-8 ml-auto" ]
                     Ui.Rive.Loading
 
             WithError ->
-                Ui.Rive.viewLoadingAnimation [ Attr.class "w-8 h-8 ml-auto" ]
+                Ui.Rive.viewLoadingAnimation [ class "w-8 h-8 ml-auto" ]
                     Ui.Rive.Failure
-
-            Connected ->
-                Ui.Rive.viewLoadingAnimation [ Attr.class "w-8 h-8 ml-auto" ]
-                    Ui.Rive.Success
         ]
+
+
+type ProviderStatus
+    = NotConnected
+    | Connecting
+    | WithError

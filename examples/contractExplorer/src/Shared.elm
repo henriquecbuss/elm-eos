@@ -28,13 +28,12 @@ import Eos.EosType
 import Eos.Name
 import Eos.Query
 import EosTable
-import Gen.Route
 import InteropDefinitions
 import Process
 import Request exposing (Request)
 import Result.Extra as ResultX
 import Task
-import User exposing (User)
+import User
 import WalletProvider exposing (WalletProvider)
 
 
@@ -214,8 +213,8 @@ update req msg model =
                 | userState =
                     User.Connected
                         (User.init
-                            { provider = provider
-                            , accountName = accountName
+                            { accountName = accountName
+                            , provider = provider
                             }
                         )
               }
@@ -223,7 +222,35 @@ update req msg model =
             )
 
         DisconnectedFromWallet provider ->
-            ( { model | userState = User.NotConnected }, Cmd.none )
+            ( { model
+                | userState =
+                    case model.userState of
+                        User.NotConnected ->
+                            User.NotConnected
+
+                        User.Connecting currentProvider ->
+                            if currentProvider == provider then
+                                User.NotConnected
+
+                            else
+                                model.userState
+
+                        User.WithError currentProvider ->
+                            if currentProvider == provider then
+                                User.NotConnected
+
+                            else
+                                model.userState
+
+                        User.Connected user ->
+                            if User.provider user == provider then
+                                User.NotConnected
+
+                            else
+                                model.userState
+              }
+            , Cmd.none
+            )
 
 
 {-| Receive values from Typescript

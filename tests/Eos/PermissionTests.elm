@@ -3,7 +3,7 @@ module Eos.PermissionTests exposing (suite)
 import Eos.Name
 import Eos.Permission
 import Expect
-import Json.Decode
+import Json.Decode as Decode
 import Test exposing (Test, describe, test)
 
 
@@ -19,12 +19,12 @@ jsonRoundTrip =
         [ test "encoding and decoding of Owner results in Owner" <|
             \() ->
                 Eos.Permission.encode Eos.Permission.Owner
-                    |> Json.Decode.decodeValue Eos.Permission.decoder
+                    |> Decode.decodeValue Eos.Permission.decoder
                     |> Expect.equal (Ok Eos.Permission.Owner)
         , test "encoding and decoding of Active results in Active" <|
             \() ->
                 Eos.Permission.encode Eos.Permission.Active
-                    |> Json.Decode.decodeValue Eos.Permission.decoder
+                    |> Decode.decodeValue Eos.Permission.decoder
                     |> Expect.equal (Ok Eos.Permission.Active)
         , test "encoding and decoding of custom results in custom" <|
             \() ->
@@ -32,7 +32,7 @@ jsonRoundTrip =
                     Ok name ->
                         Eos.Permission.Custom name
                             |> Eos.Permission.encode
-                            |> Json.Decode.decodeValue Eos.Permission.decoder
+                            |> Decode.decodeValue Eos.Permission.decoder
                             |> Expect.equal (Ok (Eos.Permission.Custom name))
 
                     Err _ ->

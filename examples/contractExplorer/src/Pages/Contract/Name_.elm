@@ -1,6 +1,7 @@
 module Pages.Contract.Name_ exposing
     ( page, Model, Msg
     , toElmSubscription
+    , ContractStatus
     )
 
 {-| A page that shows information about a particular contract. The name of the
@@ -281,14 +282,8 @@ update shared msg model =
             case model.contractStatus of
                 ValidContract info ->
                     case info.selectedAction of
-                        Nothing ->
-                            ( model, Effect.none )
-
                         Just actionName ->
                             case EosAction.fromDict actionName info.actionInput of
-                                Nothing ->
-                                    ( model, Effect.none )
-
                                 Just action ->
                                     if User.isConnected shared.userState then
                                         ( { model
@@ -303,6 +298,12 @@ update shared msg model =
 
                                     else
                                         ( model, Effect.none )
+
+                                Nothing ->
+                                    ( model, Effect.none )
+
+                        Nothing ->
+                            ( model, Effect.none )
 
                 _ ->
                     ( model, Effect.none )
@@ -405,11 +406,11 @@ view req shared model =
     { title = "Contract " ++ req.params.name
     , body =
         [ Ui.Header.view
-            { disconnectWallet = ClickedDisconnectWallet
-            , connectWallet = ClickedConnectWallet
-            , userState = shared.userState
-            , updateDropdown = UpdatedConnectWalletDropdown
+            { connectWallet = ClickedConnectWallet
+            , disconnectWallet = ClickedDisconnectWallet
             , dropdownState = model.connectWalletDropdownState
+            , updateDropdown = UpdatedConnectWalletDropdown
+            , userState = shared.userState
             , walletProviders = shared.walletProviders
             }
         , Html.main_ [ class "min-h-full bg-slate-100 pt-4 pb-20" ]
@@ -456,9 +457,9 @@ view req shared model =
                             }
                         , viewActions
                             { actionInput = contract.actionInput
+                            , actionSubmitionStatus = contract.actionSubmitionStatus
                             , actions = contract.actions
                             , selectedAction = contract.selectedAction
-                            , actionSubmitionStatus = contract.actionSubmitionStatus
                             , userState = shared.userState
                             }
                         ]
@@ -760,14 +761,14 @@ viewSelectedTable tableState tableData =
 
 
 viewActions :
-    { userState : User.State
-    , actionInput : Dict.Dict String String
+    { actionInput : Dict.Dict String String
+    , actionSubmitionStatus : ActionSubmitionStatus
     , actions : List ActionMetadata
     , selectedAction : Maybe Eos.Name.Name
-    , actionSubmitionStatus : ActionSubmitionStatus
+    , userState : User.State
     }
     -> Html.Html Msg
-viewActions { userState, actions, selectedAction, actionInput, actionSubmitionStatus } =
+viewActions { actionInput, actionSubmitionStatus, actions, selectedAction, userState } =
     let
         selectedActionMetadata : Maybe ActionMetadata
         selectedActionMetadata =
@@ -882,14 +883,6 @@ viewSelectedActionForm userState action actionInput actionSubmitionStatus =
         )
 
 
-{-| This page's model
--}
-type ContractStatus
-    = InvalidContractName Eos.Name.Error
-    | ContractNameDoesntExist Eos.Name.Name
-    | ValidContract ValidContractInfo
-
-
 type alias Model =
     { contractStatus : ContractStatus
     , connectWalletDropdownState : Dropdown.State
@@ -919,12 +912,27 @@ type Msg
     | RemovedActionSubmitionStatus Eos.Name.Name
 
 
-viewActionField : String -> Eos.EosType.EosType -> Html.Html msg_
-viewActionField name _ =
-    Html.label []
-        [ Html.text name
-        , Html.input [] []
-        ]
+{-| Subscribe to messages from Typescript
+-}
+toElmSubscription : InteropDefinitions.ToElm -> Maybe Msg
+toElmSubscription toElm =
+    case toElm of
+        InteropDefinitions.SubmittedTransaction actionName ->
+            Just (FinishedSubmittingAction actionName)
+
+        InteropDefinitions.ErrorSubmittingTransaction actionName ->
+            Just (GotErrorSubmittingAction actionName)
+
+        _ ->
+            Nothing
+
+
+{-| This page's model
+-}
+type ContractStatus
+    = InvalidContractName Eos.Name.Error
+    | ContractNameDoesntExist Eos.Name.Name
+    | ValidContract ValidContractInfo
 
 
 type alias ValidContractInfo =
@@ -955,22 +963,3 @@ type alias ActionMetadata =
     { name : Eos.Name.Name
     , fields : Dict.Dict String Eos.EosType.EosType
     }
-
-
-
--- PORT SUBSCRIPTION
-
-
-{-| Subscribe to messages from Typescript
--}
-toElmSubscription : InteropDefinitions.ToElm -> Maybe Msg
-toElmSubscription toElm =
-    case toElm of
-        InteropDefinitions.SubmittedTransaction actionName ->
-            Just (FinishedSubmittingAction actionName)
-
-        InteropDefinitions.ErrorSubmittingTransaction actionName ->
-            Just (GotErrorSubmittingAction actionName)
-
-        _ ->
-            Nothing

@@ -14,7 +14,6 @@ Typescript
 
 import Eos.Name
 import EosAction
-import Json.Encode as Encode
 import TsJson.Decode as TsDecode exposing (Decoder)
 import TsJson.Encode as TsEncode exposing (Encoder, required)
 import WalletProvider exposing (WalletProvider)
@@ -126,12 +125,12 @@ toElm =
         ]
 
 
-nameTsDecoder : TsDecode.Decoder Eos.Name.Name
+nameTsDecoder : Decoder Eos.Name.Name
 nameTsDecoder =
     TsDecode.string
         |> TsDecode.andThen
             (TsDecode.andThenInit
-                (\failDecoder nameString ->
+                (\_ nameString ->
                     case Eos.Name.fromString nameString of
                         Ok validName ->
                             TsDecode.succeed validName
@@ -145,10 +144,6 @@ nameTsDecoder =
 
 flags : Decoder Flags
 flags =
-    let
-        _ =
-            TsDecode.andMap
-    in
     TsDecode.succeed
         (\providers ->
             { walletProviders = providers

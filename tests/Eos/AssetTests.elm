@@ -3,7 +3,7 @@ module Eos.AssetTests exposing (suite)
 import Eos.Asset
 import Eos.Symbol
 import Expect
-import Json.Decode
+import Json.Decode as Decode
 import Test exposing (Test, describe, test)
 
 
@@ -23,7 +23,7 @@ jsonRoundtrip =
                 case Eos.Symbol.fromPrecisionAndCodeString 0 "EOS" of
                     Ok symbol ->
                         Eos.Asset.encode { amount = 10, symbol = symbol }
-                            |> Json.Decode.decodeValue Eos.Asset.decoder
+                            |> Decode.decodeValue Eos.Asset.decoder
                             |> Expect.equal (Ok { amount = 10, symbol = symbol })
 
                     Err _ ->
@@ -39,7 +39,7 @@ encode =
                 case Eos.Symbol.fromPrecisionAndCodeString 0 "EOS" of
                     Ok symbol ->
                         Eos.Asset.encode { amount = 10, symbol = symbol }
-                            |> Json.Decode.decodeValue Json.Decode.string
+                            |> Decode.decodeValue Decode.string
                             |> Expect.equal (Ok "10 EOS")
 
                     Err _ ->
@@ -49,7 +49,7 @@ encode =
                 case Eos.Symbol.fromPrecisionAndCodeString 1 "EOS" of
                     Ok symbol ->
                         Eos.Asset.encode { amount = 10, symbol = symbol }
-                            |> Json.Decode.decodeValue Json.Decode.string
+                            |> Decode.decodeValue Decode.string
                             |> Expect.equal (Ok "10.0 EOS")
 
                     Err _ ->
@@ -59,7 +59,7 @@ encode =
                 case Eos.Symbol.fromPrecisionAndCodeString 2 "EOS" of
                     Ok symbol ->
                         Eos.Asset.encode { amount = 10, symbol = symbol }
-                            |> Json.Decode.decodeValue Json.Decode.string
+                            |> Decode.decodeValue Decode.string
                             |> Expect.equal (Ok "10.00 EOS")
 
                     Err _ ->
@@ -69,7 +69,7 @@ encode =
                 case Eos.Symbol.fromPrecisionAndCodeString 2 "EOS" of
                     Ok symbol ->
                         Eos.Asset.encode { amount = 10.1, symbol = symbol }
-                            |> Json.Decode.decodeValue Json.Decode.string
+                            |> Decode.decodeValue Decode.string
                             |> Expect.equal (Ok "10.10 EOS")
 
                     Err _ ->
@@ -79,7 +79,7 @@ encode =
                 case Eos.Symbol.fromPrecisionAndCodeString 2 "EOS" of
                     Ok symbol ->
                         Eos.Asset.encode { amount = 10.12, symbol = symbol }
-                            |> Json.Decode.decodeValue Json.Decode.string
+                            |> Decode.decodeValue Decode.string
                             |> Expect.equal (Ok "10.12 EOS")
 
                     Err _ ->

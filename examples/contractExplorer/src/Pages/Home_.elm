@@ -117,11 +117,11 @@ view shared model =
     { title = "elm-eos"
     , body =
         [ Ui.Header.view
-            { disconnectWallet = ClickedDisconnectWallet
-            , connectWallet = ClickedConnectWallet
-            , userState = shared.userState
-            , updateDropdown = UpdatedConnectWalletDropdown
+            { connectWallet = ClickedConnectWallet
+            , disconnectWallet = ClickedDisconnectWallet
             , dropdownState = model.connectWalletDropdownState
+            , updateDropdown = UpdatedConnectWalletDropdown
+            , userState = shared.userState
             , walletProviders = shared.walletProviders
             }
         , viewContracts shared.contracts model

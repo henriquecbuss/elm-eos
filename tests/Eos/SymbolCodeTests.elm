@@ -3,7 +3,7 @@ module Eos.SymbolCodeTests exposing (suite)
 import Eos.SymbolCode
 import Expect
 import Fuzz
-import Json.Decode
+import Json.Decode as Decode
 import Test exposing (Test, describe, fuzz, test)
 
 
@@ -43,7 +43,7 @@ jsonRoundTrip =
                 case Eos.SymbolCode.fromString "EOS" of
                     Ok code ->
                         Eos.SymbolCode.encode code
-                            |> Json.Decode.decodeValue Eos.SymbolCode.decoder
+                            |> Decode.decodeValue Eos.SymbolCode.decoder
                             |> Expect.all
                                 [ Expect.equal (Ok code)
                                 , Result.map Eos.SymbolCode.toString
@@ -57,7 +57,7 @@ jsonRoundTrip =
                 case Eos.SymbolCode.fromString fuzzedCode of
                     Ok code ->
                         Eos.SymbolCode.encode code
-                            |> Json.Decode.decodeValue Eos.SymbolCode.decoder
+                            |> Decode.decodeValue Eos.SymbolCode.decoder
                             |> Expect.all
                                 [ Expect.equal (Ok code)
                                 , Result.map Eos.SymbolCode.toString
