@@ -10,7 +10,7 @@ import Html.Attributes as Attr exposing (class)
 import Html.Events
 import Html.Extra as HtmlX
 import Json.Decode as Decode
-import Ui.RiveComponent
+import Ui.Rive
 import User exposing (User)
 import WalletProvider exposing (WalletProvider)
 
@@ -170,23 +170,14 @@ walletProviderDropdownItem { onClick, provider, status } =
                 HtmlX.nothing
 
             Connecting ->
-                viewLoadingRiveAnimation { stateMachineState = 2 }
+                Ui.Rive.viewLoadingAnimation [ Attr.class "w-8 h-8 ml-auto" ]
+                    Ui.Rive.Loading
 
             WithError ->
-                viewLoadingRiveAnimation { stateMachineState = 1 }
+                Ui.Rive.viewLoadingAnimation [ Attr.class "w-8 h-8 ml-auto" ]
+                    Ui.Rive.Failure
 
             Connected ->
-                viewLoadingRiveAnimation { stateMachineState = 0 }
+                Ui.Rive.viewLoadingAnimation [ Attr.class "w-8 h-8 ml-auto" ]
+                    Ui.Rive.Success
         ]
-
-
-viewLoadingRiveAnimation : { stateMachineState : Int } -> Html.Html msg
-viewLoadingRiveAnimation { stateMachineState } =
-    Ui.RiveComponent.view
-        [ Attr.attribute "src" "/assets/check_loading_animation.riv"
-        , Attr.attribute "autoplay" "true"
-        , Attr.attribute "stateMachine" "State Machine 1"
-        , Attr.attribute "stateMachineState" (String.fromInt stateMachineState)
-        , Attr.class "w-8 h-8 ml-auto"
-        ]
-        []
