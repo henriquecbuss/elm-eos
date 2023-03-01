@@ -42,7 +42,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.elm
-          key: elm-${{ hashFiles('elm.json', 'elm-tooling.json', 'codegen/elm.json', 'codegen/elm-tooling.json', 'codegen/elm.codegen.json', 'review/elm.json', 'examples/transfer/elm.json', 'examples/transfer/elm-tooling.json', 'examples/transfer/review/elm.json') }}
+          key: elm-${{ hashFiles('elm.json', 'elm-tooling.json', 'codegen/elm.json', 'codegen/elm-tooling.json', 'codegen/elm.codegen.json', 'review/elm.json', 'examples/transfer/elm.json', 'examples/transfer/elm-tooling.json', 'examples/transfer/review/elm.json', 'examples/contractExplorer/elm.json', 'examples/contractExplorer/elm-tooling.json', 'examples/contractExplorer/review/elm.json', 'examples/memberFetching/elm.json', 'examples/memberFetching/elm-tooling.json', 'examples/memberFetching/review/elm.json') }}
 
       # Install npm packages, unless we restored them from cache.
       # Since `npm ci` removes the node_modules folder before running it’s
@@ -156,6 +156,92 @@ jobs:
       - name: Lint
         run: npm run lint
         working-directory: examples/transfer
+
+      # Re-use node_modules between runs until package.json or package-lock.json changes.
+      - name: Cache contractExplorer example node_modules
+        id: cache-contract-explorer-example-node_modules
+        uses: actions/cache@v3
+        with:
+          path: examples/contractExplorer/node_modules
+          key: node_modules-${{ hashFiles('package.json', 'package-lock.json') }}
+
+      - name: npm ci
+        if: steps.cache-contractExplorer-example-node_modules.outputs.cache-hit != 'true'
+        env:
+          # If you have a `"postinstall": "elm-tooling install"` script in your
+          # package.json, this turns it into a no-op. We’ll run it in the next
+          # step because of the caching. If elm-tooling.json changes but
+          # package-lock.json does not, the postinstall script needs running
+          # but this step won’t.
+          NO_ELM_TOOLING_INSTALL: 1
+        run: npm ci
+        working-directory: examples/contractExplorer
+
+      # Install tools from elm-tooling.json, unless we restored them from
+      # cache. package-lock.json and elm-tooling.json can change independently,
+      # so we need to install separately based on what was restored from cache.
+      # This is run even if we restored ~/.elm from cache to be 100% sure
+      # node_modules/.bin/ contains links to all your tools. `elm-tooling
+      # install` runs very fast when there’s nothing new to download so
+      # skipping the step doesn’t save much time.
+      - name: elm-tooling install
+        run: npx elm-tooling install
+        working-directory: examples/contractExplorer
+
+      - name: Generate
+        run: npm run generate
+        working-directory: examples/contractExplorer
+
+      - name: Build
+        run: npm run build
+        working-directory: examples/contractExplorer
+
+      - name: Lint
+        run: npm run lint
+        working-directory: examples/contractExplorer
+
+      # Re-use node_modules between runs until package.json or package-lock.json changes.
+      - name: Cache memberFetching example node_modules
+        id: cache-member-fetching-example-node_modules
+        uses: actions/cache@v3
+        with:
+          path: examples/memberFetching/node_modules
+          key: node_modules-${{ hashFiles('package.json', 'package-lock.json') }}
+
+      - name: npm ci
+        if: steps.cache-memberFetching-example-node_modules.outputs.cache-hit != 'true'
+        env:
+          # If you have a `"postinstall": "elm-tooling install"` script in your
+          # package.json, this turns it into a no-op. We’ll run it in the next
+          # step because of the caching. If elm-tooling.json changes but
+          # package-lock.json does not, the postinstall script needs running
+          # but this step won’t.
+          NO_ELM_TOOLING_INSTALL: 1
+        run: npm ci
+        working-directory: examples/memberFetching
+
+      # Install tools from elm-tooling.json, unless we restored them from
+      # cache. package-lock.json and elm-tooling.json can change independently,
+      # so we need to install separately based on what was restored from cache.
+      # This is run even if we restored ~/.elm from cache to be 100% sure
+      # node_modules/.bin/ contains links to all your tools. `elm-tooling
+      # install` runs very fast when there’s nothing new to download so
+      # skipping the step doesn’t save much time.
+      - name: elm-tooling install
+        run: npx elm-tooling install
+        working-directory: examples/memberFetching
+
+      - name: Generate
+        run: npm run generate
+        working-directory: examples/memberFetching
+
+      - name: Build
+        run: npm run build
+        working-directory: examples/memberFetching
+
+      - name: Lint
+        run: npm run lint
+        working-directory: examples/memberFetching
 
       - name: Elm Publish
         uses: dillonkearns/elm-publish-action@1.1.0
