@@ -8,7 +8,7 @@ module EosTable exposing
 @docs Table, Metadata
 
 
-## Building sortable tabels
+## Building sortable tables
 
 @docs toId, columns
 
