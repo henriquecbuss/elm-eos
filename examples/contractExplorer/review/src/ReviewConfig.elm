@@ -11,7 +11,6 @@ when inside the directory containing this file.
 
 -}
 
-import CognitiveComplexity
 import Docs.NoMissing
 import Docs.ReviewAtDocs
 import Docs.ReviewLinksAndSections
@@ -120,7 +119,6 @@ config =
         ]
     , NoSimpleLetBody.rule
     , NoUnnecessaryTrailingUnderscore.rule
-    , CognitiveComplexity.rule 15
     , NoConfusingPrefixOperator.rule
     , NoDeprecated.rule NoDeprecated.defaults
     , NoExposingEverything.rule

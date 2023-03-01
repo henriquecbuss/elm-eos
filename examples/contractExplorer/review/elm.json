@@ -16,7 +16,6 @@
             "henriquecbuss/elm-review-no-function-outside-of-modules": "1.0.1",
             "jfmengels/elm-review": "2.12.2",
             "jfmengels/elm-review-code-style": "1.1.3",
-            "jfmengels/elm-review-cognitive-complexity": "1.0.3",
             "jfmengels/elm-review-common": "1.3.2",
             "jfmengels/elm-review-debug": "1.0.8",
             "jfmengels/elm-review-documentation": "2.0.3",
