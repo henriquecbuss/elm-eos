@@ -1,0 +1,7 @@
+elm-stuff
+node_modules
+public/build
+generated
+.elm-spa/defaults
+.elm-spa/generated
+.vscode

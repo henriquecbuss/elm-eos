@@ -1,6 +1,7 @@
 module Eos.Checksum exposing
     ( Checksum
     , encode, decoder
+    , fromString
     )
 
 {-|
@@ -9,9 +10,11 @@ module Eos.Checksum exposing
 
 @docs encode, decoder
 
+@docs fromString
+
 -}
 
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 
 
@@ -30,6 +33,13 @@ encode (Checksum checksum) =
 
 {-| Decode a Checksum.
 -}
-decoder : Decode.Decoder Checksum
+decoder : Json.Decode.Decoder Checksum
 decoder =
-    Decode.map Checksum Decode.string
+    Json.Decode.map Checksum Json.Decode.string
+
+
+{-| Turn a String into a Checksum
+-}
+fromString : String -> Checksum
+fromString =
+    Checksum

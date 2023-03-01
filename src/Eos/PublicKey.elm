@@ -1,6 +1,7 @@
 module Eos.PublicKey exposing
     ( PublicKey
     , encode, decoder
+    , fromString
     )
 
 {-|
@@ -9,9 +10,11 @@ module Eos.PublicKey exposing
 
 @docs encode, decoder
 
+@docs fromString
+
 -}
 
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 
 
@@ -30,6 +33,13 @@ encode (PublicKey publicKey) =
 
 {-| Decode a PublicKey.
 -}
-decoder : Decode.Decoder PublicKey
+decoder : Json.Decode.Decoder PublicKey
 decoder =
-    Decode.map PublicKey Decode.string
+    Json.Decode.map PublicKey Json.Decode.string
+
+
+{-| Turn a String into a PublicKey
+-}
+fromString : String -> PublicKey
+fromString =
+    PublicKey

@@ -91,10 +91,6 @@ update msg model =
                     ( model, Cmd.none )
 
         GotCommunities (Err err) ->
-            let
-                _ =
-                    Debug.log "GotCommunities" err
-            in
             ( model, Cmd.none )
 
         ClickedStart community ->
@@ -149,10 +145,6 @@ update msg model =
                     ( model, Cmd.none )
 
         GotMembers (Err err) ->
-            let
-                _ =
-                    Debug.log "GotMembers" err
-            in
             ( model, Cmd.none )
 
         RequestedBalances member ->
@@ -203,10 +195,6 @@ update msg model =
                     ( model, Cmd.none )
 
         GotBalances _ (Err err) ->
-            let
-                _ =
-                    Debug.log "GotBalances" err
-            in
             ( model, Cmd.none )
 
 

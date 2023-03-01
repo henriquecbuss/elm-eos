@@ -15,6 +15,7 @@ suite =
         [ type_
         , encode
         , encodeSingleAction
+        , fromDict
         ]
 
 
@@ -464,6 +465,101 @@ encodeSingleAction action =
         SnakeCase args ->
             Json.Encode.object
                 [ ( "snake_case", args.snakeCase |> Json.Encode.string ) ]
+
+
+"""
+                        ]
+        ]
+
+
+fromDict : Test
+fromDict =
+    describe "fromDict"
+        [ test "works correctly for transfer action" <|
+            \() ->
+                Generate.Action.fromDict [ transferAction ]
+                    |> Elm.ToString.declaration
+                    |> Expect.all
+                        [ .docs
+                            >> Expect.equal "Given an action name and a dictionary of strings, try to build an [Action](#Action). This is useful for having generic forms"
+                        , .signature
+                            >> Expect.equal "fromDict : Eos.Name.Name -> Dict.Dict String String -> Maybe Action"
+                        , .body
+                            >> Expect.equal """fromDict : Eos.Name.Name -> Dict.Dict String String -> Maybe Action
+fromDict actionName args =
+    case Eos.Name.toString actionName of
+        "transfer" ->
+            Just
+             (\\from to quantity memo ->
+                 Transfer
+                     { from = from, to = to, quantity = quantity, memo = memo }
+             )
+                |> Maybe.Extra.andMap
+                    (Dict.get "from" args |> Maybe.andThen nameFromString)
+                |> Maybe.Extra.andMap
+                    (Dict.get "to" args |> Maybe.andThen nameFromString)
+                |> Maybe.Extra.andMap
+                    (Dict.get "quantity" args |> Maybe.andThen assetFromString)
+                |> Maybe.Extra.andMap
+                    (Dict.get "memo" args |> Maybe.andThen stringFromString)
+
+        otherwise_1_0_0 ->
+            Nothing
+
+
+"""
+                        ]
+        , test "works correctly for multiple actions" <|
+            \() ->
+                Generate.Action.fromDict [ transferAction, rewardAction ]
+                    |> Elm.ToString.declaration
+                    |> Expect.all
+                        [ .docs
+                            >> Expect.equal "Given an action name and a dictionary of strings, try to build an [Action](#Action). This is useful for having generic forms"
+                        , .signature
+                            >> Expect.equal "fromDict : Eos.Name.Name -> Dict.Dict String String -> Maybe Action"
+                        , .body
+                            >> Expect.equal """fromDict : Eos.Name.Name -> Dict.Dict String String -> Maybe Action
+fromDict actionName args =
+    case Eos.Name.toString actionName of
+        "transfer" ->
+            Just
+             (\\from to quantity memo ->
+                 Transfer
+                     { from = from, to = to, quantity = quantity, memo = memo }
+             )
+                |> Maybe.Extra.andMap
+                    (Dict.get "from" args |> Maybe.andThen nameFromString)
+                |> Maybe.Extra.andMap
+                    (Dict.get "to" args |> Maybe.andThen nameFromString)
+                |> Maybe.Extra.andMap
+                    (Dict.get "quantity" args |> Maybe.andThen assetFromString)
+                |> Maybe.Extra.andMap
+                    (Dict.get "memo" args |> Maybe.andThen stringFromString)
+
+        "reward" ->
+            Just
+             (\\receivers awarder quantity reason ->
+                 Reward
+                     { receivers = receivers
+                     , awarder = awarder
+                     , quantity = quantity
+                     , reason = reason
+                     }
+             )
+                |> Maybe.Extra.andMap
+                    (Dict.get "receivers" args
+                        |> Maybe.andThen (listFromString nameFromString)
+                    )
+                |> Maybe.Extra.andMap
+                    (Dict.get "awarder" args |> Maybe.andThen nameFromString)
+                |> Maybe.Extra.andMap
+                    (Dict.get "quantity" args |> Maybe.andThen assetFromString)
+                |> Maybe.Extra.andMap
+                    (Dict.get "reason" args |> Maybe.andThen stringFromString)
+
+        otherwise_1_0_0 ->
+            Nothing
 
 
 """

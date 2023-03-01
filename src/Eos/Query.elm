@@ -5,6 +5,7 @@ module Eos.Query exposing
     , withBaseUrl, withLimit, withLowerBound, withUpperBound, withReverse
     , Cursor
     , Index(..)
+    , map
     )
 
 {-| Perform queries to get data from tables. The CLI gives you functions to perform
@@ -22,10 +23,12 @@ type-safe queries, and this module helps you actually turn them into Cmds.
 
 @docs Index
 
+@docs map
+
 -}
 
 import Http
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 import Url.Builder
 
@@ -48,7 +51,7 @@ type Query response
         , baseUrl : String
         , contract : String
         , table : String
-        , decoder : Decode.Decoder response
+        , decoder : Json.Decode.Decoder response
         }
 
 
@@ -112,18 +115,18 @@ send toMsg (Query query) =
                 ]
                 |> Http.jsonBody
         , expect =
-            Decode.map3
+            Json.Decode.map3
                 (\hasMore nextCursor result ->
                     { hasMore = hasMore
                     , nextCursor = nextCursor
                     , result = result
                     }
                 )
-                (Decode.field "more" Decode.bool)
-                (Decode.field "next_key"
-                    (Decode.map Cursor Decode.string)
+                (Json.Decode.field "more" Json.Decode.bool)
+                (Json.Decode.field "next_key"
+                    (Json.Decode.map Cursor Json.Decode.string)
                 )
-                (Decode.field "rows" (Decode.list query.decoder))
+                (Json.Decode.field "rows" (Json.Decode.list query.decoder))
                 |> Http.expectJson toMsg
         , url = Url.Builder.crossOrigin query.baseUrl [ "get_table_rows" ] []
         }
@@ -257,3 +260,26 @@ type Index
     | Eighth
     | Ninth
     | Tenth
+
+
+
+-- UTILITY FUNCTIONS
+
+
+{-| Map the response of a Query. This is here so the CLI can use it. You probably
+shouldn't need to use it.
+-}
+map : (response -> mappedResponse) -> Query response -> Query mappedResponse
+map mappingFunction (Query query) =
+    Query
+        { scope = query.scope
+        , indexPosition = query.indexPosition
+        , lowerBound = query.lowerBound
+        , upperBound = query.upperBound
+        , limit = query.limit
+        , reverse = query.reverse
+        , baseUrl = query.baseUrl
+        , contract = query.contract
+        , table = query.table
+        , decoder = Json.Decode.map mappingFunction query.decoder
+        }

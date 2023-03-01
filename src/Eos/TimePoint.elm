@@ -26,7 +26,7 @@ module Eos.TimePoint exposing
 
 -}
 
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 import Time
 
@@ -90,6 +90,6 @@ encode (TimePoint microseconds) =
 {-| Decode a [TimePoint](#TimePoint) from JSON. You can use this to receive a
 [TimePoint](#TimePoint) from the blockchain or some server.
 -}
-decoder : Decode.Decoder TimePoint
+decoder : Json.Decode.Decoder TimePoint
 decoder =
-    Decode.map TimePoint Decode.int
+    Json.Decode.map TimePoint Json.Decode.int

@@ -169,7 +169,7 @@ update cliOptions msg model =
             ( model
             , WriteToFiles
                 { output = cliOptions.output
-                , files = Generate.files cliOptions.base abis
+                , files = Generate.apiFiles cliOptions.base abis
                 }
             )
 

@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  @apply h-full;
+}
+
+body {
+  @apply text-body h-full;
+}
+
+@layer utilities {
+  /* Hides the default triangle on a summary element inside a details element.
+  The `-webkit-details-marker` and `marker` are needed for Safari */
+  .marker-hidden {
+    @apply list-none;
+  }
+
+  .marker-hidden::-webkit-details-marker {
+    @apply hidden;
+  }
+
+  .marker-hidden::marker {
+    @apply hidden;
+  }
+
+  .grid-col-auto-fit-150 {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}

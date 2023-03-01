@@ -20,7 +20,7 @@ module Eos.SymbolCode exposing
 
 -}
 
-import Json.Decode as Decode
+import Json.Decode
 import Json.Encode as Encode
 
 
@@ -135,15 +135,15 @@ encode (SymbolCode symbolCode) =
 {-| Decode a [SymbolCode](#SymbolCode) from JSON. It already does all of the
 validation necessary to ensure the [SymbolCode](#SymbolCode) is valid.
 -}
-decoder : Decode.Decoder SymbolCode
+decoder : Json.Decode.Decoder SymbolCode
 decoder =
-    Decode.string
-        |> Decode.andThen
+    Json.Decode.string
+        |> Json.Decode.andThen
             (\code ->
                 case fromString code of
                     Ok symbolCode ->
-                        Decode.succeed symbolCode
+                        Json.Decode.succeed symbolCode
 
                     Err error ->
-                        Decode.fail (errorToString error ++ ". Received: " ++ code)
+                        Json.Decode.fail (errorToString error ++ ". Received: " ++ code)
             )

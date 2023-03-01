@@ -1,9 +1,10 @@
-module Generate.Table.Decoder exposing (generate)
+module Generate.Table.Decoder exposing (generate, generateIntDecoder)
 
 import Abi
 import Context exposing (Context)
 import Elm
 import Elm.Annotation
+import Elm.Op
 import EosType
 import Gen.Json.Decode
 import Gen.Json.Decode.Pipeline
@@ -14,10 +15,11 @@ generate : Context -> Abi.Table -> Elm.Declaration
 generate context table =
     Elm.declaration (String.Extra.camelize table.name)
         (List.foldl
-            (\column expression ->
-                Gen.Json.Decode.Pipeline.required column.name
-                    (EosType.generateDecoder column.type_)
-                    expression
+            (\column ->
+                Elm.Op.pipe
+                    (Elm.apply Gen.Json.Decode.Pipeline.values_.required
+                        [ Elm.string column.name, EosType.generateDecoder column.type_ ]
+                    )
             )
             (Gen.Json.Decode.succeed
                 (Elm.value
@@ -37,3 +39,9 @@ generate context table =
                 )
         )
         |> Elm.withDocumentation ("Decoder for the " ++ table.name ++ " table.")
+
+
+generateIntDecoder : Elm.Declaration
+generateIntDecoder =
+    Elm.declaration "intDecoder" EosType.intDecoder
+        |> Elm.withDocumentation "Decoder for an integer, which deals with the case that an int may come as a string"

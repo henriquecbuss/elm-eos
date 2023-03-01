@@ -1,0 +1,4 @@
+public/build/
+generated
+elm-stuff
+tailwind.config.js

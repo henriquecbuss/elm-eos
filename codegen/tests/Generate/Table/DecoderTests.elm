@@ -31,14 +31,11 @@ decoder =
                         , .body
                             >> Expect.equal """people : Json.Decode.Decoder Eos.Io.Table.People
 people =
-    Json.Decode.Pipeline.required
-        "assets"
-        (Json.Decode.list Eos.Asset.decoder)
-        (Json.Decode.Pipeline.required
-            "name"
-            Eos.Name.decoder
-            (Json.Decode.succeed Eos.Io.Table.People)
-        )
+    Json.Decode.succeed Eos.Io.Table.People
+        |> Json.Decode.Pipeline.required "name" Eos.Name.decoder
+        |> Json.Decode.Pipeline.required
+            "assets"
+            (Json.Decode.list Eos.Asset.decoder)
 
 
 """
@@ -56,10 +53,8 @@ people =
                         , .body
                             >> Expect.equal """snakeCase : Json.Decode.Decoder Eos.Io.Table.SnakeCase
 snakeCase =
-    Json.Decode.Pipeline.required
-        "snake_case"
-        Json.Decode.bool
-        (Json.Decode.succeed Eos.Io.Table.SnakeCase)
+    Json.Decode.succeed Eos.Io.Table.SnakeCase
+        |> Json.Decode.Pipeline.required "snake_case" Json.Decode.bool
 
 
 """

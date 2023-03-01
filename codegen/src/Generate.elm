@@ -1,4 +1,4 @@
-module Generate exposing (files)
+module Generate exposing (apiFiles)
 
 {-| -}
 
@@ -6,25 +6,27 @@ import Abi
 import Context
 import Elm
 import Generate.Action
+import Generate.Action.Metadata
 import Generate.Table
 import Generate.Table.Decoder
+import Generate.Table.Metadata
 import Generate.Table.Query
 import String.Extra
 
 
-files : List String -> List { abi : Abi.Abi, baseUrl : String, contract : String } -> List Elm.File
-files base abis =
+apiFiles : List String -> List { abi : Abi.Abi, baseUrl : String, contract : String } -> List Elm.File
+apiFiles base abis =
     List.concatMap
         (\{ abi, baseUrl, contract } ->
-            filesFromAbi base
+            apiFilesFromAbi base
                 { baseUrl = baseUrl, contract = contract }
                 abi
         )
         abis
 
 
-filesFromAbi : List String -> Context.Context -> Abi.Abi -> List Elm.File
-filesFromAbi base context abi =
+apiFilesFromAbi : List String -> Context.Context -> Abi.Abi -> List Elm.File
+apiFilesFromAbi base context abi =
     let
         fileName : List String -> List String
         fileName suffix =
@@ -66,6 +68,36 @@ filesFromAbi base context abi =
         , Generate.Action.encodeSingleAction abi.actions
             |> Elm.exposeWith { exposeConstructor = True, group = Just "Encoding" }
         , Generate.Action.getName abi.actions
+        , Generate.Action.fromDict abi.actions
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "Forms" }
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.boolFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.intFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.floatFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.timePointFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.timePointSecFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.blockTimestampFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.nameFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.stringFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.checksumFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.publicKeyFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.signatureFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.symbolFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.symbolCodeFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.assetFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.extendedAssetFromString
+        , Elm.exposeWith { exposeConstructor = True, group = Just "Forms" } Generate.Action.listFromString
+        ]
+    , prefixedFile [ "Action", "Metadata" ]
+        { docs =
+            \groupsAndMembers ->
+                ("This file contains metadata about actions from the "
+                    ++ context.contract
+                    ++ " contract. You should only need this if you're building something like a contract explorer or an auto generated app."
+                )
+                    :: makeDocs groupsAndMembers
+        }
+        [ Generate.Action.Metadata.allMetadata abi.actions
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "Metadata" }
         ]
     , prefixedFile [ "Table" ]
         { docs =
@@ -90,6 +122,20 @@ filesFromAbi base context abi =
             )
             abi.tables
         )
+    , prefixedFile [ "Table", "Metadata" ]
+        { docs =
+            \groupsAndMembers ->
+                ("This file contains metadata about tables from the "
+                    ++ context.contract
+                    ++ " contract. You should only need this if you're building something like a contract explorer or an auto generated app"
+                )
+                    :: makeDocs groupsAndMembers
+        }
+        [ Generate.Table.Metadata.typeUnion (fileName []) abi.tables
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "Metadata" }
+        , Generate.Table.Metadata.allMetadata (fileName []) abi.tables
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "Metadata" }
+        ]
     , prefixedFile [ "Table", "Decoder" ]
         { docs =
             \groupsAndMembers ->
@@ -102,14 +148,15 @@ filesFromAbi base context abi =
                 )
                     :: makeDocs groupsAndMembers
         }
-        (List.map
-            (Generate.Table.Decoder.generate context
-                >> Elm.exposeWith
-                    { exposeConstructor = True
-                    , group = Just "Decoders"
-                    }
-            )
-            abi.tables
+        (Generate.Table.Decoder.generateIntDecoder
+            :: List.map
+                (Generate.Table.Decoder.generate context
+                    >> Elm.exposeWith
+                        { exposeConstructor = True
+                        , group = Just "Decoders"
+                        }
+                )
+                abi.tables
         )
     , prefixedFile [ "Table", "Query" ]
         { docs =

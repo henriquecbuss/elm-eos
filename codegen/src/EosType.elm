@@ -1,10 +1,12 @@
-module EosType exposing (EosType(..), decoder, generateDecoder, generateEncoder, toAnnotation)
+module EosType exposing (EosType(..), decoder, generateDecoder, generateEncoder, intDecoder, toAnnotation, toExpression)
 
 import Elm
 import Elm.Annotation
+import Elm.Case
 import Elm.Op
 import Gen.Eos.Asset
 import Gen.Eos.Checksum
+import Gen.Eos.EosType
 import Gen.Eos.ExtendedAsset
 import Gen.Eos.Name
 import Gen.Eos.PublicKey
@@ -15,6 +17,7 @@ import Gen.Eos.TimePoint
 import Gen.Eos.TimePointSec
 import Gen.Json.Decode
 import Gen.Json.Encode
+import Gen.String
 import Gen.Time
 import Json.Decode as Decode
 
@@ -170,7 +173,7 @@ generateDecoder eosType =
             Gen.Json.Decode.values_.bool
 
         EosInt ->
-            Gen.Json.Decode.values_.int
+            Elm.val "intDecoder"
 
         EosFloat ->
             Gen.Json.Decode.values_.float
@@ -212,7 +215,7 @@ generateDecoder eosType =
             Gen.Eos.ExtendedAsset.values_.decoder
 
         EosList innerType ->
-            Elm.apply Gen.Json.Decode.values_.list [ generateDecoder innerType ]
+            Gen.Json.Decode.call_.list (generateDecoder innerType)
 
 
 generateEncoder : EosType -> Elm.Expression
@@ -348,6 +351,26 @@ generateEncoder eosType =
             Elm.apply Gen.Json.Encode.values_.list [ generateEncoder innerType ]
 
 
+intDecoder : Elm.Expression
+intDecoder =
+    Gen.Json.Decode.oneOf
+        [ Gen.Json.Decode.int
+        , Gen.Json.Decode.string
+            |> Gen.Json.Decode.andThen
+                (\stringValue ->
+                    Elm.Case.maybe (Gen.String.call_.toInt stringValue)
+                        { just = ( "validInt", Gen.Json.Decode.succeed )
+                        , nothing =
+                            Gen.Json.Decode.call_.fail
+                                (Elm.Op.append
+                                    (Elm.string "I got a String that should represent an Int, but it didn't parse to an Int. It was: ")
+                                    stringValue
+                                )
+                        }
+                )
+        ]
+
+
 toAnnotation : EosType -> Elm.Annotation.Annotation
 toAnnotation eosType =
     -- elm-review: IGNORE TCO
@@ -399,3 +422,58 @@ toAnnotation eosType =
 
         EosList innerType ->
             Elm.Annotation.list (toAnnotation innerType)
+
+
+{-| Turn a regular `EosType` into an `Elm.Expression`
+-}
+toExpression : EosType -> Elm.Expression
+toExpression eosType =
+    -- elm-review: IGNORE TCO
+    case eosType of
+        EosBool ->
+            Gen.Eos.EosType.make_.eosBool
+
+        EosInt ->
+            Gen.Eos.EosType.make_.eosInt
+
+        EosFloat ->
+            Gen.Eos.EosType.make_.eosFloat
+
+        TimePoint ->
+            Gen.Eos.EosType.make_.timePoint
+
+        TimePointSec ->
+            Gen.Eos.EosType.make_.timePointSec
+
+        BlockTimestampType ->
+            Gen.Eos.EosType.make_.blockTimestampType
+
+        Name ->
+            Gen.Eos.EosType.make_.name
+
+        EosString ->
+            Gen.Eos.EosType.make_.eosString
+
+        Checksum ->
+            Gen.Eos.EosType.make_.checksum
+
+        PublicKey ->
+            Gen.Eos.EosType.make_.publicKey
+
+        Signature ->
+            Gen.Eos.EosType.make_.signature
+
+        Symbol ->
+            Gen.Eos.EosType.make_.symbol
+
+        SymbolCode ->
+            Gen.Eos.EosType.make_.symbolCode
+
+        Asset ->
+            Gen.Eos.EosType.make_.asset
+
+        ExtendedAsset ->
+            Gen.Eos.EosType.make_.extendedAsset
+
+        EosList innerType ->
+            Gen.Eos.EosType.make_.eosList (toExpression innerType)
