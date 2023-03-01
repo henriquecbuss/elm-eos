@@ -1,9 +1,9 @@
-import autoAnimate from "@formkit/auto-animate";
+import autoAnimate from '@formkit/auto-animate'
 
 class AutoAnimate extends HTMLElement {
   connectedCallback() {
-    autoAnimate(this);
+    autoAnimate(this)
   }
 }
 
-export default { name: "auto-animate", classConstructor: AutoAnimate };
+export default { name: 'auto-animate', classConstructor: AutoAnimate }

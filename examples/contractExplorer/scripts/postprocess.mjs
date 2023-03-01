@@ -1,6 +1,6 @@
 // @ts-check
-import * as esbuild from "esbuild";
-import * as UglifyJS from "uglify-js";
+import * as esbuild from 'esbuild'
+import * as UglifyJS from 'uglify-js'
 
 /**
  * @type {import("elm-watch/elm-watch-node").Postprocess}
@@ -11,42 +11,42 @@ export default async function postprocess({
   compilationMode,
 }) {
   switch (compilationMode) {
-    case "standard":
-    case "debug":
-      return code;
+    case 'standard':
+    case 'debug':
+      return code
 
-    case "optimize":
+    case 'optimize':
       return minify(code, {
-        minimal: !["Html", "Sandbox", "Element", "Document", "Worker"].includes(
+        minimal: !['Html', 'Sandbox', 'Element', 'Document', 'Worker'].includes(
           targetName
         ),
-      });
+      })
 
     default:
       throw new Error(
         `Unknown compilation mode: ${JSON.stringify(compilationMode)}`
-      );
+      )
   }
 }
 
 const pureFuncs = [
-  "F2",
-  "F3",
-  "F4",
-  "F5",
-  "F6",
-  "F7",
-  "F8",
-  "F9",
-  "A2",
-  "A3",
-  "A4",
-  "A5",
-  "A6",
-  "A7",
-  "A8",
-  "A9",
-];
+  'F2',
+  'F3',
+  'F4',
+  'F5',
+  'F6',
+  'F7',
+  'F8',
+  'F9',
+  'A2',
+  'A3',
+  'A4',
+  'A5',
+  'A6',
+  'A7',
+  'A8',
+  'A9',
+]
 
 /**
  * Source: https://discourse.elm-lang.org/t/what-i-ve-learned-about-minifying-elm-code/7632
@@ -56,7 +56,7 @@ const pureFuncs = [
  * @returns {Promise<string>}
  */
 async function minify(code, { minimal }) {
-  return minimal ? runUglifyJSAndEsbuild(code) : runEsbuild(code);
+  return minimal ? runUglifyJSAndEsbuild(code) : runEsbuild(code)
 }
 
 /**
@@ -82,18 +82,18 @@ async function runUglifyJSAndEsbuild(code) {
       unused: true,
     },
     mangle: false,
-  });
+  })
 
   if (result.error !== undefined) {
-    throw result.error;
+    throw result.error
   }
 
   return (
     await esbuild.transform(result.code, {
       minify: true,
-      target: "es5",
+      target: 'es5',
     })
-  ).code;
+  ).code
 }
 
 /**
@@ -105,10 +105,10 @@ async function runEsbuild(code) {
     await esbuild.transform(removeIIFE(code), {
       minify: true,
       pure: pureFuncs,
-      target: "es5",
-      format: "iife",
+      target: 'es5',
+      format: 'iife',
     })
-  ).code;
+  ).code
 }
 
 /**
@@ -117,7 +117,7 @@ async function runEsbuild(code) {
  */
 function removeIIFE(code) {
   return `var scope = window;${code.slice(
-    code.indexOf("{") + 1,
-    code.lastIndexOf("}")
-  )}`;
+    code.indexOf('{') + 1,
+    code.lastIndexOf('}')
+  )}`
 }

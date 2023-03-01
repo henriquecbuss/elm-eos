@@ -1,18 +1,18 @@
 // Needed for eosjs
-window.global = globalThis;
+window.global = globalThis
 
 import {
   initAccessContext,
   StateUnsubscribeFn,
   Wallet,
   WalletState,
-} from "eos-transit";
-import scatter from "eos-transit-scatter-provider";
-import simpleos from "eos-transit-simpleos-provider";
-import { ElmApp } from "generated/Main";
-import { defineCustomElements } from "../../generated/customElements";
-import env from "./env";
-import { eos } from "./eos";
+} from 'eos-transit'
+import scatter from 'eos-transit-scatter-provider'
+import simpleos from 'eos-transit-simpleos-provider'
+import { ElmApp } from 'generated/Main'
+import { defineCustomElements } from '../../generated/customElements'
+import env from './env'
+import { eos } from './eos'
 
 const handleNewWalletState = (
   newWalletState: WalletState | undefined,
@@ -21,16 +21,16 @@ const handleNewWalletState = (
   app: ElmApp
 ): WalletState | null => {
   if (newWalletState === undefined) {
-    return null;
+    return null
   }
 
   if (newWalletState.connecting && !previousWalletState?.connecting) {
     app.ports.interopToElm.send({
-      tag: "startedConnectingToWallet",
+      tag: 'startedConnectingToWallet',
       data: {
         providerId: wallet.provider.id,
       },
-    });
+    })
   }
 
   if (
@@ -38,45 +38,45 @@ const handleNewWalletState = (
     !previousWalletState?.accountFetchError
   ) {
     app.ports.interopToElm.send({
-      tag: "errorConnectingToWallet",
+      tag: 'errorConnectingToWallet',
       data: {
         providerId: wallet.provider.id,
       },
-    });
+    })
   }
 
   if (
     newWalletState.accountInfo &&
     previousWalletState?.accountInfo === undefined
   ) {
-    let accountName = newWalletState.accountInfo.name;
-    if ("account_name" in newWalletState.accountInfo) {
-      accountName = newWalletState.accountInfo.account_name as string;
+    let accountName = newWalletState.accountInfo.name
+    if ('account_name' in newWalletState.accountInfo) {
+      accountName = newWalletState.accountInfo.account_name as string
     }
 
     app.ports.interopToElm.send({
-      tag: "connectedToWallet",
+      tag: 'connectedToWallet',
       data: {
         providerId: wallet.provider.id,
         accountName,
       },
-    });
+    })
   }
 
   if (!newWalletState.authenticated && previousWalletState?.authenticated) {
     app.ports.interopToElm.send({
-      tag: "disconnectedFromWallet",
+      tag: 'disconnectedFromWallet',
       data: {
         providerId: wallet.provider.id,
       },
-    });
+    })
   }
 
-  return newWalletState;
-};
+  return newWalletState
+}
 
 const run = () => {
-  defineCustomElements();
+  defineCustomElements()
 
   const accessContext = initAccessContext({
     appName: env.appName,
@@ -86,47 +86,47 @@ const run = () => {
       chainId: env.chain.id,
     },
     walletProviders: [simpleos(), scatter()],
-  });
+  })
 
   const walletProviderIds = accessContext
     .getWalletProviders()
-    .map((provider) => provider.id);
+    .map((provider) => provider.id)
 
   const app = window.Elm.Main.init({
     flags: {
       walletProviderIds,
     },
-  });
+  })
 
-  let wallet: Wallet | null = null;
-  let walletUnsubscribe: StateUnsubscribeFn | null = null;
-  let previousWalletState: WalletState | null = null;
+  let wallet: Wallet | null = null
+  let walletUnsubscribe: StateUnsubscribeFn | null = null
+  let previousWalletState: WalletState | null = null
 
   app.ports.interopFromElm.subscribe(({ tag, data }) => {
     switch (tag) {
-      case "alert": {
-        console.warn(data.message);
+      case 'alert': {
+        console.warn(data.message)
 
-        app.ports.interopToElm.send({ tag: "alerted" });
+        app.ports.interopToElm.send({ tag: 'alerted' })
 
-        break;
+        break
       }
 
-      case "scrollTo": {
+      case 'scrollTo': {
         document.querySelector(data.querySelector)?.scrollIntoView({
-          behavior: "smooth",
-        });
-        break;
+          behavior: 'smooth',
+        })
+        break
       }
 
-      case "connectWallet": {
-        const { walletProviderId } = data;
+      case 'connectWallet': {
+        const { walletProviderId } = data
 
-        wallet = accessContext.initWallet(walletProviderId);
+        wallet = accessContext.initWallet(walletProviderId)
 
         walletUnsubscribe = wallet.subscribe((walletState) => {
           if (wallet === null) {
-            return;
+            return
           }
 
           previousWalletState = handleNewWalletState(
@@ -134,66 +134,66 @@ const run = () => {
             previousWalletState,
             wallet,
             app
-          );
-        });
+          )
+        })
 
         eos.wallet.connect(wallet).then((success) => {
           if (!success) {
             app.ports.interopToElm.send({
-              tag: "errorConnectingToWallet",
+              tag: 'errorConnectingToWallet',
               data: {
                 providerId: walletProviderId,
               },
-            });
+            })
           }
-        });
+        })
 
-        break;
+        break
       }
 
-      case "disconnectWallet": {
+      case 'disconnectWallet': {
         if (wallet === null) {
-          return;
+          return
         }
 
         eos.wallet.disconnect(wallet, walletUnsubscribe).then(() => {
-          previousWalletState = null;
-          wallet = null;
-          walletUnsubscribe = null;
-        });
+          previousWalletState = null
+          wallet = null
+          walletUnsubscribe = null
+        })
 
-        break;
+        break
       }
 
-      case "performEosTransaction": {
+      case 'performEosTransaction': {
         if (!wallet) {
-          return;
+          return
         }
 
-        const { actions } = data;
+        const { actions } = data
 
         eos.transaction
           .perform(wallet, actions)
           .then(({ success, actionName }) => {
             if (success) {
               app.ports.interopToElm.send({
-                tag: "submittedTransaction",
+                tag: 'submittedTransaction',
                 data: { actionName },
-              });
+              })
             } else {
               app.ports.interopToElm.send({
-                tag: "errorSubmittingTransaction",
+                tag: 'errorSubmittingTransaction',
                 data: { actionName },
-              });
+              })
             }
-          });
+          })
 
-        break;
+        break
       }
     }
-  });
-};
+  })
+}
 
-run();
+run()
 
-export {};
+export {}

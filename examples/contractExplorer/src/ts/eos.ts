@@ -1,29 +1,29 @@
-import { StateUnsubscribeFn, Wallet } from "eos-transit/lib";
-import { JsonValue } from "generated/Main";
-import { Buffer } from "buffer";
+import { StateUnsubscribeFn, Wallet } from 'eos-transit/lib'
+import { JsonValue } from 'generated/Main'
+import { Buffer } from 'buffer'
 
-window.Buffer = Buffer;
+window.Buffer = Buffer
 
 const performTransaction = async (
   wallet: Wallet,
   action: JsonValue
 ): Promise<{ success: boolean; actionName: string }> => {
-  const { auth } = wallet;
+  const { auth } = wallet
   if (auth === undefined) {
-    throw new Error("Wallet is not connected or authorized");
+    throw new Error('Wallet is not connected or authorized')
   }
 
-  if (typeof action !== "object" || action === null || Array.isArray(action)) {
-    throw new Error("Action is not an object");
+  if (typeof action !== 'object' || action === null || Array.isArray(action)) {
+    throw new Error('Action is not an object')
   }
 
   if (
-    "account" in action === false ||
-    "name" in action === false ||
-    typeof action.name !== "string" ||
-    "data" in action === false
+    'account' in action === false ||
+    'name' in action === false ||
+    typeof action.name !== 'string' ||
+    'data' in action === false
   ) {
-    throw new Error("Action is missing account or name");
+    throw new Error('Action is missing account or name')
   }
 
   const authorizedAction = {
@@ -36,7 +36,7 @@ const performTransaction = async (
     account: action.account,
     name: action.name,
     data: action.data,
-  };
+  }
 
   try {
     await wallet.eosApi.transact(
@@ -49,36 +49,36 @@ const performTransaction = async (
         expireSeconds: 60,
         blocksBehind: 3,
       }
-    );
+    )
 
-    return { success: true, actionName: action.name };
+    return { success: true, actionName: action.name }
   } catch {
-    return { success: false, actionName: action.name };
+    return { success: false, actionName: action.name }
   }
-};
+}
 
 const connectWallet = async (wallet: Wallet): Promise<boolean> => {
   try {
-    await wallet.connect();
-    await wallet.login();
+    await wallet.connect()
+    await wallet.login()
   } catch (err) {
-    return false;
+    return false
   }
 
-  return true;
-};
+  return true
+}
 
 const disconnectWallet = async (
   wallet: Wallet,
   unsubscribeFn: StateUnsubscribeFn | null
 ) => {
-  await wallet.disconnect();
-  await wallet.logout();
+  await wallet.disconnect()
+  await wallet.logout()
 
   if (unsubscribeFn !== null) {
-    unsubscribeFn();
+    unsubscribeFn()
   }
-};
+}
 
 export const eos = {
   wallet: {
@@ -88,4 +88,4 @@ export const eos = {
   transaction: {
     perform: performTransaction,
   },
-};
+}
