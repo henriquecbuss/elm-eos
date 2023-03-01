@@ -185,7 +185,7 @@ init _ flags =
 {-| Update the shared module
 -}
 update : Request -> Msg -> Model -> ( Model, Cmd Msg )
-update req msg model =
+update _ msg model =
     case msg of
         StartedConnectingToWallet provider ->
             ( { model | userState = User.Connecting provider }, Cmd.none )
