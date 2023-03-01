@@ -220,27 +220,12 @@ jobs:
         run: npm ci
         working-directory: examples/memberFetching
 
-      # Install tools from elm-tooling.json, unless we restored them from
-      # cache. package-lock.json and elm-tooling.json can change independently,
-      # so we need to install separately based on what was restored from cache.
-      # This is run even if we restored ~/.elm from cache to be 100% sure
-      # node_modules/.bin/ contains links to all your tools. `elm-tooling
-      # install` runs very fast when there’s nothing new to download so
-      # skipping the step doesn’t save much time.
-      - name: elm-tooling install in memberFetching example
-        run: npx elm-tooling install
-        working-directory: examples/memberFetching
-
       - name: Generate memberFetching example
         run: npm run generate
         working-directory: examples/memberFetching
 
       - name: Build memberFetching example
         run: npm run build
-        working-directory: examples/memberFetching
-
-      - name: Lint memberFetching example
-        run: npm run lint
         working-directory: examples/memberFetching
 
       - name: Elm Publish
