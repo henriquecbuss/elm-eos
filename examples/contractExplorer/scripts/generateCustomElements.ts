@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises'
 import * as path from 'path'
 
-const exportRegex = /^export default {[\s\S]*name: "(.*)"[\s\S]*};$/m
+const exportRegex = /^export default {[\s\S]*name: '(.*)'[\s\S]*}$/m
 const generatedDir = path.join(__dirname, '..', 'generated')
 const generatedUiDir = path.join(generatedDir, 'Ui')
 const customElementsDir = path.join(
@@ -56,7 +56,7 @@ const generateTsCustomElementsDefine = (fileNames: string[]) => `${fileNames
     (fileName: string) =>
       `import ${toPascalCase(
         fileName
-      )} from "../src/ts/customElements/${toSnakeCase(fileName)}";`
+      )} from '../src/ts/customElements/${toSnakeCase(fileName)}';`
   )
   .join('\n')}
 
