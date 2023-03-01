@@ -1,13 +1,12 @@
 module Pages.Contract.Name_ exposing
-    ( page, Model, Msg
+    ( page, Model, ContractStatus, Msg
     , toElmSubscription
-    , ContractStatus
     )
 
 {-| A page that shows information about a particular contract. The name of the
 contract comes from the url
 
-@docs page, Model, Msg
+@docs page, Model, ContractStatus, Msg
 
 @docs toElmSubscription
 
@@ -883,10 +882,20 @@ viewSelectedActionForm userState action actionInput actionSubmitionStatus =
         )
 
 
+{-| The model for this page
+-}
 type alias Model =
     { contractStatus : ContractStatus
     , connectWalletDropdownState : Dropdown.State
     }
+
+
+{-| The status of the loaded contract based on the url
+-}
+type ContractStatus
+    = InvalidContractName Eos.Name.Error
+    | ContractNameDoesntExist Eos.Name.Name
+    | ValidContract ValidContractInfo
 
 
 {-| This page's msgs
@@ -925,14 +934,6 @@ toElmSubscription toElm =
 
         _ ->
             Nothing
-
-
-{-| This page's model
--}
-type ContractStatus
-    = InvalidContractName Eos.Name.Error
-    | ContractNameDoesntExist Eos.Name.Name
-    | ValidContract ValidContractInfo
 
 
 type alias ValidContractInfo =
