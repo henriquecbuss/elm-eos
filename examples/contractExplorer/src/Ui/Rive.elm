@@ -1,19 +1,24 @@
-module Ui.Rive exposing (LoadingState(..), viewLoadingAnimation)
+module Ui.Rive exposing (viewLoadingAnimation, LoadingState(..))
+
+{-| This module uses the auto-generated Ui.RiveComponent module to define animations
+from Rive files
+
+@docs viewLoadingAnimation, LoadingState
+
+-}
 
 import Html
 import Html.Attributes as Attr
 import Ui.RiveComponent
 
 
-type LoadingState
-    = Loading
-    | Failure
-    | Success
-
-
+{-| An HTML element that plays a loading animation, with a failure and success
+animation
+-}
 viewLoadingAnimation : List (Html.Attribute msg) -> LoadingState -> Html.Html msg
 viewLoadingAnimation attrs stateMachineState =
     let
+        intStateMachineState : Int
         intStateMachineState =
             case stateMachineState of
                 Loading ->
@@ -33,3 +38,11 @@ viewLoadingAnimation attrs stateMachineState =
             :: attrs
         )
         []
+
+
+{-| The state of the state machine in the Rive file for `viewLoadingAnimation`
+-}
+type LoadingState
+    = Loading
+    | Failure
+    | Success
