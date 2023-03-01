@@ -285,8 +285,6 @@ cambiatusCmActionColumns exampleData =
     , wrapCol stringColumn "description" .description unwrap
     , wrapCol assetColumn "reward" .reward unwrap
     , wrapCol assetColumn "verifierReward" .reward unwrap
-
-    -- TODO - Turn this into posix?
     , wrapCol intColumn "deadline" .deadline unwrap
     , wrapCol intColumn "usages" .usages unwrap
     , wrapCol intColumn "usagesLeft" .usagesLeft unwrap
@@ -531,8 +529,6 @@ cambiatusTkAccountsColumns exampleData =
                     exampleData
     in
     [ wrapCol assetColumn "balance" .balance unwrap
-
-    -- TODO - Posix?
     , wrapCol intColumn "lastActivity" .lastActivity unwrap
     ]
 
