@@ -132,6 +132,7 @@ There are a few moving pieces that need to work together in order to use
    elm install henriquecbuss/elm-eos
    elm install elm/json
    elm install elm/http
+   elm install elm/time
    elm install NoRedInk/elm-json-decode-pipeline
    elm install elm-community/maybe-extra
    ```
