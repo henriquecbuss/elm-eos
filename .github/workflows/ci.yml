@@ -122,7 +122,7 @@ jobs:
           path: examples/transfer/node_modules
           key: node_modules-${{ hashFiles('package.json', 'package-lock.json') }}
 
-      - name: npm ci
+      - name: npm ci in transfer example
         if: steps.cache-transfer-example-node_modules.outputs.cache-hit != 'true'
         env:
           # If you have a `"postinstall": "elm-tooling install"` script in your
@@ -141,19 +141,19 @@ jobs:
       # node_modules/.bin/ contains links to all your tools. `elm-tooling
       # install` runs very fast when there’s nothing new to download so
       # skipping the step doesn’t save much time.
-      - name: elm-tooling install
+      - name: elm-tooling install in transfer example
         run: npx elm-tooling install
         working-directory: examples/transfer
 
-      - name: Generate
+      - name: Generate transfer example
         run: npm run generate
         working-directory: examples/transfer
 
-      - name: Build
+      - name: Build transfer example
         run: npm run build
         working-directory: examples/transfer
 
-      - name: Lint
+      - name: Lint transfer example
         run: npm run lint
         working-directory: examples/transfer
 
@@ -165,7 +165,7 @@ jobs:
           path: examples/contractExplorer/node_modules
           key: node_modules-${{ hashFiles('package.json', 'package-lock.json') }}
 
-      - name: npm ci
+      - name: npm ci in contractExplorer example
         if: steps.cache-contractExplorer-example-node_modules.outputs.cache-hit != 'true'
         env:
           # If you have a `"postinstall": "elm-tooling install"` script in your
@@ -184,19 +184,19 @@ jobs:
       # node_modules/.bin/ contains links to all your tools. `elm-tooling
       # install` runs very fast when there’s nothing new to download so
       # skipping the step doesn’t save much time.
-      - name: elm-tooling install
+      - name: elm-tooling install in contractExplorer example
         run: npx elm-tooling install
         working-directory: examples/contractExplorer
 
-      - name: Generate
+      - name: Generate contractExplorer example
         run: npm run generate
         working-directory: examples/contractExplorer
 
-      - name: Build
+      - name: Build contractExplorer example
         run: npm run build
         working-directory: examples/contractExplorer
 
-      - name: Lint
+      - name: Lint contractExplorer example
         run: npm run lint
         working-directory: examples/contractExplorer
 
@@ -208,7 +208,7 @@ jobs:
           path: examples/memberFetching/node_modules
           key: node_modules-${{ hashFiles('package.json', 'package-lock.json') }}
 
-      - name: npm ci
+      - name: npm ci in memberFetching example
         if: steps.cache-memberFetching-example-node_modules.outputs.cache-hit != 'true'
         env:
           # If you have a `"postinstall": "elm-tooling install"` script in your
@@ -227,19 +227,19 @@ jobs:
       # node_modules/.bin/ contains links to all your tools. `elm-tooling
       # install` runs very fast when there’s nothing new to download so
       # skipping the step doesn’t save much time.
-      - name: elm-tooling install
+      - name: elm-tooling install in memberFetching example
         run: npx elm-tooling install
         working-directory: examples/memberFetching
 
-      - name: Generate
+      - name: Generate memberFetching example
         run: npm run generate
         working-directory: examples/memberFetching
 
-      - name: Build
+      - name: Build memberFetching example
         run: npm run build
         working-directory: examples/memberFetching
 
-      - name: Lint
+      - name: Lint memberFetching example
         run: npm run lint
         working-directory: examples/memberFetching
 
