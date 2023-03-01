@@ -175,6 +175,7 @@ config =
                 , "generated"
                 , "tests/VerifyExamples"
                 , "../../src"
+                , "../../tests"
                 ]
             )
 
