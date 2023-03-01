@@ -119,8 +119,16 @@ sendMoney { currentUser, currentPermission, to, amount } =
 ```
 
 You can then send that JSON to the blockchain using the `eosjs` library (through
-a port), or using your preferred method. Check out the [examples](https://github.com/henriquecbuss/elm-eos/examples) folder for
-complete examples.
+a port), or using your preferred method.
+
+### Examples
+
+You can take a look at the [examples](https://github.com/henriquecbuss/elm-eos/examples) folder
+for complete examples (each one has more detailed information in their `README.md`):
+
+- [memberFetching](https://github.com/henriquecbuss/elm-eos/examples/memberFetching): a simple example of fetching data from the blockchain and displaying it in a table. This is the simplest example there is, and it's a good place to start.
+- [transfer](https://github.com/henriquecbuss/elm-eos/examples/transfer): a more complex example, where you can send a transfer to the blockchain. This is an example for when you know what actions do and which ones you want to use.
+- [contractExplorer](https://github.com/henriquecbuss/elm-eos/examples/contractExplorer): an even more complex example, where you can explore the tables and actions of multiple contracts. This is an example for when you want to explore the API of a contract, and see what actions and tables it has. This example also includes integration with third-party wallets using [eos-transit](https://github.com/eosnewyork/eos-transit). This app is roughly what the tool generation does for you if you ask it to generate an app based on some contracts.
 
 ## Setup
 
