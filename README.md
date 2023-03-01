@@ -135,6 +135,7 @@ There are a few moving pieces that need to work together in order to use
    elm install elm/time
    elm install NoRedInk/elm-json-decode-pipeline
    elm install elm-community/maybe-extra
+   elm install elm-community/result-extra
    ```
 
 2. Install the `elm-eos` command line through npm. This is what you will
