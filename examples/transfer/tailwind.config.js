@@ -1,25 +1,25 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ["./src/**/*.elm"],
+export default {
+  content: ['./src/**/*.elm'],
   theme: {
     extend: {
       fontFamily: {
         sans: [
-          "Source Sans Pro",
-          "Trebuchet MS",
-          "Lucida Grande",
-          "Bitstream Vera Sans",
-          "Helvetica Neue",
-          "sans-serif",
+          'Source Sans Pro',
+          'Trebuchet MS',
+          'Lucida Grande',
+          'Bitstream Vera Sans',
+          'Helvetica Neue',
+          'sans-serif',
         ],
       },
       colors: {
         blue: {
-          elm: "#5fabdc",
+          elm: '#5fabdc',
         },
-        body: "#000e16",
+        body: '#000e16',
       },
     },
   },
   plugins: [],
-};
+}
