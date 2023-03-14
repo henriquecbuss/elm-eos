@@ -17,12 +17,9 @@ import Task
 import Url.Builder
 
 
-type alias CliOptions =
-    { url : String
-    , output : String
-    , base : List String
-    , contracts : List String
-    }
+type CliOptions
+    = ApiFiles ApiFilesOptions
+    | GenerateDapp GenerateDappOptions
 
 
 type alias Model =
@@ -60,11 +57,65 @@ main =
 
 config : Cli.Program.Config CliOptions
 config =
-    Cli.Program.add baseUrlOptionsParser Cli.Program.config
+    Cli.Program.add createDappOptionsParser Cli.Program.config
+        |> Cli.Program.add apiFilesOptionsParser
 
 
-baseUrlOptionsParser : Cli.OptionsParser.OptionsParser CliOptions Cli.OptionsParser.BuilderState.AnyOptions
-baseUrlOptionsParser =
+urlValidator :
+    String
+    -> String
+urlValidator =
+    \url ->
+        if String.endsWith "/" url then
+            String.dropRight 1 url
+
+        else
+            url
+
+
+elmPathParser :
+    Cli.Option.Option from (Maybe String) builderState
+    -> Cli.Option.Option from (Maybe (List String)) builderState
+elmPathParser =
+    Maybe.map (String.split ".")
+        |> Cli.Option.map
+
+
+contractListValidator :
+    Cli.Option.Option from (List String) builderState
+    -> Cli.Option.Option from (List String) builderState
+contractListValidator =
+    Cli.Option.validateMap
+        (List.foldr
+            (\contract context ->
+                case validateContractName contract of
+                    Ok validContract ->
+                        { context | oks = validContract :: context.oks }
+
+                    Err errorMessage ->
+                        { context | errs = errorMessage :: context.errs }
+            )
+            { errs = []
+            , oks = []
+            }
+            >> (\{ errs, oks } ->
+                    if List.isEmpty errs then
+                        Ok oks
+
+                    else
+                        Err
+                            ("All contract names must be up to 12 characters long, with characters from a-Z, 1-5 and . (except for the last character, which can't be a .). Here are all the errors I found:\n\n"
+                                ++ (List.map (\err -> "\t- " ++ err) errs
+                                        |> String.join "\n"
+                                   )
+                                ++ "\n"
+                            )
+               )
+        )
+
+
+apiFilesOptionsParser : Cli.OptionsParser.OptionsParser CliOptions Cli.OptionsParser.BuilderState.AnyOptions
+apiFilesOptionsParser =
     Cli.OptionsParser.build
         (\url output base contracts ->
             { url = url
@@ -73,105 +124,111 @@ baseUrlOptionsParser =
             , contracts = contracts
             }
         )
-        |> Cli.OptionsParser.with urlArg
-        |> Cli.OptionsParser.with outputArg
-        |> Cli.OptionsParser.with baseArg
-        |> Cli.OptionsParser.with contractsArg
+        |> Cli.OptionsParser.with
+            (Cli.Option.requiredPositionalArg "url"
+                |> Cli.Option.map urlValidator
+            )
+        |> Cli.OptionsParser.with
+            (Cli.Option.optionalKeywordArg "output"
+                |> Cli.Option.map (Maybe.withDefault "generated")
+            )
+        |> Cli.OptionsParser.with
+            (Cli.Option.optionalKeywordArg "base"
+                |> elmPathParser
+                |> Cli.Option.map (Maybe.withDefault [])
+            )
+        |> Cli.OptionsParser.with
+            (Cli.Option.keywordArgList "contract"
+                |> nonEmptyListValidator "I need at least one contract. You can give me a list like this:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
+                |> contractListValidator
+            )
         |> Cli.OptionsParser.withDoc "Get specified contracts from url. For example:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --output generated --base My.Contract\n"
+        |> Cli.OptionsParser.map ApiFiles
 
 
-urlArg : Cli.Option.Option String String Cli.Option.BeginningOption
-urlArg =
-    Cli.Option.requiredPositionalArg "url"
-        |> Cli.Option.map
-            (\url ->
-                if String.endsWith "/" url then
-                    String.dropRight 1 url
-
-                else
-                    url
-            )
-
-
-outputArg : Cli.Option.Option (Maybe String) String Cli.Option.BeginningOption
-outputArg =
-    Cli.Option.optionalKeywordArg "output"
-        |> Cli.Option.map (Maybe.withDefault "generated")
-
-
-baseArg : Cli.Option.Option (Maybe String) (List String) Cli.Option.BeginningOption
-baseArg =
-    Cli.Option.optionalKeywordArg "base"
-        |> Cli.Option.map
-            (Maybe.map (String.split ".")
-                >> Maybe.withDefault []
-            )
-
-
-
--- INITIALIZING
-
-
-contractsArg : Cli.Option.Option (List String) (List String) Cli.Option.BeginningOption
-contractsArg =
-    Cli.Option.keywordArgList "contract"
+nonEmptyListValidator : String -> Cli.Option.Option from (List a) builderState -> Cli.Option.Option from (List a) builderState
+nonEmptyListValidator errorMessage =
+    Cli.Validate.predicate
+        errorMessage
+        (\list -> not (List.isEmpty list))
         |> Cli.Option.validate
-            (Cli.Validate.predicate
-                "I need at least one contract. You can give me a list like this:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
-                (List.isEmpty
-                    >> not
-                )
-            )
-        |> Cli.Option.validateMap
-            (List.foldr
-                (\contract context ->
-                    case validateContractName contract of
-                        Ok validContract ->
-                            { context | oks = validContract :: context.oks }
 
-                        Err errorMessage ->
-                            { context | errs = errorMessage :: context.errs }
-                )
-                { errs = []
-                , oks = []
-                }
-                >> (\{ errs, oks } ->
-                        if List.isEmpty errs then
-                            Ok oks
+
+createDappOptionsParser : Cli.OptionsParser.OptionsParser CliOptions Cli.OptionsParser.BuilderState.NoMoreOptions
+createDappOptionsParser =
+    Cli.OptionsParser.buildSubCommand "create-dapp"
+        (\url apiFilesOutput apiFilesBase outputDirectory contracts ->
+            { outputDirectory = outputDirectory
+            , url = url
+            , apiFilesOutput = apiFilesOutput
+            , apiBase = apiFilesBase
+            , contracts = contracts
+            }
+        )
+        |> Cli.OptionsParser.with
+            (Cli.Option.optionalKeywordArg "url"
+                |> optionallyValidate urlValidator
+            )
+        |> Cli.OptionsParser.with (Cli.Option.optionalKeywordArg "api-files-output")
+        |> Cli.OptionsParser.with
+            (Cli.Option.optionalKeywordArg "api-files-base"
+                |> elmPathParser
+            )
+        |> Cli.OptionsParser.withOptionalPositionalArg (Cli.Option.optionalPositionalArg "output directory")
+        |> Cli.OptionsParser.withRestArgs
+            (Cli.Option.restArgs "contracts"
+                |> contractListValidator
+                |> Cli.Option.map
+                    (\contracts ->
+                        if List.isEmpty contracts then
+                            Nothing
 
                         else
-                            Err
-                                ("All contract names must be up to 12 characters long, with characters from a-Z, 1-5 and . (except for the last character, which can't be a .). Here are all the errors I found:\n\n"
-                                    ++ (List.map (\err -> "\t- " ++ err) errs
-                                            |> String.join "\n"
-                                       )
-                                    ++ "\n"
-                                )
-                   )
+                            Just contracts
+                    )
             )
+        |> Cli.OptionsParser.withDoc "Generate a dapp from the given contracts. For example:\n\n\telm-eos create-dapp --url https://mydomain.com/v1/chain --apiFilesOutput generated --apiFilesBase My.Contract --outputDirectory my-dapp --contract first --contract second\n"
+        |> Cli.OptionsParser.map GenerateDapp
+
+
+optionallyValidate :
+    (a -> b)
+    -> Cli.Option.Option from (Maybe a) builderState
+    -> Cli.Option.Option from (Maybe b) builderState
+optionallyValidate validationFn =
+    Cli.Option.map (Maybe.map validationFn)
 
 
 init : InteropDefinitions.Flags -> CliOptions -> ( Model, Effect )
 init _ cliOptions =
     ( {}
-    , FetchContracts { baseUrl = cliOptions.url, contracts = cliOptions.contracts }
+    , case cliOptions of
+        ApiFiles apiFilesOptions ->
+            FetchContracts
+                { baseUrl = apiFilesOptions.url
+                , contracts = apiFilesOptions.contracts
+                }
+
+        _ ->
+            Debug.todo ""
     )
-
-
-
--- UPDATING
 
 
 update : CliOptions -> Msg -> Model -> ( Model, Effect )
 update cliOptions msg model =
     case msg of
         GotAbis (Ok abis) ->
-            ( model
-            , WriteToFiles
-                { output = cliOptions.output
-                , files = Generate.apiFiles cliOptions.base abis
-                }
-            )
+            case cliOptions of
+                ApiFiles apiFilesOptions ->
+                    ( model
+                    , WriteToFiles
+                        { output = apiFilesOptions.output
+                        , files = Generate.apiFiles apiFilesOptions.base abis
+                        }
+                    )
+
+                _ ->
+                    Debug.todo ""
 
         GotAbis (Err error) ->
             ( model
@@ -308,10 +365,6 @@ effectToCmd effect =
                 |> InteropPorts.fromElm
 
 
-
--- EFFECTS
-
-
 validateContractName : String -> Result String String
 validateContractName contract =
     let
@@ -350,6 +403,23 @@ validateContractName contract =
                        )
                     ++ "."
                 )
+
+
+type alias ApiFilesOptions =
+    { url : String
+    , output : String
+    , base : List String
+    , contracts : List String
+    }
+
+
+type alias GenerateDappOptions =
+    { outputDirectory : Maybe String
+    , url : Maybe String
+    , apiFilesOutput : Maybe String
+    , apiBase : Maybe (List String)
+    , contracts : Maybe (List String)
+    }
 
 
 type Effect
