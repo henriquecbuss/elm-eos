@@ -1,4 +1,4 @@
-module Main exposing (CliOptions, Model, Msg, main, validateContractName)
+module Command.GenerateApiFiles exposing (CliOptions, Model, Msg, main, validateContractName)
 
 import Abi
 import Cli.Option
@@ -6,20 +6,23 @@ import Cli.OptionsParser
 import Cli.OptionsParser.BuilderState
 import Cli.Program
 import Cli.Validate
+import Command.GenerateApiFiles.InteropDefinitions as InteropDefinitions
+import Command.GenerateApiFiles.InteropPorts as InteropPorts
 import Elm
 import Generate
 import Http
-import InteropDefinitions
-import InteropPorts
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Task
 import Url.Builder
 
 
-type CliOptions
-    = ApiFiles ApiFilesOptions
-    | GenerateDapp GenerateDappOptions
+type alias CliOptions =
+    { url : String
+    , output : String
+    , base : List String
+    , contracts : List String
+    }
 
 
 type alias Model =
@@ -57,8 +60,38 @@ main =
 
 config : Cli.Program.Config CliOptions
 config =
-    Cli.Program.add createDappOptionsParser Cli.Program.config
-        |> Cli.Program.add apiFilesOptionsParser
+    Cli.Program.add apiFilesOptionsParser Cli.Program.config
+
+
+apiFilesOptionsParser : Cli.OptionsParser.OptionsParser CliOptions Cli.OptionsParser.BuilderState.AnyOptions
+apiFilesOptionsParser =
+    Cli.OptionsParser.build
+        (\url output base contracts ->
+            { url = url
+            , output = output
+            , base = base
+            , contracts = contracts
+            }
+        )
+        |> Cli.OptionsParser.with
+            (Cli.Option.requiredPositionalArg "url"
+                |> Cli.Option.map urlValidator
+            )
+        |> Cli.OptionsParser.with
+            (Cli.Option.optionalKeywordArg "output"
+                |> Cli.Option.map (Maybe.withDefault "generated")
+            )
+        |> Cli.OptionsParser.with
+            (Cli.Option.optionalKeywordArg "base"
+                |> elmPathParser
+                |> Cli.Option.map (Maybe.withDefault [])
+            )
+        |> Cli.OptionsParser.with
+            (Cli.Option.keywordArgList "contract"
+                |> nonEmptyListValidator "I need at least one contract. You can give me a list like this:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
+                |> contractListValidator
+            )
+        |> Cli.OptionsParser.withDoc "Get specified contracts from url. For example:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --output generated --base My.Contract\n"
 
 
 urlValidator :
@@ -114,38 +147,6 @@ contractListValidator =
         )
 
 
-apiFilesOptionsParser : Cli.OptionsParser.OptionsParser CliOptions Cli.OptionsParser.BuilderState.AnyOptions
-apiFilesOptionsParser =
-    Cli.OptionsParser.build
-        (\url output base contracts ->
-            { url = url
-            , output = output
-            , base = base
-            , contracts = contracts
-            }
-        )
-        |> Cli.OptionsParser.with
-            (Cli.Option.requiredPositionalArg "url"
-                |> Cli.Option.map urlValidator
-            )
-        |> Cli.OptionsParser.with
-            (Cli.Option.optionalKeywordArg "output"
-                |> Cli.Option.map (Maybe.withDefault "generated")
-            )
-        |> Cli.OptionsParser.with
-            (Cli.Option.optionalKeywordArg "base"
-                |> elmPathParser
-                |> Cli.Option.map (Maybe.withDefault [])
-            )
-        |> Cli.OptionsParser.with
-            (Cli.Option.keywordArgList "contract"
-                |> nonEmptyListValidator "I need at least one contract. You can give me a list like this:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --contract third\n"
-                |> contractListValidator
-            )
-        |> Cli.OptionsParser.withDoc "Get specified contracts from url. For example:\n\n\telm-eos https://mydomain.com/v1/chain --contract first --contract second --output generated --base My.Contract\n"
-        |> Cli.OptionsParser.map ApiFiles
-
-
 nonEmptyListValidator : String -> Cli.Option.Option from (List a) builderState -> Cli.Option.Option from (List a) builderState
 nonEmptyListValidator errorMessage =
     Cli.Validate.predicate
@@ -154,63 +155,13 @@ nonEmptyListValidator errorMessage =
         |> Cli.Option.validate
 
 
-createDappOptionsParser : Cli.OptionsParser.OptionsParser CliOptions Cli.OptionsParser.BuilderState.NoMoreOptions
-createDappOptionsParser =
-    Cli.OptionsParser.buildSubCommand "create-dapp"
-        (\url apiFilesOutput apiFilesBase outputDirectory contracts ->
-            { outputDirectory = outputDirectory
-            , url = url
-            , apiFilesOutput = apiFilesOutput
-            , apiBase = apiFilesBase
-            , contracts = contracts
-            }
-        )
-        |> Cli.OptionsParser.with
-            (Cli.Option.optionalKeywordArg "url"
-                |> optionallyValidate urlValidator
-            )
-        |> Cli.OptionsParser.with (Cli.Option.optionalKeywordArg "api-files-output")
-        |> Cli.OptionsParser.with
-            (Cli.Option.optionalKeywordArg "api-files-base"
-                |> elmPathParser
-            )
-        |> Cli.OptionsParser.withOptionalPositionalArg (Cli.Option.optionalPositionalArg "output directory")
-        |> Cli.OptionsParser.withRestArgs
-            (Cli.Option.restArgs "contracts"
-                |> contractListValidator
-                |> Cli.Option.map
-                    (\contracts ->
-                        if List.isEmpty contracts then
-                            Nothing
-
-                        else
-                            Just contracts
-                    )
-            )
-        |> Cli.OptionsParser.withDoc "Generate a dapp from the given contracts. For example:\n\n\telm-eos create-dapp --url https://mydomain.com/v1/chain --apiFilesOutput generated --apiFilesBase My.Contract --outputDirectory my-dapp --contract first --contract second\n"
-        |> Cli.OptionsParser.map GenerateDapp
-
-
-optionallyValidate :
-    (a -> b)
-    -> Cli.Option.Option from (Maybe a) builderState
-    -> Cli.Option.Option from (Maybe b) builderState
-optionallyValidate validationFn =
-    Cli.Option.map (Maybe.map validationFn)
-
-
 init : InteropDefinitions.Flags -> CliOptions -> ( Model, Effect )
 init _ cliOptions =
     ( {}
-    , case cliOptions of
-        ApiFiles apiFilesOptions ->
-            FetchContracts
-                { baseUrl = apiFilesOptions.url
-                , contracts = apiFilesOptions.contracts
-                }
-
-        _ ->
-            Debug.todo ""
+    , FetchContracts
+        { baseUrl = cliOptions.url
+        , contracts = cliOptions.contracts
+        }
     )
 
 
@@ -218,17 +169,12 @@ update : CliOptions -> Msg -> Model -> ( Model, Effect )
 update cliOptions msg model =
     case msg of
         GotAbis (Ok abis) ->
-            case cliOptions of
-                ApiFiles apiFilesOptions ->
-                    ( model
-                    , WriteToFiles
-                        { output = apiFilesOptions.output
-                        , files = Generate.apiFiles apiFilesOptions.base abis
-                        }
-                    )
-
-                _ ->
-                    Debug.todo ""
+            ( model
+            , WriteToFiles
+                { output = cliOptions.output
+                , files = Generate.apiFiles cliOptions.base abis
+                }
+            )
 
         GotAbis (Err error) ->
             ( model
@@ -403,23 +349,6 @@ validateContractName contract =
                        )
                     ++ "."
                 )
-
-
-type alias ApiFilesOptions =
-    { url : String
-    , output : String
-    , base : List String
-    , contracts : List String
-    }
-
-
-type alias GenerateDappOptions =
-    { outputDirectory : Maybe String
-    , url : Maybe String
-    , apiFilesOutput : Maybe String
-    , apiBase : Maybe (List String)
-    , contracts : Maybe (List String)
-    }
 
 
 type Effect

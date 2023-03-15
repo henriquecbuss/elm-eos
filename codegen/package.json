@@ -5,7 +5,10 @@
   "scripts": {
     "build": "NODE_ENV=production ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts",
     "execute": "eslint . && tsc --noEmit && ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts && node dist/index.js",
-    "generate-ts-interop": "elm-ts-interop --output src/Main.elm.d.ts",
+    "execute:generate-dapp": "eslint . && tsc --noEmit && ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts && node dist/generateDapp.js",
+    "gen:ts-interop": "npm run gen:ts-interop:api-files && npm run gen:ts-interop:dapp",
+    "gen:ts-interop:api-files": "elm-ts-interop --output src/Command/GenerateApiFiles.elm.d.ts --definition-module Command.GenerateApiFiles.InteropDefinitions --entrypoint Command.GenerateApiFiles",
+    "gen:ts-interop:dapp": "elm-ts-interop --output src/Command/GenerateDapp.elm.d.ts --definition-module Command.GenerateDapp.InteropDefinitions --entrypoint Command.GenerateDapp",
     "lint": "eslint . && NODE_ENV=production tsc --noEmit"
   },
   "keywords": [
@@ -23,6 +26,8 @@
   },
   "homepage": "https://github.com/henriquecbuss/elm-eos#readme",
   "devDependencies": {
+    "@types/degit": "^2.8.3",
+    "@types/inquirer": "^9.0.3",
     "@types/node": "^18.7.14",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
@@ -39,8 +44,11 @@
     "typescript": "^4.8.2"
   },
   "dependencies": {
+    "degit": "^2.8.4",
     "esbuild": "^0.17.5",
     "esbuild-plugin-elm": "^0.0.12",
+    "inquirer": "^9.1.4",
+    "rxjs": "^7.8.0",
     "ts-node": "^10.9.1",
     "xhr2": "^0.2.1"
   }

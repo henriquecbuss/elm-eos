@@ -24,5 +24,5 @@ module.exports = {
     quotes: [2, "double"],
     semi: [2, "always"],
   },
-  ignorePatterns: ["src/Main.elm.d.ts", "dist/", "bin/", "elm-stuff/"],
+  ignorePatterns: ["src/Command/**/*.elm.d.ts", "dist/", "bin/", "elm-stuff/"],
 };

@@ -1,4 +1,4 @@
-module InteropDefinitions exposing (Flags, FlagsWithoutArgv, FromElm(..), ToElm(..), interop)
+module Command.GenerateApiFiles.InteropDefinitions exposing (Flags, FlagsWithoutArgv, FromElm(..), ToElm(..), interop)
 
 import Cli.Program
 import Elm
