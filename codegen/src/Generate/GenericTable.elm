@@ -30,6 +30,7 @@ module Generate.GenericTable exposing
 -}
 
 import Abi
+import Context
 import Elm
 import Elm.Annotation
 import Elm.Case
@@ -47,18 +48,6 @@ import Generate.Table
 import String.Extra
 
 
-contractNamePartsWithoutBase : String -> List String
-contractNamePartsWithoutBase contract =
-    String.split "." contract
-        |> List.map String.Extra.classify
-
-
-contractNameParts : List String -> String -> List String
-contractNameParts base contract =
-    (base ++ String.split "." contract)
-        |> List.map String.Extra.classify
-
-
 type_ : List String -> List String -> Elm.Declaration
 type_ base contracts =
     Elm.customType "Table"
@@ -67,10 +56,10 @@ type_ base contracts =
                 let
                     baseContractName : String
                     baseContractName =
-                        String.concat (contractNamePartsWithoutBase contract)
+                        String.concat (Context.contractNamePartsWithoutBase contract)
                 in
                 Elm.variantWith (baseContractName ++ "Table")
-                    [ Elm.Annotation.named (contractNameParts base contract ++ [ "Table", "Metadata" ]) "Table"
+                    [ Elm.Annotation.named (Context.contractNameParts base contract ++ [ "Table", "Metadata" ]) "Table"
                     ]
             )
             contracts
@@ -111,12 +100,12 @@ toId base contractsAndTables =
                         let
                             constructor : String
                             constructor =
-                                String.concat (contractNamePartsWithoutBase contract ++ [ "Table" ])
+                                String.concat (Context.contractNamePartsWithoutBase contract ++ [ "Table" ])
                         in
                         Elm.Case.branch1 constructor
                             ( "table"
                             , Elm.Annotation.named
-                                (contractNameParts base contract ++ [ "Table", "Metadata" ])
+                                (Context.contractNameParts base contract ++ [ "Table", "Metadata" ])
                                 "Table"
                             )
                             (contractToId base contract tables)
@@ -129,7 +118,7 @@ toId base contractsAndTables =
 contractToId : List String -> String -> List Abi.Table -> Elm.Expression -> Elm.Expression
 contractToId base contract tables tableExpr =
     Elm.Case.custom tableExpr
-        (Elm.Annotation.named (contractNameParts base contract ++ [ "Table", "Metadata" ]) "Table")
+        (Elm.Annotation.named (Context.contractNameParts base contract ++ [ "Table", "Metadata" ]) "Table")
         (List.map
             (\table ->
                 Elm.Case.branch1 (String.Extra.classify table.name)
@@ -173,19 +162,19 @@ columns base contractsAndTables =
                         let
                             contractName : String
                             contractName =
-                                contractNamePartsWithoutBase contract
+                                Context.contractNamePartsWithoutBase contract
                                     |> String.concat
                         in
                         Elm.Case.branch1 (contractName ++ "Table")
                             ( String.Extra.camelize contractName ++ "Table"
                             , Elm.Annotation.named
-                                (contractNameParts base contract ++ [ "Table", "Metadata" ])
+                                (Context.contractNameParts base contract ++ [ "Table", "Metadata" ])
                                 "Table"
                             )
                             (\tableMetadata ->
                                 Elm.Case.custom tableMetadata
                                     (Elm.Annotation.named
-                                        (contractNameParts base contract ++ [ "Table", "Metadata" ])
+                                        (Context.contractNameParts base contract ++ [ "Table", "Metadata" ])
                                         "Table"
                                     )
                                     (List.map
@@ -193,7 +182,7 @@ columns base contractsAndTables =
                                             Elm.Case.branch1
                                                 (String.Extra.classify table.name)
                                                 ( String.Extra.camelize table.name
-                                                , Elm.Annotation.named (contractNameParts base contract ++ [ "Table" ])
+                                                , Elm.Annotation.named (Context.contractNameParts base contract ++ [ "Table" ])
                                                     (String.Extra.classify table.name)
                                                 )
                                                 (\specificTable ->
@@ -201,7 +190,7 @@ columns base contractsAndTables =
                                                         (Elm.value
                                                             { annotation =
                                                                 Elm.Annotation.function
-                                                                    [ Elm.Annotation.named (contractNameParts base contract ++ [ "Table" ])
+                                                                    [ Elm.Annotation.named (Context.contractNameParts base contract ++ [ "Table" ])
                                                                         (String.Extra.classify table.name)
                                                                     ]
                                                                     (Gen.Table.annotation_.column (Elm.Annotation.named [] "Table") (Elm.Annotation.var "msg_")
@@ -250,14 +239,14 @@ columnsForTable base contract table =
     let
         contractName : String
         contractName =
-            contractNamePartsWithoutBase contract
+            Context.contractNamePartsWithoutBase contract
                 |> String.concat
                 |> String.Extra.decapitalize
     in
     Elm.Declare.fn (contractName ++ String.Extra.classify table.name ++ "Columns")
         ( "exampleData"
         , Elm.Annotation.named
-            (contractNameParts base contract ++ [ "Table" ])
+            (Context.contractNameParts base contract ++ [ "Table" ])
             (String.Extra.classify table.name)
             |> Just
         )
@@ -293,13 +282,13 @@ columnsForTable base contract table =
                                 ( "table", Elm.Annotation.named [] "Table" )
                                 (\tableFromRightContract ->
                                     Elm.Case.custom tableFromRightContract
-                                        (Elm.Annotation.named (contractNameParts base contract ++ [ "Table", "Metadata" ])
+                                        (Elm.Annotation.named (Context.contractNameParts base contract ++ [ "Table", "Metadata" ])
                                             (String.Extra.classify table.name)
                                         )
                                         [ Elm.Case.branch1 (String.Extra.classify table.name)
                                             ( String.Extra.camelize table.name
                                             , Elm.Annotation.named
-                                                (contractNameParts base contract ++ [ "Table", "Metadata" ])
+                                                (Context.contractNameParts base contract ++ [ "Table", "Metadata" ])
                                                 (String.Extra.classify table.name)
                                             )
                                             (\finalTable -> finalTable)
