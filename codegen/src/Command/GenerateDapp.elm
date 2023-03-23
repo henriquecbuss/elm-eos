@@ -72,7 +72,7 @@ update msg model =
             -- TODO - Also generate src/EosTable.elm and src/EosAction.elm
             addFilesToWriteAndIssueEffect
                 (\options ->
-                    ( Generate.apiFiles options.apiBase abis
+                    ( Generate.files options.apiBase abis
                         |> List.map
                             (\file ->
                                 { contents = file.contents
