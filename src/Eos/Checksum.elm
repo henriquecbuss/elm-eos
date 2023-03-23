@@ -1,7 +1,7 @@
 module Eos.Checksum exposing
     ( Checksum
     , encode, decoder
-    , fromString
+    , fromString, toString
     )
 
 {-|
@@ -10,7 +10,7 @@ module Eos.Checksum exposing
 
 @docs encode, decoder
 
-@docs fromString
+@docs fromString, toString
 
 -}
 
@@ -43,3 +43,10 @@ decoder =
 fromString : String -> Checksum
 fromString =
     Checksum
+
+
+{-| Turn a Checksum into a String
+-}
+toString : Checksum -> String
+toString (Checksum checksum) =
+    checksum

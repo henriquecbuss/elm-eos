@@ -1,7 +1,7 @@
 module Eos.Signature exposing
     ( Signature
     , encode, decoder
-    , fromString
+    , fromString, toString
     )
 
 {-|
@@ -10,7 +10,7 @@ module Eos.Signature exposing
 
 @docs encode, decoder
 
-@docs fromString
+@docs fromString, toString
 
 -}
 
@@ -43,3 +43,10 @@ decoder =
 fromString : String -> Signature
 fromString =
     Signature
+
+
+{-| Turn a Signature into a String
+-}
+toString : Signature -> String
+toString (Signature signature) =
+    signature
