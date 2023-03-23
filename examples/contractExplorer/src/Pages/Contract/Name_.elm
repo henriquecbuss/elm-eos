@@ -12,6 +12,8 @@ contract comes from the url
 
 -}
 
+import Api.Action
+import Api.Table
 import AssocList
 import Dict
 import Dropdown
@@ -19,8 +21,6 @@ import Effect exposing (Effect)
 import Eos.EosType
 import Eos.Name
 import Eos.Query
-import EosAction
-import Api.Table
 import Gen.Params.Contract.Name_ exposing (Params)
 import Gen.Route
 import Heroicons.Outline
@@ -282,7 +282,7 @@ update shared msg model =
                 ValidContract info ->
                     case info.selectedAction of
                         Just actionName ->
-                            case EosAction.fromDict actionName info.actionInput of
+                            case Api.Action.fromDict actionName info.actionInput of
                                 Just action ->
                                     if User.isConnected shared.userState then
                                         ( { model
@@ -663,9 +663,8 @@ viewSelectedTable tableState tableData =
         tableConfig =
             Table.customConfig
                 { columns =
-                    -- Tuple.first tableData.result
-                    --     |> EosTable.columns
-                    []
+                    Tuple.first tableData.result
+                        |> Api.Table.columns
                 , customizations =
                     { tableAttrs = [ class "min-w-full" ]
                     , caption = Nothing

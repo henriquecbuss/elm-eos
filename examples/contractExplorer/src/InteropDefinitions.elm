@@ -12,8 +12,8 @@ Typescript
 
 -}
 
+import Api.Action
 import Eos.Name
-import EosAction
 import TsJson.Decode as TsDecode exposing (Decoder)
 import TsJson.Encode as TsEncode exposing (Encoder, required)
 import WalletProvider exposing (WalletProvider)
@@ -32,7 +32,7 @@ type FromElm
     | ScrollTo { querySelector : String }
     | ConnectWallet WalletProvider
     | DisconnectWallet
-    | PerformEosTransaction EosAction.Action
+    | PerformEosTransaction Api.Action.Action
 
 
 {-| Messages that we can send from Typescript to Elm
@@ -79,7 +79,7 @@ fromElm =
                     vDisconnectWallet {}
 
                 PerformEosTransaction action ->
-                    vPerformEosTransaction { action = EosAction.encode action }
+                    vPerformEosTransaction { action = Api.Action.encode action }
         )
         |> TsEncode.variantTagged "alert"
             (TsEncode.object [ required "message" identity TsEncode.string ])
