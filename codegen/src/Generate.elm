@@ -8,6 +8,7 @@ import Elm
 import EosType
 import Generate.Action
 import Generate.Action.Metadata
+import Generate.GenericAction
 import Generate.GenericTable
 import Generate.Table
 import Generate.Table.Decoder
@@ -119,6 +120,15 @@ genericFiles base abis =
                 )
                 contractsAndTables
         )
+    , prefixedFile [ "Action" ]
+        { docs = [ "This file is a way to use actions in a generic way. It's useful if you want to create pages that can fire any action. For example, if you want to create a contract explorer. Check out https://henriquecbuss/elm-eos/blob/master/examples/contract-explorer for an example on how to use this module." ] }
+        [ Generate.GenericAction.type_ base contracts
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "Generic action" }
+        , (Generate.GenericAction.encode base contracts).declaration
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "JSON" }
+        , (Generate.GenericAction.fromDict base contracts).declaration
+            |> Elm.exposeWith { exposeConstructor = True, group = Just "Building" }
+        ]
     ]
 
 
