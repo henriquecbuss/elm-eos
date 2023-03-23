@@ -14,8 +14,8 @@ module EosAction exposing
 
 -}
 
-import Cambiatus.Cm.Action
-import Cambiatus.Tk.Action
+import Api.Cambiatus.Cm.Action
+import Api.Cambiatus.Tk.Action
 import Dict
 import Eos.Name
 import Json.Encode as Encode
@@ -25,8 +25,8 @@ import Maybe.Extra as MaybeX
 {-| All possible actions
 -}
 type Action
-    = CambiatusCmAction Cambiatus.Cm.Action.Action
-    | CambiatusTkAction Cambiatus.Tk.Action.Action
+    = CambiatusCmAction Api.Cambiatus.Cm.Action.Action
+    | CambiatusTkAction Api.Cambiatus.Tk.Action.Action
 
 
 {-| Encode an action to JSON
@@ -35,10 +35,10 @@ encode : Action -> Encode.Value
 encode genericAction =
     case genericAction of
         CambiatusCmAction action ->
-            Cambiatus.Cm.Action.encode [] action
+            Api.Cambiatus.Cm.Action.encode [] action
 
         CambiatusTkAction action ->
-            Cambiatus.Tk.Action.encode [] action
+            Api.Cambiatus.Tk.Action.encode [] action
 
 
 {-| Turn a dict into an action. Useful for building forms
@@ -46,9 +46,9 @@ encode genericAction =
 fromDict : Eos.Name.Name -> Dict.Dict String String -> Maybe Action
 fromDict contractName inputDict =
     MaybeX.oneOf
-        [ Cambiatus.Cm.Action.fromDict contractName
+        [ Api.Cambiatus.Cm.Action.fromDict contractName
             >> Maybe.map CambiatusCmAction
-        , Cambiatus.Tk.Action.fromDict contractName
+        , Api.Cambiatus.Tk.Action.fromDict contractName
             >> Maybe.map CambiatusTkAction
         ]
         inputDict
