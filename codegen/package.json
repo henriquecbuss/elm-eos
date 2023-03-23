@@ -9,7 +9,9 @@
     "gen:ts-interop": "npm run gen:ts-interop:api-files && npm run gen:ts-interop:dapp",
     "gen:ts-interop:api-files": "elm-ts-interop --output src/Command/GenerateApiFiles.elm.d.ts --definition-module Command.GenerateApiFiles.InteropDefinitions --entrypoint Command.GenerateApiFiles",
     "gen:ts-interop:dapp": "elm-ts-interop --output src/Command/GenerateDapp.elm.d.ts --definition-module Command.GenerateDapp.InteropDefinitions --entrypoint Command.GenerateDapp",
-    "lint": "eslint . && NODE_ENV=production tsc --noEmit"
+    "lint": "npm run lint:elm && npm run lint:ts",
+    "lint:ts": "eslint . && NODE_ENV=production tsc --noEmit",
+    "lint:elm": "elm-review"
   },
   "keywords": [
     "elm",
@@ -31,6 +33,7 @@
     "@types/node": "^18.7.14",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
+    "elm-review": "^2.9.2",
     "elm-tooling": "^1.8.0",
     "elm-ts-interop": "^0.0.8",
     "eslint": "^8.23.0",
