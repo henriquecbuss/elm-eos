@@ -1,4 +1,16 @@
-module EosType exposing (EosType(..), decoder, generateDecoder, generateEncoder, intDecoder, toAnnotation, toExpression)
+module EosType exposing
+    ( EosType(..)
+    , decoder
+    , generateDecoder
+    , generateEncoder
+    , intDecoder
+    , toAnnotation
+    , toExpression
+    , toId
+    , toTypeName
+    , valueToComparable
+    , valueToString
+    )
 
 import Elm
 import Elm.Annotation
@@ -17,9 +29,12 @@ import Gen.Eos.TimePoint
 import Gen.Eos.TimePointSec
 import Gen.Json.Decode
 import Gen.Json.Encode
+import Gen.List
+import Gen.Mask
 import Gen.String
 import Gen.Time
 import Json.Decode as Decode
+import String.Extra
 
 
 {-| This includes all of the native types, declared in [abi\_serializer::configure\_built\_in\_types()](https://github.com/EOSIO/eos/blob/de78b49b5765c88f4e005046d1489c3905985b94/libraries/chain/abi_serializer.cpp#L89-L127).
@@ -477,3 +492,336 @@ toExpression eosType =
 
         EosList innerType ->
             Gen.Eos.EosType.make_.eosList (toExpression innerType)
+
+
+toId : EosType -> Elm.Expression -> Elm.Expression
+toId eosType value =
+    -- elm-review: IGNORE TCO
+    case eosType of
+        EosBool ->
+            Elm.apply (Elm.val "boolToString") [ value ]
+
+        EosInt ->
+            Gen.String.call_.fromInt value
+
+        EosFloat ->
+            Gen.String.call_.fromFloat value
+
+        TimePoint ->
+            Gen.String.call_.fromInt (Gen.Eos.TimePoint.toMicroseconds value)
+
+        TimePointSec ->
+            Gen.String.call_.fromInt (Gen.Eos.TimePointSec.toSeconds value)
+
+        BlockTimestampType ->
+            Gen.String.call_.fromInt (Gen.Time.posixToMillis value)
+
+        Name ->
+            Gen.Eos.Name.toString value
+                |> Elm.withType Elm.Annotation.string
+
+        EosString ->
+            value
+
+        Checksum ->
+            Gen.Eos.Checksum.toString value
+
+        PublicKey ->
+            Gen.Eos.PublicKey.toString value
+
+        Signature ->
+            Gen.Eos.Signature.toString value
+
+        Symbol ->
+            Elm.Op.append
+                (Gen.Eos.Symbol.precision value
+                    |> Gen.String.call_.fromInt
+                )
+                (Gen.Eos.Symbol.code value
+                    |> toId SymbolCode
+                )
+                |> Elm.withType Elm.Annotation.string
+
+        SymbolCode ->
+            Gen.Eos.SymbolCode.toString value
+
+        Asset ->
+            Elm.Op.append
+                (Elm.get "amount" value
+                    |> Gen.String.call_.fromFloat
+                )
+                (Elm.get "symbol" value
+                    |> toId Symbol
+                )
+
+        ExtendedAsset ->
+            Elm.Op.append
+                (Elm.get "contract" value
+                    |> toId Name
+                )
+                (Elm.get "symbol" value
+                    |> toId Symbol
+                )
+                |> Elm.Op.append
+                    (Elm.get "amount" value
+                        |> Gen.String.call_.fromFloat
+                    )
+
+        EosList innerType ->
+            [ Elm.string "["
+            , value
+                |> Elm.Op.pipe
+                    (Elm.apply Gen.List.values_.map
+                        [ Elm.functionReduced "x"
+                            (\x -> toId innerType x)
+                        ]
+                    )
+                |> Elm.Op.pipe
+                    (Elm.apply Gen.String.values_.join [ Elm.string ";" ])
+            , Elm.string "]"
+            ]
+                |> Elm.list
+                |> Gen.String.call_.concat
+
+
+toTypeName : EosType -> String
+toTypeName eosType =
+    -- elm-review: IGNORE TCO
+    case eosType of
+        EosBool ->
+            "bool"
+
+        EosInt ->
+            "int"
+
+        EosFloat ->
+            "float"
+
+        TimePoint ->
+            "timePoint"
+
+        TimePointSec ->
+            "timePointSec"
+
+        BlockTimestampType ->
+            "blockTimestampType"
+
+        Name ->
+            "name"
+
+        EosString ->
+            "string"
+
+        Checksum ->
+            "checksum"
+
+        PublicKey ->
+            "publicKey"
+
+        Signature ->
+            "signature"
+
+        Symbol ->
+            "symbol"
+
+        SymbolCode ->
+            "symbolCode"
+
+        Asset ->
+            "asset"
+
+        ExtendedAsset ->
+            "extendedAsset"
+
+        EosList innerType ->
+            "list" ++ String.Extra.classify (toTypeName innerType)
+
+
+valueToComparable : EosType -> (Elm.Expression -> Elm.Expression)
+valueToComparable eosType expr =
+    -- elm-review: IGNORE TCO
+    case eosType of
+        EosBool ->
+            expr
+
+        EosInt ->
+            expr
+
+        EosFloat ->
+            expr
+
+        TimePoint ->
+            Gen.Eos.TimePoint.toMicroseconds expr
+
+        TimePointSec ->
+            Gen.Eos.TimePointSec.toSeconds expr
+
+        BlockTimestampType ->
+            Gen.Time.posixToMillis expr
+
+        Name ->
+            Gen.Eos.Name.toString expr
+
+        EosString ->
+            expr
+
+        Checksum ->
+            Gen.Eos.Checksum.toString expr
+
+        PublicKey ->
+            Gen.Eos.PublicKey.toString expr
+
+        Signature ->
+            Gen.Eos.Signature.toString expr
+
+        Symbol ->
+            Elm.tuple (Gen.Eos.Symbol.precision expr)
+                (expr
+                    |> Gen.Eos.Symbol.code
+                    |> Gen.Eos.SymbolCode.toString
+                )
+
+        SymbolCode ->
+            Gen.Eos.SymbolCode.toString expr
+
+        Asset ->
+            Elm.triple
+                (Elm.get "symbol" expr
+                    |> Gen.Eos.Symbol.precision
+                )
+                (Elm.get "symbol" expr
+                    |> Gen.Eos.Symbol.code
+                    |> Gen.Eos.SymbolCode.toString
+                )
+                (Elm.get "amount" expr)
+
+        ExtendedAsset ->
+            Elm.triple
+                (Elm.get "contract" expr
+                    |> Gen.Eos.Name.toString
+                )
+                (Elm.get "symbol" expr
+                    |> Gen.Eos.Symbol.precision
+                )
+                (Elm.get "amount" expr
+                    |> Elm.tuple
+                        (Elm.get "symbol" expr
+                            |> Gen.Eos.Symbol.code
+                        )
+                )
+
+        EosList innerType ->
+            Elm.apply Gen.List.values_.map
+                [ Elm.functionReduced "expr" (valueToComparable innerType)
+                , expr
+                ]
+
+
+valueToString : EosType -> Elm.Expression -> Elm.Expression
+valueToString eosType expr =
+    -- elm-review: IGNORE TCO
+    case eosType of
+        EosBool ->
+            Elm.ifThen (Elm.Op.equal expr (Elm.int 1))
+                (Elm.string "Yes")
+                (Elm.string "No")
+
+        EosInt ->
+            Gen.String.call_.fromInt expr
+
+        EosFloat ->
+            Gen.String.call_.fromFloat expr
+
+        TimePoint ->
+            expr
+                |> Gen.Eos.TimePoint.toMicroseconds
+                |> Gen.String.call_.fromInt
+
+        TimePointSec ->
+            expr
+                |> Gen.Eos.TimePointSec.toSeconds
+                |> Gen.String.call_.fromInt
+
+        BlockTimestampType ->
+            expr
+                |> Gen.Time.posixToMillis
+                |> Gen.String.call_.fromInt
+
+        Name ->
+            Gen.Eos.Name.toString expr
+
+        EosString ->
+            expr
+
+        Checksum ->
+            Gen.Eos.Checksum.toString expr
+
+        PublicKey ->
+            Gen.Eos.PublicKey.toString expr
+
+        Signature ->
+            Gen.Eos.Signature.toString expr
+
+        Symbol ->
+            Gen.String.call_.concat
+                (Elm.list
+                    [ Gen.String.call_.fromInt (Gen.Eos.Symbol.precision expr)
+                    , Elm.string ","
+                    , expr
+                        |> Gen.Eos.Symbol.code
+                        |> Gen.Eos.SymbolCode.toString
+                    ]
+                )
+
+        SymbolCode ->
+            Gen.Eos.SymbolCode.toString expr
+
+        Asset ->
+            Gen.String.call_.join (Elm.string " ")
+                ([ Gen.Mask.call_.float
+                    (Gen.Mask.make_.precisely (Gen.Eos.Symbol.precision (Elm.get "symbol" expr)))
+                    (Elm.record
+                        [ ( "decimalSeparator", Elm.string "." )
+                        , ( "thousandsSeparator", Elm.string "" )
+                        ]
+                    )
+                    (Elm.get "amount" expr)
+                 , Gen.Eos.Symbol.code (Elm.get "symbol" expr)
+                    |> Gen.Eos.SymbolCode.toString
+                 ]
+                    |> Elm.list
+                )
+
+        ExtendedAsset ->
+            Gen.String.call_.join (Elm.string " ")
+                ([ Gen.Mask.call_.float
+                    (Gen.Mask.make_.precisely (Gen.Eos.Symbol.precision (Elm.get "symbol" expr)))
+                    (Elm.record
+                        [ ( "decimalSeparator", Elm.string "." )
+                        , ( "thousandsSeparator", Elm.string "" )
+                        ]
+                    )
+                    (Elm.get "amount" expr)
+                 , Gen.String.call_.join (Elm.string ".")
+                    (Elm.list
+                        [ Elm.get "contract" expr
+                        , Gen.Eos.Symbol.code (Elm.get "symbol" expr)
+                            |> Gen.Eos.SymbolCode.toString
+                        ]
+                    )
+                 ]
+                    |> Elm.list
+                )
+
+        EosList innerType ->
+            Gen.String.call_.concat
+                (Elm.list
+                    [ Elm.string "["
+                    , Elm.apply Gen.List.values_.map
+                        [ Elm.functionReduced "expr" (valueToString innerType)
+                        , expr
+                        ]
+                        |> Gen.String.call_.join (Elm.string ", ")
+                    , Elm.string "]"
+                    ]
+                )
