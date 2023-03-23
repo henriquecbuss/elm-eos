@@ -7,7 +7,8 @@
   },
   "files": [
     "codegen/bin/elm-eos",
-    "codegen/dist/index.js"
+    "codegen/dist/index.js",
+    "README.md"
   ],
   "scripts": {
     "test": "elm-verify-examples && elm-test-rs && cd codegen && elm-test-rs",
