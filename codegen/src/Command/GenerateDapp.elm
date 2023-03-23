@@ -69,7 +69,6 @@ update : Msg -> Model -> ( Model, Effect )
 update msg model =
     case msg of
         GotAbis (Ok abis) ->
-            -- TODO - Also generate src/EosTable.elm and src/EosAction.elm
             addFilesToWriteAndIssueEffect
                 (\options ->
                     ( Generate.files options.apiBase abis
@@ -82,7 +81,7 @@ update msg model =
                     , CloneRepository
                         { from = "henriquecbuss/elm-eos/examples/contractExplorer"
                         , into = options.outputDirectory
-                        , removeFiles = [ "src/EosTable.elm", "src/EosAction.elm", "package-lock.json" ]
+                        , removeFiles = [ "package-lock.json" ]
                         , generateCliOptions =
                             { url = options.url
                             , generatedFilesDirectory = options.apiFilesOutput

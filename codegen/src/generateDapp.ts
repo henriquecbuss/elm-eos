@@ -2,11 +2,13 @@
 
 import { Elm } from "./Command/GenerateDapp.elm";
 import { version } from "../../package.json";
+import { version as elmVersion, name as elmPackageName } from "../../elm.json";
 import fs from "node:fs/promises";
 import path from "node:path";
 import inquirer from "inquirer";
 import EventEmitter from "node:events";
 import degit from "degit";
+import replaceInFile from "replace-in-file";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 global.XMLHttpRequest = require("xhr2");
@@ -144,6 +146,10 @@ app.ports.interopFromElm.subscribe((fromElm) => {
         const elmJsonBuffer = await fs.readFile(path.join(into, "elm.json"));
         const elmJson = JSON.parse(elmJsonBuffer.toString()) as {
           "source-directories": string[];
+          dependencies: {
+            direct: Record<string, string>;
+            indirect: Record<string, string>;
+          };
         };
 
         elmJson["source-directories"] = [
@@ -152,6 +158,8 @@ app.ports.interopFromElm.subscribe((fromElm) => {
           ".elm-spa/defaults",
           ".elm-spa/generated",
         ];
+
+        elmJson.dependencies.direct[elmPackageName] = elmVersion;
 
         await fs.writeFile(
           path.join(into, "package.json"),
@@ -162,6 +170,12 @@ app.ports.interopFromElm.subscribe((fromElm) => {
           path.join(into, "elm.json"),
           JSON.stringify(elmJson, undefined, 4)
         );
+
+        await replaceInFile.replaceInFile({
+          files: `${into}/src/**/*.elm`,
+          from: [/\sApi\.Table\s/g, /\sApi\.Action\s/g],
+          to: (match) => match.replace("Api", generateCliOptions.base),
+        });
 
         app.ports.interopToElm.send({
           tag: "finishedCloningProject",
