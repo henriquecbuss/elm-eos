@@ -102,7 +102,6 @@ config =
     , [ ReviewPipelineStyles.Premade.noMultilineLeftPizza
       , ReviewPipelineStyles.Premade.noMultilineLeftComposition
       , ReviewPipelineStyles.Premade.noSingleLineRightPizza
-      , ReviewPipelineStyles.Premade.noSingleLineRightComposition
       , ReviewPipelineStyles.Premade.noPipelinesWithSimpleInputs
       , ReviewPipelineStyles.Premade.noRepeatedParentheticalApplication
       , ReviewPipelineStyles.Premade.noPipelinesWithConfusingNonCommutativeFunctions
