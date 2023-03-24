@@ -9,6 +9,7 @@ import inquirer from "inquirer";
 import EventEmitter from "node:events";
 import degit from "degit";
 import replaceInFile from "replace-in-file";
+import ora from "ora";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 global.XMLHttpRequest = require("xhr2");
@@ -97,6 +98,8 @@ app.ports.interopFromElm.subscribe((fromElm) => {
       const { from, into, removeFiles, generateCliOptions } = fromElm.data;
 
       void (async () => {
+        const spinner = ora("Fetching project template").start();
+
         let dirExists = false;
         try {
           await fs.access(into);
@@ -107,6 +110,7 @@ app.ports.interopFromElm.subscribe((fromElm) => {
         }
 
         if (dirExists) {
+          spinner.fail();
           app.ports.interopToElm.send({
             tag: "directoryExistsAndIsNotEmpty",
           });
@@ -120,8 +124,6 @@ app.ports.interopFromElm.subscribe((fromElm) => {
         });
 
         await emitter.clone(into);
-
-        console.log("DONE! Removing files...");
 
         await Promise.all(
           removeFiles.map((file) => fs.rm(path.join(into, file)))
@@ -183,6 +185,8 @@ app.ports.interopFromElm.subscribe((fromElm) => {
           to: (match) => match.replace("Api", generateCliOptions.base),
         });
 
+        spinner.succeed();
+
         app.ports.interopToElm.send({
           tag: "finishedCloningProject",
         });
@@ -195,14 +199,20 @@ app.ports.interopFromElm.subscribe((fromElm) => {
       const { files, output } = fromElm.data;
 
       void (async () => {
+        const spinner = ora("Writing API files").start();
         await Promise.all(
           files.map(async (file) => {
-            console.log(file.path);
             const filePath = path.join(output, ...file.path);
             await fs.mkdir(path.dirname(filePath), { recursive: true });
             await fs.writeFile(filePath, file.contents, { flag: "w+" });
           })
         );
+
+        spinner.succeed();
+
+        app.ports.interopToElm.send({
+          tag: "finishedWritingToFiles",
+        });
       })();
     }
   }
