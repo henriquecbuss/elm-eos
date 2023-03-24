@@ -1,4 +1,4 @@
-module Generate.Table exposing (type_)
+module Generate.Table exposing (record, type_)
 
 import Abi
 import Elm
@@ -7,8 +7,8 @@ import EosType
 import String.Extra
 
 
-type_ : Abi.Table -> Elm.Declaration
-type_ table =
+record : Abi.Table -> Elm.Annotation.Annotation
+record table =
     Elm.Annotation.record
         (List.map
             (\column ->
@@ -18,5 +18,9 @@ type_ table =
             )
             table.columns
         )
-        |> Elm.alias (String.Extra.classify table.name)
+
+
+type_ : Abi.Table -> Elm.Declaration
+type_ table =
+    Elm.alias (String.Extra.classify table.name) (record table)
         |> Elm.withDocumentation ("Type representing the " ++ table.name ++ " table.")

@@ -5,6 +5,98 @@ Elm's type safety. In order to do so, it reads the ABI of the contracts you want
 to interact with, and generates all of the necessary Elm code to interact with
 them.
 
+## Table of contents
+
+- [🏃 Getting started](#getting-started)
+  - [️🏗️ Scaffold new app](#scaffold-new-app)
+  - [➕ Add to existing app](#add-to-existing-app)
+- [📕 Overview](#overview)
+  - [📖 Examples](#examples)
+- [🤖 CLI](#cli)
+- [🆘 Support](#support)
+
+## Getting started
+
+### Scaffold new app
+
+If you want to start a new app, you can use the [create-elm-eos-dapp]() tool to
+scaffold a new app for you. It will generate anew app with all of the necessary
+dependencies and code to get you started, along with linters, formatters, and all
+of that good stuff.
+
+- With `yarn`:
+
+```sh
+yarn create elm-eos-dapp
+```
+
+- With `npm`:
+
+```sh
+npx create-elm-eos-dapp
+```
+
+- With `pnpm`:
+
+```sh
+pnpm create elm-eos-dapp
+```
+
+> _The scripts in the generated package.json use `npm`, so you have to manually change them if you want to use `yarn` or `pnpm`._
+
+### Add to existing app
+
+There are a few moving pieces that need to work together in order to use
+`henriquecbuss/elm-eos`. Here's how to set them up:
+
+1. Add the elm package as a dependency in your `elm.json`, and install these libraries:
+
+   ```bash
+   elm install henriquecbuss/elm-eos
+   elm install elm/json
+   elm install elm/http
+   elm install elm/time
+   elm install NoRedInk/elm-json-decode-pipeline
+   elm install elm-community/maybe-extra
+   elm install elm-community/result-extra
+   ```
+
+2. Install the `elm-eos` command line through npm. This is what you will
+   use to generate Elm code for the EOSIO API. You can save it as a dev dependency
+   to ensure everyone on your team has access to the same version:
+
+   - With `npm`:
+
+   ```sh
+   npm install --save-dev elm-eos
+   ```
+
+   - With `yarn`:
+
+   ```sh
+   yarn add --dev elm-eos
+   ```
+
+   - With `pnpm`:
+
+   ```sh
+   pnpm add -D elm-eos
+   ```
+
+3. Run the CLI tool to generate the Elm code for your contracts. If you installed
+   like shown above, you can run with `npx elm-eos`, or create a script in your `package.json` like this:
+
+   ```json
+   {
+     "scripts": {
+       "generate:eos": "elm-eos https://mydomain.com/v1/chain --contract my.first --contract my.second --output generated --base Contracts"
+     }
+   }
+   ```
+
+   This will generate files in `Contracts/My/First` and `Contracts/My/Second`
+
+4. Now whenever you need to refresh the generated code, you can run `npm run generate-eos`.
 
 ## Overview
 
@@ -18,18 +110,18 @@ table, described by this struct:
 
 ```json
 {
-    "name": "account",
-    "base": "",
-    "fields": [
-        {
-            "name": "account_name",
-            "type": "name"
-        },
-        {
-            "name": "balance",
-            "type": "asset"
-        }
-    ]
+  "name": "account",
+  "base": "",
+  "fields": [
+    {
+      "name": "account_name",
+      "type": "name"
+    },
+    {
+      "name": "balance",
+      "type": "asset"
+    }
+  ]
 }
 ```
 
@@ -79,22 +171,22 @@ described by this struct:
 
 ```json
 {
-    "name": "transfer",
-    "base": "",
-    "fields": [
-        {
-            "name": "from",
-            "type": "name"
-        },
-        {
-            "name": "to",
-            "type": "name"
-        },
-        {
-            "name": "amount",
-            "type": "asset"
-        }
-    ]
+  "name": "transfer",
+  "base": "",
+  "fields": [
+    {
+      "name": "from",
+      "type": "name"
+    },
+    {
+      "name": "to",
+      "type": "name"
+    },
+    {
+      "name": "amount",
+      "type": "asset"
+    }
+  ]
 }
 ```
 
@@ -119,57 +211,17 @@ sendMoney { currentUser, currentPermission, to, amount } =
 ```
 
 You can then send that JSON to the blockchain using the `eosjs` library (through
-a port), or using your preferred method.
+a port), or using your preferred method. The [contractExplorer](https://github.com/henriquecbuss/elm-eos/tree/main/examples/contractExplorer) example shows
+how to integrate with external wallets to submit transactions.
 
 ### Examples
 
 You can take a look at the [examples](https://github.com/henriquecbuss/elm-eos/tree/main/examples) folder
 for complete examples (each one has more detailed information in their `README.md`):
 
-- [memberFetching](https://github.com/henriquecbuss/elm-eos/tree/main/examples/memberFetching): a simple example of fetching data from the blockchain and displaying it in a table. This is the simplest example there is, and it's a good place to start.
-- [transfer](https://github.com/henriquecbuss/elm-eos/tree/main/examples/transfer): a more complex example, where you can send a transfer to the blockchain. This is an example for when you know what actions do and which ones you want to use.
-- [contractExplorer](https://github.com/henriquecbuss/elm-eos/tree/main/examples/contractExplorer): an even more complex example, where you can explore the tables and actions of multiple contracts. This is an example for when you want to explore the API of a contract, and see what actions and tables it has. This example also includes integration with third-party wallets using [eos-transit](https://github.com/eosnewyork/eos-transit). This app is roughly what the tool generation does for you if you ask it to generate an app based on some contracts.
-
-## Setup
-
-There are a few moving pieces that need to work together in order to use
-`henriquecbuss/elm-eos`. Here's how to set them up:
-
-1. Add the elm package as a dependency in your `elm.json`, along with `elm/json`, `elm/http` and `NoRedInk/elm-json-decode-pipeline`:
-   ```bash
-   elm install henriquecbuss/elm-eos
-   elm install elm/json
-   elm install elm/http
-   elm install elm/time
-   elm install NoRedInk/elm-json-decode-pipeline
-   elm install elm-community/maybe-extra
-   elm install elm-community/result-extra
-   ```
-
-2. Install the `elm-eos` command line through npm. This is what you will
-   use to generate Elm code for the EOSIO API. You can save it as a dev dependency
-   to ensure everyone on your team has access to the same version:
-   ```bash
-   # With npm
-   npm install --save-dev elm-eos
-
-   # With yarn
-   yarn add --dev elm-eos
-   ```
-
-3. Run the CLI tool to generate the Elm code for your contracts. If you installed
-   like shown above, you can run with `npx elm-eos`, or create a script in your `package.json` like this:
-   ```json
-   {
-       "scripts": {
-           "generate:eos": "elm-eos https://mydomain.com/v1/chain --contract my.first --contract my.second --output generated --base Contracts"
-       }
-   }
-   ```
-
-   This will generate files in `Contracts/My/First` and `Contracts/My/Second`
-
-4. Now whenever you need to refresh the generated code, you can run `npm run generate-eos`.
+- memberFetching ([source](https://github.com/henriquecbuss/elm-eos/tree/main/examples/memberFetching) | [live demo](https://elm-eos-member-fetching.netlify.app)): a simple example of fetching data from the blockchain and displaying it in a table. This is the simplest example there is, and it's a good place to start.
+- transfer ([source](https://github.com/henriquecbuss/elm-eos/tree/main/examples/transfer) | [live demo](https://elm-eos-transfer.netlify.app)): a more complex example, where you can send a transfer to the blockchain. This is an example for when you know what actions do and which ones you want to use.
+- contractExplorer ([source](https://github.com/henriquecbuss/elm-eos/tree/main/examples/contractExplorer) | [live demo](https://elm-eos-contract-explorer.netlify.app)): an even more complex example, where you can explore the tables and actions of multiple contracts. This is an example for when you want to explore the API of a contract, and see what actions and tables it has. This example also includes integration with third-party wallets using [eos-transit](https://github.com/eosnewyork/eos-transit). This app is roughly what the tool generation does for you if you [ask it to generate an app based on some contracts](#scaffold-new-app).
 
 ## CLI
 

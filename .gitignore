@@ -4,5 +4,6 @@ tests/VerifyExamples/
 codegen/src/Gen/
 codegen/Gen/
 generated/
-codegen/src/Main.elm.d.ts
+codegen/src/Command/**/*.elm.d.ts
 codegen/dist/
+packages/*/dist

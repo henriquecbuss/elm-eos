@@ -103,7 +103,7 @@ jobs:
         run: npx --no-install elm make --docs docs.json
 
       - name: Generate TS Interop bindings in codegen/
-        run: npm run generate-ts-interop
+        run: npm run gen:ts-interop
         working-directory: codegen
 
       - name: Lint codegen/

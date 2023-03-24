@@ -14,13 +14,13 @@ module Pages.Home_ exposing
 
 -}
 
+import Api.GenericTable
 import AssocList
 import Dict
 import Dropdown
 import Effect exposing (Effect)
 import Eos.EosType
 import Eos.Name
-import EosTable
 import Gen.Params.Home_ exposing (Params)
 import Gen.Route
 import Heroicons.Solid
@@ -133,7 +133,7 @@ viewContracts :
     AssocList.Dict
         Eos.Name.Name
         { actions : List { fields : Dict.Dict String Eos.EosType.EosType, name : Eos.Name.Name }
-        , tables : List EosTable.Metadata
+        , tables : List Api.GenericTable.Metadata
         }
     -> Model
     -> Html.Html Msg
@@ -178,7 +178,7 @@ viewContracts contractsDict model =
 viewContractCard :
     { actions : List { fields : Dict.Dict String Eos.EosType.EosType, name : Eos.Name.Name }
     , name : Eos.Name.Name
-    , tables : List EosTable.Metadata
+    , tables : List Api.GenericTable.Metadata
     }
     -> Html.Html msg_
 viewContractCard { actions, name, tables } =

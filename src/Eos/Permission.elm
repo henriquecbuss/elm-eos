@@ -1,6 +1,7 @@
 module Eos.Permission exposing
     ( Permission(..)
     , encode, decoder
+    , toString
     )
 
 {-| Permissions control what EOSIO accounts can do and how actions are authorized.
@@ -13,6 +14,8 @@ the `Owner` permission. The `Active` permission is a child of the `Owner`.
 ## Working with JSON
 
 @docs encode, decoder
+
+@docs toString
 
 -}
 
@@ -65,3 +68,18 @@ decoder =
                 )
         , Json.Decode.map Custom Eos.Name.decoder
         ]
+
+
+{-| Turn a Permission into a String
+-}
+toString : Permission -> String
+toString permission =
+    case permission of
+        Owner ->
+            "owner"
+
+        Active ->
+            "active"
+
+        Custom name ->
+            Eos.Name.toString name

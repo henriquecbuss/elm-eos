@@ -1,7 +1,7 @@
 module Eos.PublicKey exposing
     ( PublicKey
     , encode, decoder
-    , fromString
+    , fromString, toString
     )
 
 {-|
@@ -10,7 +10,7 @@ module Eos.PublicKey exposing
 
 @docs encode, decoder
 
-@docs fromString
+@docs fromString, toString
 
 -}
 
@@ -43,3 +43,10 @@ decoder =
 fromString : String -> PublicKey
 fromString =
     PublicKey
+
+
+{-| Turn a PublicKey into a String
+-}
+toString : PublicKey -> String
+toString (PublicKey publicKey) =
+    publicKey

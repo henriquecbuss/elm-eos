@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 
-import { Elm } from "./Main.elm";
-import { version } from "../../package.json";
+import { Elm } from "./Command/GenerateApiFiles.elm";
+import { version } from "../../packages/elm-eos/package.json";
 import fs from "fs/promises";
 import path from "path";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 global.XMLHttpRequest = require("xhr2");
 
-const app = Elm.Main.init({
+const init = Elm.Command.GenerateApiFiles.init; // as typeof Command.GenerateApiFiles.init;
+
+const app = init({
   node: null,
   flags: {
     argv: process.argv,

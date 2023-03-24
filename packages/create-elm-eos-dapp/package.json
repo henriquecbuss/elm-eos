@@ -1,0 +1,32 @@
+{
+  "name": "create-elm-eos-dapp",
+  "version": "1.0.2",
+  "description": "Scaffold new elm-eos dapps",
+  "bin": {
+    "create-elm-eos-dapp": "bin/create-elm-eos-dapp"
+  },
+  "files": [
+    "bin/create-elm-eos-dapp",
+    "dist/index.js",
+    "README.md"
+  ],
+  "scripts": {
+    "copy-built": "cp ../../codegen/dist/generateDapp.js ./dist"
+  },
+  "keywords": [
+    "elm",
+    "eos"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/henriquecbuss/elm-eos.git"
+  },
+  "author": "Henrique da Cunha Buss",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/henriquecbuss/elm-eos/issues"
+  },
+  "homepage": "https://github.com/henriquecbuss/elm-eos#readme",
+  "devDependencies": {},
+  "dependencies": {}
+}

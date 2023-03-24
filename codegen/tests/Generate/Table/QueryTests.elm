@@ -78,6 +78,7 @@ context : Context
 context =
     { baseUrl = "https://eos.io"
     , contract = "eos.io"
+    , basePath = []
     }
 
 

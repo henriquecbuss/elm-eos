@@ -64,6 +64,8 @@ import NoUselessSubscriptions
 import OnlyAllSingleUseTypeVarsEndWith_
 import Review.Rule as Rule exposing (Rule)
 import ReviewPipelineStyles
+import ReviewPipelineStyles.Fixes
+import ReviewPipelineStyles.Predicates
 import ReviewPipelineStyles.Premade
 import Simplify
 import UseCamelCase
@@ -102,11 +104,19 @@ config =
     , [ ReviewPipelineStyles.Premade.noMultilineLeftPizza
       , ReviewPipelineStyles.Premade.noMultilineLeftComposition
       , ReviewPipelineStyles.Premade.noSingleLineRightPizza
-      , ReviewPipelineStyles.Premade.noSingleLineRightComposition
-      , ReviewPipelineStyles.Premade.noPipelinesWithSimpleInputs
       , ReviewPipelineStyles.Premade.noRepeatedParentheticalApplication
       , ReviewPipelineStyles.Premade.noPipelinesWithConfusingNonCommutativeFunctions
       , ReviewPipelineStyles.Premade.noSemanticallyInfixFunctionsInLeftPipelines
+      , [ ReviewPipelineStyles.forbid ReviewPipelineStyles.rightPizzaPipelines
+            |> ReviewPipelineStyles.that ReviewPipelineStyles.Predicates.haveASimpleInputStep
+            |> ReviewPipelineStyles.exceptThoseThat (ReviewPipelineStyles.Predicates.haveMoreStepsThan 1)
+            |> ReviewPipelineStyles.andTryToFixThemBy ReviewPipelineStyles.Fixes.eliminatingInputStep
+            |> ReviewPipelineStyles.andCallThem "|> pipeline with simple input in a single line"
+        , ReviewPipelineStyles.forbid ReviewPipelineStyles.leftPizzaPipelines
+            |> ReviewPipelineStyles.that ReviewPipelineStyles.Predicates.haveASimpleInputStep
+            |> ReviewPipelineStyles.andTryToFixThemBy ReviewPipelineStyles.Fixes.eliminatingInputStep
+            |> ReviewPipelineStyles.andCallThem "<| pipeline with simple input"
+        ]
       ]
         |> List.concat
         |> ReviewPipelineStyles.rule
@@ -156,7 +166,6 @@ config =
     , NoUnmatchedUnit.rule
     , UseMemoizedLazyLambda.rule
     , NoLongImportLines.rule
-
     , UseCamelCase.rule UseCamelCase.default
     , NoForbiddenWords.rule forbiddenWords
     , NoInconsistentAliases.config aliases

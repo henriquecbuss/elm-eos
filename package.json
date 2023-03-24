@@ -1,19 +1,13 @@
 {
   "name": "elm-eos",
-  "version": "1.0.3",
+  "version": "1.0.2",
   "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
-  "bin": {
-    "elm-eos": "codegen/bin/elm-eos"
-  },
-  "files": [
-    "codegen/bin/elm-eos",
-    "codegen/dist/index.js"
-  ],
   "scripts": {
     "test": "elm-verify-examples && elm-test-rs && cd codegen && elm-test-rs",
     "generate-helpers": "rm -rf codegen/src/Gen && elm-codegen install && mv codegen/Gen codegen/src/Gen",
     "postinstall": "elm-tooling install && cd codegen && npm ci",
-    "build": "npm run generate-helpers && cd codegen && npm run build"
+    "build": "npm run generate-helpers && cd codegen && npm run build",
+    "preview:docs": "elm-doc-preview"
   },
   "keywords": [
     "elm",
@@ -30,6 +24,7 @@
   },
   "homepage": "https://github.com/henriquecbuss/elm-eos#readme",
   "devDependencies": {
+    "elm-doc-preview": "^5.0.5",
     "elm-review": "^2.7.3",
     "elm-tooling": "^1.8.0",
     "elm-verify-examples": "^5.2.0"

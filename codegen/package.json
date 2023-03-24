@@ -4,9 +4,14 @@
   "main": "bin/index.js",
   "scripts": {
     "build": "NODE_ENV=production ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts",
-    "execute": "eslint . && tsc --noEmit && ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts && node dist/index.js",
-    "generate-ts-interop": "elm-ts-interop --output src/Main.elm.d.ts",
-    "lint": "eslint . && NODE_ENV=production tsc --noEmit"
+    "execute": "eslint . && tsc --noEmit && ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts && node dist/generateApiFiles.js",
+    "execute:generate-dapp": "eslint . && tsc --noEmit && ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts && node dist/generateDapp.js",
+    "gen:ts-interop": "npm run gen:ts-interop:api-files && npm run gen:ts-interop:dapp",
+    "gen:ts-interop:api-files": "elm-ts-interop --output src/Command/GenerateApiFiles.elm.d.ts --definition-module Command.GenerateApiFiles.InteropDefinitions --entrypoint Command.GenerateApiFiles",
+    "gen:ts-interop:dapp": "elm-ts-interop --output src/Command/GenerateDapp.elm.d.ts --definition-module Command.GenerateDapp.InteropDefinitions --entrypoint Command.GenerateDapp",
+    "lint": "npm run lint:elm && npm run lint:ts",
+    "lint:ts": "eslint . && NODE_ENV=production tsc --noEmit",
+    "lint:elm": "elm-review"
   },
   "keywords": [
     "elm",
@@ -23,9 +28,12 @@
   },
   "homepage": "https://github.com/henriquecbuss/elm-eos#readme",
   "devDependencies": {
+    "@types/degit": "^2.8.3",
+    "@types/inquirer": "^9.0.3",
     "@types/node": "^18.7.14",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
+    "elm-review": "^2.9.2",
     "elm-tooling": "^1.8.0",
     "elm-ts-interop": "^0.0.8",
     "eslint": "^8.23.0",
@@ -39,8 +47,13 @@
     "typescript": "^4.8.2"
   },
   "dependencies": {
+    "degit": "^2.8.4",
     "esbuild": "^0.17.5",
     "esbuild-plugin-elm": "^0.0.12",
+    "inquirer": "^9.1.4",
+    "ora": "^6.3.0",
+    "replace-in-file": "^6.3.5",
+    "rxjs": "^7.8.0",
     "ts-node": "^10.9.1",
     "xhr2": "^0.2.1"
   }
