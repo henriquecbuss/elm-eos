@@ -6,6 +6,7 @@ import Command.GenerateDapp.InteropDefinitions as InteropDefinitions
 import Command.GenerateDapp.InteropPorts as InteropPorts
 import Command.GenerateDapp.Options as Options
 import Generate
+import Generate.GenerateDappShared
 import Http
 import Inquirer
 import Json.Decode as Decode
@@ -71,17 +72,21 @@ update msg model =
         GotAbis (Ok abis) ->
             addFilesToWriteAndIssueEffect
                 (\options ->
-                    ( Generate.files options.apiBase abis
-                        |> List.map
-                            (\file ->
-                                { contents = file.contents
-                                , path = options.apiFilesOutput :: String.split "/" file.path
-                                }
-                            )
+                    ( { contents = Generate.GenerateDappShared.file options.apiBase (List.map .contract abis)
+                      , path = [ "src", "Shared.elm" ]
+                      }
+                        :: (Generate.files options.apiBase abis
+                                |> List.map
+                                    (\file ->
+                                        { contents = file.contents
+                                        , path = options.apiFilesOutput :: String.split "/" file.path
+                                        }
+                                    )
+                           )
                     , CloneRepository
                         { from = "henriquecbuss/elm-eos/examples/contractExplorer"
                         , into = options.outputDirectory
-                        , removeFiles = [ "package-lock.json" ]
+                        , removeFiles = [ "package-lock.json", "src/Shared.elm" ]
                         , generateCliOptions =
                             { url = options.url
                             , generatedFilesDirectory = options.apiFilesOutput
