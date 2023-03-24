@@ -1,6 +1,5 @@
 module Generate.GenericAction exposing (encode, fromDict, type_)
 
-import Abi
 import Context
 import Elm
 import Elm.Annotation
@@ -9,31 +8,10 @@ import Elm.Declare
 import Gen.Dict
 import Gen.Eos.Authorization
 import Gen.Eos.Name
-import Gen.Eos.Permission
 import Gen.Json.Encode
 import Gen.Maybe
 import Gen.Maybe.Extra
 import String.Extra
-
-
-type_ : List String -> List String -> Elm.Declaration
-type_ base contracts =
-    Elm.customType "Action"
-        (List.map
-            (\contract ->
-                let
-                    baseContractName : String
-                    baseContractName =
-                        String.concat (Context.contractNamePartsWithoutBase contract)
-                in
-                Elm.variantWith (baseContractName ++ "Action")
-                    [ Elm.Annotation.named
-                        (actionModule base contract)
-                        "Action"
-                    ]
-            )
-            contracts
-        )
 
 
 actionModule : List String -> String -> List String
@@ -45,9 +23,9 @@ encode :
     List String
     -> List String
     ->
-        { declaration : Elm.Declaration
-        , call : Elm.Expression -> Elm.Expression
+        { call : Elm.Expression -> Elm.Expression
         , callFrom : List String -> Elm.Expression -> Elm.Expression
+        , declaration : Elm.Declaration
         }
 encode base contracts =
     Elm.Declare.fn "encode"
@@ -69,9 +47,7 @@ encode base contracts =
                             (\action ->
                                 Elm.apply
                                     (Elm.value
-                                        { importFrom = actionModule base contract
-                                        , name = "encode"
-                                        , annotation =
+                                        { annotation =
                                             Just
                                                 (Elm.Annotation.function
                                                     [ Elm.Annotation.list Gen.Eos.Authorization.annotation_.authorization
@@ -79,6 +55,8 @@ encode base contracts =
                                                     ]
                                                     Gen.Json.Encode.annotation_.value
                                                 )
+                                        , importFrom = actionModule base contract
+                                        , name = "encode"
                                         }
                                     )
                                     [ Elm.list []
@@ -95,9 +73,9 @@ fromDict :
     List String
     -> List String
     ->
-        { declaration : Elm.Declaration
-        , call : Elm.Expression -> Elm.Expression -> Elm.Expression
+        { call : Elm.Expression -> Elm.Expression -> Elm.Expression
         , callFrom : List String -> Elm.Expression -> Elm.Expression -> Elm.Expression
+        , declaration : Elm.Declaration
         }
 fromDict base contracts =
     Elm.Declare.fn2 "fromDict"
@@ -111,9 +89,7 @@ fromDict base contracts =
                             (\args ->
                                 Elm.apply
                                     (Elm.value
-                                        { importFrom = actionModule base contract
-                                        , name = "fromDict"
-                                        , annotation =
+                                        { annotation =
                                             Elm.Annotation.function
                                                 [ Gen.Eos.Name.annotation_.name
                                                 , Elm.Annotation.dict Elm.Annotation.string Elm.Annotation.string
@@ -122,6 +98,8 @@ fromDict base contracts =
                                                     |> Elm.Annotation.maybe
                                                 )
                                                 |> Just
+                                        , importFrom = actionModule base contract
+                                        , name = "fromDict"
                                         }
                                     )
                                     [ contractName, args ]
@@ -129,14 +107,14 @@ fromDict base contracts =
                                         (\action ->
                                             Elm.apply
                                                 (Elm.value
-                                                    { importFrom = []
-                                                    , name = String.Extra.classify contract ++ "Action"
-                                                    , annotation =
+                                                    { annotation =
                                                         Elm.Annotation.function
                                                             [ Elm.Annotation.named (actionModule base contract) "Action"
                                                             ]
                                                             (Elm.Annotation.named [] "Action")
                                                             |> Just
+                                                    , importFrom = []
+                                                    , name = String.Extra.classify contract ++ "Action"
                                                     }
                                                 )
                                                 [ action ]
@@ -146,4 +124,24 @@ fromDict base contracts =
                     contracts
                 )
                 inputDict
+        )
+
+
+type_ : List String -> List String -> Elm.Declaration
+type_ base contracts =
+    Elm.customType "Action"
+        (List.map
+            (\contract ->
+                let
+                    baseContractName : String
+                    baseContractName =
+                        String.concat (Context.contractNamePartsWithoutBase contract)
+                in
+                Elm.variantWith (baseContractName ++ "Action")
+                    [ Elm.Annotation.named
+                        (actionModule base contract)
+                        "Action"
+                    ]
+            )
+            contracts
         )

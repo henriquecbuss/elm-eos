@@ -10,12 +10,6 @@ type alias Context =
     }
 
 
-prefixed : Context -> List String -> List String
-prefixed context suffix =
-    (context.basePath ++ String.split "." context.contract ++ suffix)
-        |> List.map String.Extra.classify
-
-
 contractNameParts : List String -> String -> List String
 contractNameParts base contract =
     (base ++ String.split "." contract)
@@ -25,4 +19,10 @@ contractNameParts base contract =
 contractNamePartsWithoutBase : String -> List String
 contractNamePartsWithoutBase contract =
     String.split "." contract
+        |> List.map String.Extra.classify
+
+
+prefixed : Context -> List String -> List String
+prefixed context suffix =
+    (context.basePath ++ String.split "." context.contract ++ suffix)
         |> List.map String.Extra.classify
