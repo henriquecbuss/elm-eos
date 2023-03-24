@@ -8,10 +8,10 @@ them.
 ## Table of contents
 
 - [🏃 Getting started](#-getting-started)
-    - [️🏗️ Scaffold new app](#-scaffold-new-app)
-    - [➕ Add to existing app](#-add-to-existing-app)
+  - [️🏗️ Scaffold new app](#-scaffold-new-app)
+  - [➕ Add to existing app](#-add-to-existing-app)
 - [📕 Overview](#-overview)
-    - [📖 Examples](#-examples)
+  - [📖 Examples](#-examples)
 - [🤖 CLI](#-cli)
 - [🆘 Support](#-support)
 
@@ -30,7 +30,7 @@ of that good stuff.
 yarn create elm-eos-dapp
 ```
 
-- With `npm`: 
+- With `npm`:
 
 ```sh
 npx create-elm-eos-dapp
@@ -50,6 +50,7 @@ There are a few moving pieces that need to work together in order to use
 `henriquecbuss/elm-eos`. Here's how to set them up:
 
 1. Add the elm package as a dependency in your `elm.json`, and install these libraries:
+
    ```bash
    elm install henriquecbuss/elm-eos
    elm install elm/json
@@ -63,36 +64,39 @@ There are a few moving pieces that need to work together in order to use
 2. Install the `elm-eos` command line through npm. This is what you will
    use to generate Elm code for the EOSIO API. You can save it as a dev dependency
    to ensure everyone on your team has access to the same version:
-   
+
    - With `npm`:
+
    ```sh
    npm install --save-dev elm-eos
    ```
 
    - With `yarn`:
+
    ```sh
    yarn add --dev elm-eos
    ```
 
    - With `pnpm`:
+
    ```sh
    pnpm add -D elm-eos
    ```
 
 3. Run the CLI tool to generate the Elm code for your contracts. If you installed
    like shown above, you can run with `npx elm-eos`, or create a script in your `package.json` like this:
+
    ```json
    {
-       "scripts": {
-           "generate:eos": "elm-eos https://mydomain.com/v1/chain --contract my.first --contract my.second --output generated --base Contracts"
-       }
+     "scripts": {
+       "generate:eos": "elm-eos https://mydomain.com/v1/chain --contract my.first --contract my.second --output generated --base Contracts"
+     }
    }
    ```
 
    This will generate files in `Contracts/My/First` and `Contracts/My/Second`
 
 4. Now whenever you need to refresh the generated code, you can run `npm run generate-eos`.
-
 
 ## 📕 Overview
 
@@ -106,18 +110,18 @@ table, described by this struct:
 
 ```json
 {
-    "name": "account",
-    "base": "",
-    "fields": [
-        {
-            "name": "account_name",
-            "type": "name"
-        },
-        {
-            "name": "balance",
-            "type": "asset"
-        }
-    ]
+  "name": "account",
+  "base": "",
+  "fields": [
+    {
+      "name": "account_name",
+      "type": "name"
+    },
+    {
+      "name": "balance",
+      "type": "asset"
+    }
+  ]
 }
 ```
 
@@ -167,22 +171,22 @@ described by this struct:
 
 ```json
 {
-    "name": "transfer",
-    "base": "",
-    "fields": [
-        {
-            "name": "from",
-            "type": "name"
-        },
-        {
-            "name": "to",
-            "type": "name"
-        },
-        {
-            "name": "amount",
-            "type": "asset"
-        }
-    ]
+  "name": "transfer",
+  "base": "",
+  "fields": [
+    {
+      "name": "from",
+      "type": "name"
+    },
+    {
+      "name": "to",
+      "type": "name"
+    },
+    {
+      "name": "amount",
+      "type": "asset"
+    }
+  ]
 }
 ```
 
