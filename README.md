@@ -7,17 +7,17 @@ them.
 
 ## Table of contents
 
-- [🏃 Getting started](#-getting-started)
-  - [️🏗️ Scaffold new app](#-scaffold-new-app)
-  - [➕ Add to existing app](#-add-to-existing-app)
-- [📕 Overview](#-overview)
-  - [📖 Examples](#-examples)
-- [🤖 CLI](#-cli)
-- [🆘 Support](#-support)
+- [🏃 Getting started](#getting-started)
+  - [️🏗️ Scaffold new app](#scaffold-new-app)
+  - [➕ Add to existing app](#add-to-existing-app)
+- [📕 Overview](#overview)
+  - [📖 Examples](#examples)
+- [🤖 CLI](#cli)
+- [🆘 Support](#support)
 
-## 🏃 Getting started
+## Getting started
 
-### 🏗️ Scaffold new app
+### Scaffold new app
 
 If you want to start a new app, you can use the [create-elm-eos-dapp]() tool to
 scaffold a new app for you. It will generate anew app with all of the necessary
@@ -44,7 +44,7 @@ pnpm create elm-eos-dapp
 
 > _The scripts in the generated package.json use `npm`, so you have to manually change them if you want to use `yarn` or `pnpm`._
 
-### ➕ Add to existing app
+### Add to existing app
 
 There are a few moving pieces that need to work together in order to use
 `henriquecbuss/elm-eos`. Here's how to set them up:
@@ -98,7 +98,7 @@ There are a few moving pieces that need to work together in order to use
 
 4. Now whenever you need to refresh the generated code, you can run `npm run generate-eos`.
 
-## 📕 Overview
+## Overview
 
 This package mainly serves to translate EOSIO types to Elm types. There is a
 [CLI app](#cli) that is responsible for generating code specific to the contracts
@@ -214,16 +214,16 @@ You can then send that JSON to the blockchain using the `eosjs` library (through
 a port), or using your preferred method. The [contractExplorer](https://github.com/henriquecbuss/elm-eos/tree/main/examples/contractExplorer) example shows
 how to integrate with external wallets to submit transactions.
 
-### 📖 Examples
+### Examples
 
 You can take a look at the [examples](https://github.com/henriquecbuss/elm-eos/tree/main/examples) folder
 for complete examples (each one has more detailed information in their `README.md`):
 
 - memberFetching ([source](https://github.com/henriquecbuss/elm-eos/tree/main/examples/memberFetching) | [live demo](https://elm-eos-member-fetching.netlify.app)): a simple example of fetching data from the blockchain and displaying it in a table. This is the simplest example there is, and it's a good place to start.
 - transfer ([source](https://github.com/henriquecbuss/elm-eos/tree/main/examples/transfer) | [live demo](https://elm-eos-transfer.netlify.app)): a more complex example, where you can send a transfer to the blockchain. This is an example for when you know what actions do and which ones you want to use.
-- contractExplorer ([source](https://github.com/henriquecbuss/elm-eos/tree/main/examples/contractExplorer) | [live demo](https://elm-eos-contract-explorer.netlify.app)): an even more complex example, where you can explore the tables and actions of multiple contracts. This is an example for when you want to explore the API of a contract, and see what actions and tables it has. This example also includes integration with third-party wallets using [eos-transit](https://github.com/eosnewyork/eos-transit). This app is roughly what the tool generation does for you if you [ask it to generate an app based on some contracts](#-scaffold-new-app).
+- contractExplorer ([source](https://github.com/henriquecbuss/elm-eos/tree/main/examples/contractExplorer) | [live demo](https://elm-eos-contract-explorer.netlify.app)): an even more complex example, where you can explore the tables and actions of multiple contracts. This is an example for when you want to explore the API of a contract, and see what actions and tables it has. This example also includes integration with third-party wallets using [eos-transit](https://github.com/eosnewyork/eos-transit). This app is roughly what the tool generation does for you if you [ask it to generate an app based on some contracts](#scaffold-new-app).
 
-## 🤖 CLI
+## CLI
 
 The CLI tool is used to generate the Elm code for your contracts. It takes some
 arguments:
@@ -241,6 +241,6 @@ elm-eos https://mydomain.com/v1/chain --contract first --contract second --outpu
 
 Only URL and Contracts are required.
 
-## 🆘 Support
+## Support
 
 If you need any kind of support, feel free to open an issue on GitHub, or ping me @HenriqueBuss on the [Elm Slack](https://elm-lang.org/community/slack).
