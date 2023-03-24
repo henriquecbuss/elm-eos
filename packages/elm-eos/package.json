@@ -7,7 +7,7 @@
   },
   "files": [
     "bin/elm-eos",
-    "dist/index.js",
+    "dist/generateApiFiles.js",
     "README.md"
   ],
   "scripts": {

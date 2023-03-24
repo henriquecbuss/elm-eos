@@ -1,13 +1,13 @@
 {
   "name": "create-elm-eos-dapp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Scaffold new elm-eos dapps",
   "bin": {
     "create-elm-eos-dapp": "bin/create-elm-eos-dapp"
   },
   "files": [
     "bin/create-elm-eos-dapp",
-    "dist/index.js",
+    "dist/generateDapp.js",
     "README.md"
   ],
   "scripts": {
