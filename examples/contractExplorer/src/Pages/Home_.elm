@@ -14,7 +14,7 @@ module Pages.Home_ exposing
 
 -}
 
-import Api.Table
+import Api.GenericTable
 import AssocList
 import Dict
 import Dropdown
@@ -133,7 +133,7 @@ viewContracts :
     AssocList.Dict
         Eos.Name.Name
         { actions : List { fields : Dict.Dict String Eos.EosType.EosType, name : Eos.Name.Name }
-        , tables : List Api.Table.Metadata
+        , tables : List Api.GenericTable.Metadata
         }
     -> Model
     -> Html.Html Msg
@@ -178,7 +178,7 @@ viewContracts contractsDict model =
 viewContractCard :
     { actions : List { fields : Dict.Dict String Eos.EosType.EosType, name : Eos.Name.Name }
     , name : Eos.Name.Name
-    , tables : List Api.Table.Metadata
+    , tables : List Api.GenericTable.Metadata
     }
     -> Html.Html msg_
 viewContractCard { actions, name, tables } =

@@ -22,7 +22,7 @@ import Api.Cambiatus.Cm.Action.Metadata
 import Api.Cambiatus.Cm.Table.Metadata
 import Api.Cambiatus.Tk.Action.Metadata
 import Api.Cambiatus.Tk.Table.Metadata
-import Api.Table
+import Api.GenericTable
 import AssocList
 import Dict
 import Eos.EosType
@@ -48,7 +48,7 @@ type alias Model =
             , tables :
                 List
                     { name : Eos.Name.Name
-                    , queryFunction : { scope : String } -> Eos.Query.Query Api.Table.Table
+                    , queryFunction : { scope : String } -> Eos.Query.Query Api.GenericTable.Table
                     }
             }
     , walletProviders : List WalletProvider
@@ -80,7 +80,7 @@ init _ flags =
                         { fields : Dict.Dict String Eos.EosType.EosType
                         , name : Eos.Name.Name
                         }
-                , tables : List Api.Table.Metadata
+                , tables : List Api.GenericTable.Metadata
                 }
         contracts =
             ResultX.combine
@@ -102,7 +102,7 @@ init _ flags =
                     , queryFunction : { scope : String } -> Eos.Query.Query response
                     }
             }
-            -> (response -> Api.Table.Table)
+            -> (response -> Api.GenericTable.Table)
             -> Eos.Name.Name
             ->
                 ( Eos.Name.Name
@@ -111,7 +111,7 @@ init _ flags =
                             { fields : Dict.Dict String Eos.EosType.EosType
                             , name : Eos.Name.Name
                             }
-                  , tables : List Api.Table.Metadata
+                  , tables : List Api.GenericTable.Metadata
                   }
                 )
         makeContract { actions, tables } toTable name =
@@ -139,7 +139,7 @@ init _ flags =
                             { fields : Dict.Dict String Eos.EosType.EosType
                             , name : Eos.Name.Name
                             }
-                  , tables : List Api.Table.Metadata
+                  , tables : List Api.GenericTable.Metadata
                   }
                 )
         cambiatusCm =
@@ -149,7 +149,7 @@ init _ flags =
                         { actions = Api.Cambiatus.Cm.Action.Metadata.metadata
                         , tables = Api.Cambiatus.Cm.Table.Metadata.metadata
                         }
-                        Api.Table.CambiatusCmTable
+                        Api.GenericTable.CambiatusCmTable
                     )
 
         cambiatusTk :
@@ -161,7 +161,7 @@ init _ flags =
                             { fields : Dict.Dict String Eos.EosType.EosType
                             , name : Eos.Name.Name
                             }
-                  , tables : List Api.Table.Metadata
+                  , tables : List Api.GenericTable.Metadata
                   }
                 )
         cambiatusTk =
@@ -171,7 +171,7 @@ init _ flags =
                         { actions = Api.Cambiatus.Tk.Action.Metadata.metadata
                         , tables = Api.Cambiatus.Tk.Table.Metadata.metadata
                         }
-                        Api.Table.CambiatusTkTable
+                        Api.GenericTable.CambiatusTkTable
                     )
     in
     ( { userState = User.NotConnected

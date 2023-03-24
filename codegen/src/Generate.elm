@@ -90,7 +90,7 @@ genericFiles base abis =
         prefixedFile suffix =
             basePrefixedFile (base ++ suffix)
     in
-    [ prefixedFile [ "Table" ]
+    [ prefixedFile [ "GenericTable" ]
         { docs = [ "This file is a way to use tables in a generic way. It's useful if you want to create pages that can display any table. For example, if you want to create a contract explorer. Check out https://henriquecbuss/elm-eos/blob/master/examples/contract-explorer for an example on how to use this module." ]
         }
         ((Generate.GenericTable.type_ base contracts

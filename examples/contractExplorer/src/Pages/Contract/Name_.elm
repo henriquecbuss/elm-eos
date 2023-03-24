@@ -13,7 +13,7 @@ contract comes from the url
 -}
 
 import Api.Action
-import Api.Table
+import Api.GenericTable
 import AssocList
 import Dict
 import Dropdown
@@ -375,10 +375,10 @@ updateValidContractInfo updateFn model =
             model
 
 
-queryFromValidContractInfo : ValidContractInfo -> Maybe (Eos.Query.Query Api.Table.Table)
+queryFromValidContractInfo : ValidContractInfo -> Maybe (Eos.Query.Query Api.GenericTable.Table)
 queryFromValidContractInfo info =
     let
-        maybeValidTable : Maybe Api.Table.Metadata
+        maybeValidTable : Maybe Api.GenericTable.Metadata
         maybeValidTable =
             ListX.find (\t -> Just t.name == info.selectedTable) info.tables
 
@@ -545,13 +545,13 @@ viewHttpError error =
 
 viewTables :
     { limit : String
-    , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response Api.Table.Table)
+    , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response Api.GenericTable.Table)
     , reverse : Bool
     , scope : String
     , selectedTable : Maybe Eos.Name.Name
-    , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response Api.Table.Table)
+    , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response Api.GenericTable.Table)
     , tableState : Table.State
-    , tables : List Api.Table.Metadata
+    , tables : List Api.GenericTable.Metadata
     }
     -> Html.Html Msg
 viewTables { tables, selectedTable, scope, limit, reverse, tableState, tableData, moreTableData } =
@@ -652,19 +652,19 @@ viewSelectedTable :
     Table.State
     ->
         { hasMore : Bool
-        , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response Api.Table.Table)
+        , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response Api.GenericTable.Table)
         , nextCursor : Eos.Query.Cursor
-        , result : ( Api.Table.Table, List Api.Table.Table )
+        , result : ( Api.GenericTable.Table, List Api.GenericTable.Table )
         }
     -> Html.Html Msg
 viewSelectedTable tableState tableData =
     let
-        tableConfig : Table.Config Api.Table.Table Msg
+        tableConfig : Table.Config Api.GenericTable.Table Msg
         tableConfig =
             Table.customConfig
                 { columns =
                     Tuple.first tableData.result
-                        |> Api.Table.columns
+                        |> Api.GenericTable.columns
                 , customizations =
                     { tableAttrs = [ class "min-w-full" ]
                     , caption = Nothing
@@ -682,7 +682,7 @@ viewSelectedTable tableState tableData =
                     , tbodyAttrs = [ class "px-6" ]
                     , rowAttrs = \_ -> [ class "even:bg-slate-200 hover:even:bg-slate-100 hover:bg-slate-100 transition-colors" ]
                     }
-                , toId = Api.Table.toId
+                , toId = Api.GenericTable.toId
                 , toMsg = UpdatedTable
                 }
 
@@ -725,7 +725,7 @@ viewSelectedTable tableState tableData =
                 ]
                 content
 
-        allData : List Api.Table.Table
+        allData : List Api.GenericTable.Table
         allData =
             Tuple.first tableData.result :: Tuple.second tableData.result
     in
@@ -910,8 +910,8 @@ type Msg
     | CheckedReverse Bool
     | RequestedTableData
     | RequestedMoreTableData
-    | GotTableData (Result Http.Error (Eos.Query.Response Api.Table.Table))
-    | GotMoreTableData (Result Http.Error (Eos.Query.Response Api.Table.Table))
+    | GotTableData (Result Http.Error (Eos.Query.Response Api.GenericTable.Table))
+    | GotMoreTableData (Result Http.Error (Eos.Query.Response Api.GenericTable.Table))
     | UpdatedTable Table.State
     | SelectedAction Eos.Name.Name
     | EnteredActionInput { fieldName : String, newValue : String }
@@ -939,14 +939,14 @@ toElmSubscription toElm =
 type alias ValidContractInfo =
     { contractName : Eos.Name.Name
     , actions : List ActionMetadata
-    , tables : List Api.Table.Metadata
+    , tables : List Api.GenericTable.Metadata
     , selectedTable : Maybe Eos.Name.Name
     , scope : String
     , limit : String
     , reverse : Bool
     , tableState : Table.State
-    , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response Api.Table.Table)
-    , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response Api.Table.Table)
+    , tableData : RemoteData.RemoteData Http.Error (Eos.Query.Response Api.GenericTable.Table)
+    , moreTableData : RemoteData.RemoteData Http.Error (Eos.Query.Response Api.GenericTable.Table)
     , selectedAction : Maybe Eos.Name.Name
     , actionInput : Dict.Dict String String
     , actionSubmitionStatus : ActionSubmitionStatus
