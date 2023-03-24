@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Elm } from "./Command/GenerateApiFiles.elm";
-import { version } from "../../package.json";
+import { version } from "../../packages/elm-eos/package.json";
 import fs from "fs/promises";
 import path from "path";
 

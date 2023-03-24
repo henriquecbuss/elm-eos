@@ -6,3 +6,4 @@ codegen/Gen/
 generated/
 codegen/src/Command/**/*.elm.d.ts
 codegen/dist/
+packages/*/dist

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Elm, Command } from "./Command/GenerateDapp.elm";
-import { version } from "../../package.json";
+import { version } from "../../packages/create-elm-eos-dapp/package.json";
 import { version as elmVersion, name as elmPackageName } from "../../elm.json";
 import fs from "node:fs/promises";
 import path from "node:path";
