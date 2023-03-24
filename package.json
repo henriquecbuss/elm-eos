@@ -14,7 +14,8 @@
     "test": "elm-verify-examples && elm-test-rs && cd codegen && elm-test-rs",
     "generate-helpers": "rm -rf codegen/src/Gen && elm-codegen install && mv codegen/Gen codegen/src/Gen",
     "postinstall": "elm-tooling install && cd codegen && npm ci",
-    "build": "npm run generate-helpers && cd codegen && npm run build"
+    "build": "npm run generate-helpers && cd codegen && npm run build",
+    "preview:docs": "elm-doc-preview"
   },
   "keywords": [
     "elm",
@@ -31,6 +32,7 @@
   },
   "homepage": "https://github.com/henriquecbuss/elm-eos#readme",
   "devDependencies": {
+    "elm-doc-preview": "^5.0.5",
     "elm-review": "^2.7.3",
     "elm-tooling": "^1.8.0",
     "elm-verify-examples": "^5.2.0"
