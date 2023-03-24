@@ -297,6 +297,7 @@ encode =
         context =
             { baseUrl = "https://fruits.com"
             , contract = "fruits"
+            , basePath = []
             }
     in
     describe "encode"
