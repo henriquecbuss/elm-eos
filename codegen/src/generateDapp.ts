@@ -181,7 +181,7 @@ app.ports.interopFromElm.subscribe((fromElm) => {
 
         await replaceInFile.replaceInFile({
           files: `${into}/src/**/*.elm`,
-          from: [/\sApi\.Table[.|\s]/g, /\sApi\.Action[.|\s]/g],
+          from: [/\sApi\.GenericTable[.|\s]/g, /\sApi\.Action[.|\s]/g],
           to: (match) => match.replace("Api", generateCliOptions.base),
         });
 
