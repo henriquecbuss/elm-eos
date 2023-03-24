@@ -227,17 +227,3 @@ jobs:
       - name: Build memberFetching example
         run: npm run build
         working-directory: examples/memberFetching
-
-      - name: Elm Publish
-        uses: dillonkearns/elm-publish-action@1.1.0
-
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-elm: ./node_modules/.bin/elm
-
-      - name: NPM Publish
-        id: npm-publish
-        if: github.ref == 'refs/heads/master'
-        uses: JS-DevTools/npm-publish@v1
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
