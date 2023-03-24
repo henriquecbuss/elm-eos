@@ -102,7 +102,7 @@ There are a few moving pieces that need to work together in order to use
 
 This package mainly serves to translate EOSIO types to Elm types. There is a
 [CLI app](#cli) that is responsible for generating code specific to the contracts
-you need. The exception to that is the [Eos.Query](https://package.elm-lang.org/packages/henriquecbuss/elm-eos/1.0.1/Eos-Query/) module, which is
+you need. The exception to that is the [Eos.Query](https://package.elm-lang.org/packages/henriquecbuss/elm-eos/1.1.0/Eos-Query/) module, which is
 used to send queries to the blockchain.
 
 For example, let's say you have a contract named `company.acc`, with an `accounts`
