@@ -7,7 +7,7 @@ const ElmPlugin = ElmPluginImport as unknown as ElmPluginSignature;
 
 const options: esbuild.BuildOptions = {
   platform: "node",
-  entryPoints: ["src/index.ts", "src/generateDapp.ts"],
+  entryPoints: ["src/generateApiFiles.ts", "src/generateDapp.ts"],
   bundle: true,
   outdir: "dist",
   plugins: [ElmPlugin({ optimize: process.env.NODE_ENV === "production" })],

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Elm } from "./Command/GenerateDapp.elm";
+import { Elm, Command } from "./Command/GenerateDapp.elm";
 import { version } from "../../package.json";
 import { version as elmVersion, name as elmPackageName } from "../../elm.json";
 import fs from "node:fs/promises";
@@ -13,7 +13,13 @@ import replaceInFile from "replace-in-file";
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 global.XMLHttpRequest = require("xhr2");
 
-const app = Elm.Command.GenerateDapp.init({
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+const init = Elm.Command.GenerateDapp.init as typeof Command.GenerateDapp.init;
+
+// const app = Elm.Command.GenerateDapp.init({
+const app = init({
   flags: {
     argv: process.argv,
     versionMessage: version,

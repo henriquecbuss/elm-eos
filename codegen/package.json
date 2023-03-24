@@ -4,7 +4,7 @@
   "main": "bin/index.js",
   "scripts": {
     "build": "NODE_ENV=production ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts",
-    "execute": "eslint . && tsc --noEmit && ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts && node dist/index.js",
+    "execute": "eslint . && tsc --noEmit && ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts && node dist/generateApiFiles.js",
     "execute:generate-dapp": "eslint . && tsc --noEmit && ts-node --project ./scripts/build.tsconfig.json ./scripts/build.ts && node dist/generateDapp.js",
     "gen:ts-interop": "npm run gen:ts-interop:api-files && npm run gen:ts-interop:dapp",
     "gen:ts-interop:api-files": "elm-ts-interop --output src/Command/GenerateApiFiles.elm.d.ts --definition-module Command.GenerateApiFiles.InteropDefinitions --entrypoint Command.GenerateApiFiles",
