@@ -105,7 +105,7 @@ update msg model =
 
                 WithValidatedInput input ->
                     ( model
-                    , "\nYou're all done! The project has been generated at OUTPUT_DIR.\n\nYou can get started by running the following commands:\n\n\tcd OUTPUT_DIR\n\tnpm install\n\tnpm run dev\n\n"
+                    , "\nYou're all done! The project has been generated at OUTPUT_DIR.\n\nYou can get started by running the following commands:\n\n\tcd OUTPUT_DIR\n\tnpm install\n\tnpm run generate\n\tnpm run dev\n\n"
                         |> String.replace "OUTPUT_DIR" input.input.outputDirectory
                         |> PrintAndExitSuccess
                     )
