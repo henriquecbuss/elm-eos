@@ -3,7 +3,7 @@
     "name": "henriquecbuss/elm-eos",
     "summary": "Type-safe interaction with the EOSIO blockchain in Elm.",
     "license": "BSD-3-Clause",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "exposed-modules": [
         "Eos.Asset",
         "Eos.Authorization",

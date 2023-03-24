@@ -1,6 +1,6 @@
 {
   "name": "elm-eos",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Type-safe interaction with the EOSIO blockchain in Elm.",
   "bin": {
     "elm-eos": "bin/elm-eos"
